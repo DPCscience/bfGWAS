@@ -1365,7 +1365,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 		if (cPar.a_mode==12) {  //ridge regression				
 			cBslmm.RidgeR(U, UtX, Uty, eval, cPar.l_remle_null);
 		} else {	//Run MCMC
-			cBslmm.MCMC(U, UtX, Uty, eval, y);
+			//cBslmm.MCMC(UtX,  y);
 		}
 		cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		cBslmm.CopyToParam(cPar);

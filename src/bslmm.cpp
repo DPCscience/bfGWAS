@@ -324,17 +324,15 @@ void BSLMM::WriteParam (const gsl_vector *alpha)
 }
 
 
-void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const gsl_matrix * Pmatx, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
+void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
-	string file_gamma, file_hyp, file_pmatx;
+	string file_gamma, file_hyp;
 	file_gamma="./output/"+file_out;
 	file_gamma+=".gamma.txt";
 	file_hyp="./output/"+file_out;
 	file_hyp+=".hyp.txt";
-    file_pmatx = "./output/" + file_out;
-    file_pmatx+= ".Pmatx.txt";
 
-	ofstream outfile_gamma, outfile_hyp, outfile_pmatx;
+	ofstream outfile_gamma, outfile_hyp;
 		
 	if (flag==0) {
 		outfile_gamma.open (file_gamma.c_str(), ofstream::out);
@@ -353,11 +351,9 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 	else {
 		outfile_gamma.open (file_gamma.c_str(), ofstream::app);
 		outfile_hyp.open (file_hyp.c_str(), ofstream::app);
-        outfile_pmatx.open(file_pmatx.c_str(), ofstream::out);
         
 		if (!outfile_gamma) {cout<<"error writing file: "<<file_gamma<<endl; return;}
 		if (!outfile_hyp) {cout<<"error writing file: "<<file_hyp<<endl; return;}
-        if (!outfile_pmatx) {cout<<"error writing file: "<<file_pmatx<<endl; return;}
 
 		size_t w;
 		if (w_col==0) {w=w_pace;}
@@ -378,25 +374,13 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 				outfile_gamma<<(int)gsl_matrix_get (Result_gamma, i, j)<<"\t";
 			}
 			outfile_gamma<<endl;
-		}
-        
-        for (size_t i=0; i<ns_test; ++i) {
-            outfile_pmatx << snp_pos[i].rs<< "\t" << snp_pos[i].chr<< "\t" << snp_pos[i].bp << "\t";
-            outfile_pmatx << pos_loglr[mapOrder2Rank[i]].second << "\t" ;
-			for (size_t j=0; j<ns_neib; ++j) {
-				outfile_pmatx<<setprecision(6)<<gsl_matrix_get (Pmatx, i, j)<<"\t";
-			}
-			outfile_pmatx<<endl;
-		}
-		
+		}		
 	}
 	
 	outfile_hyp.close();
 	outfile_hyp.clear();
 	outfile_gamma.close();
 	outfile_gamma.clear();
-    outfile_pmatx.close();
-	outfile_pmatx.clear();
 	return;
 }
 
@@ -415,43 +399,6 @@ void BSLMM::CalcPgamma (double *p_gamma)
 	return;
 }
 
-/*void BSLMM::CalcPmatx(const int &win, const size_t &ns_neib, gsl_matrix *Pmatx, const vector<pair<size_t, double> > &pos_loglr)
-{
-    //window of neigbourhood
-    long int orderj, rankj;
-    long double lr;
-    
-    gsl_matrix_set_all(Pmatx, double(0));
-    gsl_vector *neib_lr = gsl_vector_alloc(Pmatx->size2);
-    
-    for (long int i=0; i < (long int)ns_test; ++i){
-        
-        gsl_vector_set_zero(neib_lr);
-        long double rsum = 0.0; // row sum lr
-        for(size_t j=0; j < (ns_neib); ++j){
-            orderj = (i - win) + j;
-            if((orderj >= 0) && (orderj < (long int)ns_test) && (orderj != i)) {
-                rankj = mapOrder2Rank[orderj];
-                lr = (long double)exp(pos_loglr[rankj].second);
-                gsl_vector_set(neib_lr, j, lr);
-                rsum+=lr;
-            }
-        }
-  
-        rsum = 1.0/rsum;
-        
-        gsl_vector_scale(neib_lr, (double)rsum); //scale loglr vector by its row mean
-        gsl_matrix_set_row(Pmatx, i, neib_lr);
-        
-    }
-    
-    gsl_vector_free(neib_lr);
-    
-    return;
-
-} */
-
-// Jingjing's edit end
 
 void BSLMM::SetXgamma (gsl_matrix *Xgamma, const gsl_matrix *X, vector<size_t> &rank)
 {
@@ -589,16 +536,18 @@ void BSLMM::InitialMCMC (const gsl_matrix *UtX, const gsl_vector *Uty, vector<si
  gsl_vector_free(Xtyr);
  gsl_vector_free(xvec);
  gsl_vector_free(yres);
+     gsl_vector_free(Xtxvec);
  stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
  //PrintVector(rank);
  
+     /*
  vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
  size_t order;
  for (size_t i=0; i<rank.size(); ++i) {
  order = mapRank2Order[rank[i]];
  iniRank.push_back(snp_pos[order].rs);
  }
- //WriteIniRank(iniRank);  // write out initial sig snp ID
+ //WriteIniRank(iniRank); */ // write out initial sig snp ID
  
  cHyp.logp=log((double)cHyp.n_gamma/(double)ns_test);
  cHyp.h=pve_null;
@@ -1122,7 +1071,7 @@ double BSLMM::CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec){
     return (LR);
 }
 
-gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, const gsl_matrix *X, const gsl_vector *z_res, gsl_matrix * Pmatx, const map<size_t, int> &mapRank2in)
+gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, const gsl_matrix *X, const gsl_vector *z_res, const map<size_t, int> &mapRank2in)
 {   
     long int orderj;
     size_t posj, rank_j;
@@ -1159,14 +1108,13 @@ gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, const gs
     psum = 1.0/psum;
     for(size_t j=0; j < ns_neib; ++j){
         p_BF[j] *= psum;
-        gsl_matrix_set(Pmatx, o, j, p_BF[j]);
     }
     
     return (gsl_ran_discrete_preproc(ns_neib, p_BF));
 }
 // JY edit end
 
-double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, const gsl_matrix *X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, gsl_matrix * Pmatx, int &flag_gamma)
+double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, const gsl_matrix *X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma)
 {
 	map<size_t, int> mapRank2in;
 	double unif, logp = 0.0;
@@ -1263,7 +1211,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             }
             
             CalcRes(Xgamma_temp, z, XtX_gamma, Xtz_gamma, z_res, s_size, ztz);
-            gsl_s = MakeProposal(o_remove, p_BFr, X, z_res, Pmatx, mapRank2in);
+            gsl_s = MakeProposal(o_remove, p_BFr, X, z_res, mapRank2in);
             //construct gsl_s, JY
 
             j_add = gsl_ran_discrete(gsl_r, gsl_s);
@@ -1273,7 +1221,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             if((o_add < 0) || (o_add >= (long int)ns_test) || (o_add == (long int)o_remove))
                 cout << "ERROR proposing switch snp"; //new snp != removed snp
 
-            gsl_a = MakeProposal(o_add, p_BFa, X, z_res, Pmatx, mapRank2in);
+            gsl_a = MakeProposal(o_add, p_BFa, X, z_res, mapRank2in);
             
 			double prob_total_remove=1.0;
             double prob_total_add=1.0;
@@ -1298,6 +1246,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             gsl_matrix_free(XtX_gamma);
             gsl_vector_free(Xtz_gamma);
             gsl_vector_free(z_res);
+            
             gsl_ran_discrete_free(gsl_s);
             gsl_ran_discrete_free(gsl_a);
             
@@ -1315,381 +1264,11 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
 	return logp;
 }
 
-
-
 //JY
 bool comp_snp(const snpPos& lhs, const snpPos& rhs){
     return (lhs.chr.compare(rhs.chr) < 0) || ((lhs.chr.compare(rhs.chr) == 0) && (lhs.bp < rhs.bp));
 }
 //JY
-
-
-
-
-//if a_mode==13 then Uty==y
-void BSLMM::MCMC (const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector *Uty, const gsl_vector *K_eval, const gsl_vector *y) {
-	clock_t time_start;	
-
-	class HYPBSLMM cHyp_old, cHyp_new;
-	
-	gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 6);
-	gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
-	
-	gsl_vector *alpha_prime=gsl_vector_alloc (ni_test);		
-	gsl_vector *alpha_new=gsl_vector_alloc (ni_test);
-	gsl_vector *alpha_old=gsl_vector_alloc (ni_test);	
-	gsl_vector *Utu=gsl_vector_alloc (ni_test);
-	gsl_vector *Utu_new=gsl_vector_alloc (ni_test);
-	gsl_vector *Utu_old=gsl_vector_alloc (ni_test);
-	
-	gsl_vector *UtXb_new=gsl_vector_alloc (ni_test);
-	gsl_vector *UtXb_old=gsl_vector_alloc (ni_test);
-	
-	gsl_vector *z_hat=gsl_vector_alloc (ni_test);
-	gsl_vector *z=gsl_vector_alloc (ni_test);
-	gsl_vector *Utz=gsl_vector_alloc (ni_test);	
-
-	gsl_vector_memcpy (Utz, Uty);			
-	
-	double logPost_new, logPost_old;
-	double logMHratio;
-	double mean_z=0.0;	
-	
-	gsl_matrix_set_zero (Result_gamma);
-	gsl_vector_set_zero (Utu);
-	gsl_vector_set_zero (alpha_prime);
-	if (a_mode==13) {
-		pheno_mean=0.0;
-	}
-	
-	vector<pair<double, double> > beta_g;
-	for (size_t i=0; i<ns_test; i++) {
-		beta_g.push_back(make_pair(0.0, 0.0));
-	}
-	
-	vector<size_t> rank_new, rank_old;
-	vector<double> beta_new, beta_old;	
-
-	vector<pair<size_t, double> > pos_loglr;
-
-	time_start=clock();
-	MatrixCalcLR (U, UtX, Utz, K_eval, l_min, l_max, n_region, pos_loglr);
-	time_Proposal=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
-
-    // Jingjing add a vector of "snpPos" structs snp_pos
-    vector<snpPos> snp_pos;
-    
-    size_t pos;
-    string rs;
-    string chr;
-    long int bp;
-    size_t tt=0;
-    
-    for (size_t i=0; i < ns_total; ++i){
-        if(indicator_snp[i] == 0) {continue;}
-        
-        if(tt == pos_loglr[tt].first ) pos = tt;
-        else cout << "error assigning position to snp_pos vector"<< endl;
-
-        rs = snpInfo[i].rs_number;
-        chr = snpInfo[i].chr;
-        bp = snpInfo[i].base_position;
-        snpPos snp_temp={pos, rs, chr, bp};
-        snp_pos.push_back(snp_temp);
-        
-        tt++;
-    }
-    
-    stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp);
-    //end of Jingjing's edit
-    
-	stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr);
-    
-    //Jingjing's edit
-	for (size_t i=0; i<ns_test; ++i) {
-		mapRank2pos[i]=pos_loglr[i].first;
-        mapPos2Rank[pos_loglr[i].first] = i; //Jingjing's edit
-        
-        mapOrder2pos[i] = snp_pos[i].pos;//Jingjing's edit
-        mapPos2Order[snp_pos[i].pos] = i; //Jingjing's edit
-	}
-    
-    for (size_t i=0; i<ns_test; ++i) {
-        pos = mapRank2pos[i];
-		mapRank2Order[i] = mapPos2Order[pos];
-        
-        pos = mapOrder2pos[i];
-        mapOrder2Rank[i] = mapPos2Rank[pos];
-	}
-
-	//calculate proposal distribution for gamma (unnormalized), and set up gsl_r and gsl_t			
-	gsl_rng_env_setup();                
-	const gsl_rng_type * gslType;                                               
-	gslType = gsl_rng_default; 
-	if (randseed<0)
-	{
-		time_t rawtime;
-		time (&rawtime);
-		tm * ptm = gmtime (&rawtime);
-		
-		randseed = (unsigned) (ptm->tm_hour%24*3600+ptm->tm_min*60+ptm->tm_sec);
-	}
-	gsl_r = gsl_rng_alloc(gslType); 
-	gsl_rng_set(gsl_r, randseed);
-	
-	double *p_gamma = new double[ns_test]; 
-	CalcPgamma (p_gamma);
-	
-	gsl_t=gsl_ran_discrete_preproc (ns_test, p_gamma);
-	
-	//initial parameters
-	InitialMCMC (UtX, Utz, rank_old, cHyp_old, pos_loglr, snp_pos);
-//	if (fix_sigma>=0) {
-//		rho_max=1-fix_sigma;
-//		cHyp_old.h=fix_sigma/(1-cHyp_old.rho);
-//	}
-	
-	cHyp_initial=cHyp_old;
-	
-	if (cHyp_old.n_gamma==0 || cHyp_old.rho==0) {
-		logPost_old=CalcPosterior(Utz, K_eval, Utu_old, alpha_old, cHyp_old);
-
-		beta_old.clear();
-		for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
-		  beta_old.push_back(0);
-		}	
-	}
-	else {
-		gsl_matrix *UtXgamma=gsl_matrix_alloc (ni_test, cHyp_old.n_gamma);
-		gsl_vector *beta=gsl_vector_alloc (cHyp_old.n_gamma);
-		SetXgamma (UtXgamma, UtX, rank_old);		
-		logPost_old=CalcPosterior(UtXgamma, Utz, K_eval, UtXb_old, Utu_old, alpha_old, beta, cHyp_old);
-	
-		beta_old.clear();
-		for (size_t i=0; i<beta->size; ++i) {
-			beta_old.push_back(gsl_vector_get(beta, i));
-		}	
-		gsl_matrix_free (UtXgamma);
-		gsl_vector_free (beta);
-	}	
-	
-	//calculate centered z_hat, and pve
-	if (a_mode==13) {
-		time_start=clock();
-		if (cHyp_old.n_gamma==0 || cHyp_old.rho==0) {
-			CalcCC_PVEnZ (U, Utu_old, z_hat, cHyp_old);
-		}
-		else {
-			CalcCC_PVEnZ (U, UtXb_old, Utu_old, z_hat, cHyp_old);
-		}
-		time_UtZ+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
-	}
-	
-	//start MCMC
-	int accept;
-	size_t total_step=w_step+s_step;
-    size_t w=0, w_col; // pos declared earlier (JY)
-	size_t repeat=0;
-	
-	for (size_t t=0; t<total_step; ++t) {
-		if (t%d_pace==0 || t==total_step-1) {ProgressBar ("Running MCMC ", t, total_step-1, (double)n_accept/(double)(t*n_mh+1));}
-//		if (t>10) {break;}		
-
-		if (a_mode==13) {			
-			SampleZ (y, z_hat, z);		
-			mean_z=CenterVector (z);	
-			
-			time_start=clock();
-			gsl_blas_dgemv (CblasTrans, 1.0, U, z, 0.0, Utz);
-			time_UtZ+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
-		
-			//First proposal
-			if (cHyp_old.n_gamma==0 || cHyp_old.rho==0) {				
-				logPost_old=CalcPosterior(Utz, K_eval, Utu_old, alpha_old, cHyp_old);
-				beta_old.clear();
-				for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
-				  beta_old.push_back(0);
-				}	
-			}
-			else {
-				gsl_matrix *UtXgamma=gsl_matrix_alloc (ni_test, cHyp_old.n_gamma);
-				gsl_vector *beta=gsl_vector_alloc (cHyp_old.n_gamma);
-				SetXgamma (UtXgamma, UtX, rank_old);
-				logPost_old=CalcPosterior(UtXgamma, Utz, K_eval, UtXb_old, Utu_old, alpha_old, beta, cHyp_old);
-				
-				beta_old.clear();
-				for (size_t i=0; i<beta->size; ++i) {
-					beta_old.push_back(gsl_vector_get(beta, i));
-				}
-				gsl_matrix_free (UtXgamma);
-				gsl_vector_free (beta);
-			}
-		}
-		
-		//MH steps
-		for (size_t i=0; i<n_mh; ++i) {
-			if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
-			else {repeat=1;}
-			
-			logMHratio=0.0;
-			logMHratio+=ProposeHnRho(cHyp_old, cHyp_new, repeat);
-            //logMHratio+=ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, UtX, z, Xgamma_old, cXtX_old, Xty_old);//JY
-			logMHratio+=ProposePi(cHyp_old, cHyp_new, repeat);
-			
-//			if (fix_sigma>=0) {
-//				cHyp_new.h=fix_sigma/(1-cHyp_new.rho);
-//			}
-			
-			if (cHyp_new.n_gamma==0 || cHyp_new.rho==0) {
-				logPost_new=CalcPosterior(Utz, K_eval, Utu_new, alpha_new, cHyp_new);
-				beta_new.clear();
-				for (size_t i=0; i<cHyp_new.n_gamma; ++i) {
-				  beta_new.push_back(0);
-				}	
-			}
-			else {
-				gsl_matrix *UtXgamma=gsl_matrix_alloc (ni_test, cHyp_new.n_gamma);
-				gsl_vector *beta=gsl_vector_alloc (cHyp_new.n_gamma);
-				SetXgamma (UtXgamma, UtX, rank_new);
-				logPost_new=CalcPosterior(UtXgamma, Utz, K_eval, UtXb_new, Utu_new, alpha_new, beta, cHyp_new);
-				beta_new.clear();
-				for (size_t i=0; i<beta->size; ++i) {
-					beta_new.push_back(gsl_vector_get(beta, i));
-				}
-				gsl_matrix_free (UtXgamma);
-				gsl_vector_free (beta);
-			}	
-			
-			logMHratio+=logPost_new-logPost_old;		
-		
-			if (logMHratio>0 || log(gsl_rng_uniform(gsl_r))<logMHratio) {accept=1; n_accept++;}
-			else {accept=0;}
-
-			if (accept==1) {			
-				logPost_old=logPost_new;
-				rank_old.clear(); beta_old.clear();
-				if (rank_new.size()!=0) {
-					for (size_t i=0; i<rank_new.size(); ++i) {
-						rank_old.push_back(rank_new[i]);
-						beta_old.push_back(beta_new[i]);
-					}
-				}
-				cHyp_old=cHyp_new;
-				gsl_vector_memcpy (alpha_old, alpha_new);
-				gsl_vector_memcpy (UtXb_old, UtXb_new);
-				gsl_vector_memcpy (Utu_old, Utu_new);
-			}
-			else {cHyp_new=cHyp_old;}
-		}				
-		
-		//calculate z_hat, and pve
-		if (a_mode==13) {
-			time_start=clock();
-			if (cHyp_old.n_gamma==0 || cHyp_old.rho==0) {
-				CalcCC_PVEnZ (U, Utu_old, z_hat, cHyp_old);
-			}
-			else {
-				CalcCC_PVEnZ (U, UtXb_old, Utu_old, z_hat, cHyp_old);
-			}
-			
-			//sample mu and update z hat
-			gsl_vector_sub (z, z_hat);
-			mean_z+=CenterVector(z);
-			mean_z+=gsl_ran_gaussian(gsl_r, sqrt(1.0/(double) ni_test) );			
-			
-			gsl_vector_add_constant (z_hat, mean_z);
-			
-			time_UtZ+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
-		}
-		
-		//Save data
-		if (t<w_step) {continue;} //Burnin steps
-		else {		
-			if (t%r_pace==0) {
-				w_col=w%w_pace;
-				if (w_col==0) {
-					if (w==0) {
-                        //WriteResult (0, Result_hyp, Result_gamma, w_col, Residual_mtx, R2_vec, Pmatx);
-                    }
-					else {
-						//WriteResult (1, Result_hyp, Result_gamma, w_col, Residual_mtx, R2_vec, Pmatx);
-						gsl_matrix_set_zero (Result_hyp);
-						gsl_matrix_set_zero (Result_gamma);
-					}
-				}
-				
-				gsl_matrix_set (Result_hyp, w_col, 0, cHyp_old.h);
-				gsl_matrix_set (Result_hyp, w_col, 1, cHyp_old.pve);
-				gsl_matrix_set (Result_hyp, w_col, 2, cHyp_old.rho);
-				gsl_matrix_set (Result_hyp, w_col, 3, cHyp_old.pge);
-				gsl_matrix_set (Result_hyp, w_col, 4, cHyp_old.logp);
-				gsl_matrix_set (Result_hyp, w_col, 5, cHyp_old.n_gamma);
-				
-				for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
-					pos=mapRank2pos[rank_old[i]]+1;
-
-					gsl_matrix_set (Result_gamma, w_col, i, pos);
-					
-					beta_g[pos-1].first+=beta_old[i];
-					beta_g[pos-1].second+=1.0;	
-				}
-				
-				gsl_vector_add (alpha_prime, alpha_old);
-				gsl_vector_add (Utu, Utu_old);
-				
-				if (a_mode==13) {
-					pheno_mean+=mean_z;
-				}
-				
-				w++;
-				
-			}
-			
-		}
-	}
-	cout<<endl;
-	
-	w_col=w%w_pace;
-	//WriteResult (1, Result_hyp, Result_gamma, w_col, Residual_mtx, R2_vec, Pmatx);
-	
-	gsl_matrix_free(Result_hyp);
-	gsl_matrix_free(Result_gamma);
-
-	
-	gsl_vector_free(z_hat);
-	gsl_vector_free(z);
-	gsl_vector_free(Utz);	
-	gsl_vector_free(UtXb_new);	
-	gsl_vector_free(UtXb_old);
-	gsl_vector_free(alpha_new);	
-	gsl_vector_free(alpha_old);
-	gsl_vector_free(Utu_new);	
-	gsl_vector_free(Utu_old);
-
-	
-	gsl_vector_scale (alpha_prime, 1.0/(double)w);	
-	gsl_vector_scale (Utu, 1.0/(double)w);	
-	if (a_mode==13) {
-		pheno_mean/=(double)w;
-	}
-	
-	gsl_vector *alpha=gsl_vector_alloc (ns_test);
-	gsl_blas_dgemv (CblasTrans, 1.0/(double)ns_test, UtX, alpha_prime, 0.0, alpha);	
-	WriteParam (beta_g, alpha, w);
-	gsl_vector_free(alpha);
-	
-	gsl_blas_dgemv (CblasNoTrans, 1.0, U, Utu, 0.0, alpha_prime);
-	WriteBV(alpha_prime);	
-	
-	gsl_vector_free(alpha_prime);				
-	gsl_vector_free(Utu);	
-		
-	delete [] p_gamma;
-	beta_g.clear();
-	
-	return;
-}
-
 
 
 void BSLMM::RidgeR(const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector *Uty, const gsl_vector *eval, const double lambda)
@@ -2030,19 +1609,16 @@ void BSLMM::CalcCC_PVEnZ (const gsl_vector *Xb, gsl_vector *z_hat, class HYPBSLM
 }
 
 
-
 //if a_mode==13, then run probit model
 void BSLMM::MCMC (const gsl_matrix *X, const gsl_vector *y) {
 	clock_t time_start;
-       
+    
 	double time_set=0, time_post=0;
 
 	class HYPBSLMM cHyp_old, cHyp_new;
 	
 	gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 6);
 	gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
-    gsl_matrix *Pmatx = gsl_matrix_alloc(ns_test, ns_neib);
-    gsl_matrix_set_all(Pmatx, 0.0);
 	
 	gsl_vector *Xb_new=gsl_vector_alloc (ni_test);
 	gsl_vector *Xb_old=gsl_vector_alloc (ni_test);	
@@ -2181,8 +1757,8 @@ void BSLMM::MCMC (const gsl_matrix *X, const gsl_vector *y) {
 	int accept;
 	size_t total_step=w_step+s_step;
 	size_t w=0, w_col; // pos declared earlier (JY)
-//	size_t repeat=0;
-    size_t repeat=1;
+	size_t repeat=0;
+   // size_t repeat=1;
     int flag_gamma=0;
 	
 	for (size_t t=0; t<total_step; ++t) {
@@ -2205,18 +1781,16 @@ void BSLMM::MCMC (const gsl_matrix *X, const gsl_vector *y) {
 		}
 
 		//MH steps
-        //repeat = 1;
-        //cout << "n_mh = " << n_mh << endl;
 		for (size_t i=0; i<n_mh; ++i) {
-			//if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
-			//else {repeat=1;}
+			if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
+			else {repeat=1;}
 
 			logMHratio=0.0;
 			logMHratio+=ProposeHnRho(cHyp_old, cHyp_new, repeat);
             logMHratio+=ProposePi(cHyp_old, cHyp_new, repeat);
             //cout << "propose h, rho, pi success, proposing gamma..." << endl;
 
-			logMHratio+=ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, Pmatx, flag_gamma); //JY
+			logMHratio+=ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             if(flag_gamma==1) nadd++;
             else if(flag_gamma==2) ndel++;
             else if(flag_gamma==3) nswitch++;
@@ -2314,9 +1888,9 @@ void BSLMM::MCMC (const gsl_matrix *X, const gsl_vector *y) {
 			if (t%r_pace==0) {
 				w_col=w%w_pace;
 				if (w_col==0) {
-					if (w==0) {WriteResult (0, Result_hyp, Result_gamma, w_col, Pmatx, snp_pos, pos_loglr);}
+					if (w==0) {WriteResult (0, Result_hyp, Result_gamma, w_col, snp_pos, pos_loglr);}
 					else {
-						WriteResult (1, Result_hyp, Result_gamma, w_col, Pmatx, snp_pos, pos_loglr);
+						WriteResult (1, Result_hyp, Result_gamma, w_col, snp_pos, pos_loglr);
 						gsl_matrix_set_zero (Result_hyp);
 						gsl_matrix_set_zero (Result_gamma);
 					}
@@ -2354,7 +1928,7 @@ void BSLMM::MCMC (const gsl_matrix *X, const gsl_vector *y) {
 	cout<<"time on calculating posterior: "<<time_post<<endl;
 
 	w_col=w%w_pace;
-	WriteResult (1, Result_hyp, Result_gamma, w_col, Pmatx, snp_pos, pos_loglr);
+	WriteResult (1, Result_hyp, Result_gamma, w_col, snp_pos, pos_loglr);
 	
 	gsl_vector *alpha=gsl_vector_alloc (ns_test);
 	gsl_vector_set_zero (alpha);
@@ -2379,11 +1953,8 @@ void BSLMM::MCMC (const gsl_matrix *X, const gsl_vector *y) {
 	gsl_vector_free(Xtz_new);
 	gsl_vector_free(beta_new);
     
-    //JY
-    gsl_matrix_free(Pmatx);
-    //JY
-    
 	//gsl_ran_discrete_free(gsl_t);
+    //gsl_rng_free(gsl_r);
     
 	delete [] p_gamma;
 	beta_g.clear();

@@ -18,7 +18,7 @@ WITH_LAPACK = 1
 FORCE_32BIT = 
 FORCE_DYNAMIC = 
 FORCE_FLOAT = 
-DIST_NAME = gemma-0.95alpha
+DIST_NAME = gemma-0.96_11
 
 # --------------------------------------------------------------------
 # Edit below this line with caution
@@ -31,7 +31,7 @@ SRC_DIR  = ./src
 
 CPP = g++
 
-CPPFLAGS = -Wall -O3
+CPPFLAGS = -Wall -O0
 
 ifdef FORCE_DYNAMIC
 LIBS = -lgsl -lgslcblas -lblas -pthread -lz

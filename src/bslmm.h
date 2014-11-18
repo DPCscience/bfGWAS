@@ -111,14 +111,14 @@ public:
 	void CopyToParam (PARAM &cPar);
 	
 	void RidgeR(const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector *Uty, const gsl_vector *eval, const double lambda);
-	
-	void MCMC (const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector *Uty, const gsl_vector *K_eval, const gsl_vector *y);
+
+    
 	void WriteLog ();
 	void WriteLR ();
 	void WriteBV (const gsl_vector *bv);
 	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w);
 	void WriteParam (const gsl_vector *alpha);
-	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const gsl_matrix * Pmatx, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
+	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
 	
 	//Subfunctions inside MCMC
 	void CalcPgamma (double *p_gamma);
@@ -149,10 +149,10 @@ public:
     //JY added
     void CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_matrix *XtX_gamma, const gsl_vector *Xtz_gamma, gsl_vector *z_res, const size_t &s_size, const double &ztz);
     double CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec);
-    gsl_ran_discrete_t * MakeProposal(const size_t &o, double *p_BF, const gsl_matrix *X, const gsl_vector *z_res, gsl_matrix * Pmatx, const map<size_t, int> &mapRank2in);
+    gsl_ran_discrete_t * MakeProposal(const size_t &o, double *p_BF, const gsl_matrix *X, const gsl_vector *z_res, const map<size_t, int> &mapRank2in);
 
     //JY revised
-    double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, const gsl_matrix *X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, gsl_matrix * Pmatx, int &flag_gamma);
+    double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, const gsl_matrix *X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma);
     void WriteMatrix(const gsl_matrix * X, const string &filename);
     void WriteVector(const gsl_vector * X, const string &filename);
     void PrintVector(const gsl_vector * x);
