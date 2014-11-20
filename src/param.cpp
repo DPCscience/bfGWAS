@@ -355,9 +355,9 @@ void PARAM::CheckParam (void)
 	if (!file_geno.empty()) {flag++;}
 	if (!file_gene.empty()) {flag++;}
 	
-	if (flag!=1 && a_mode!=43 && a_mode!=5) {
-		cout<<"error! either plink binary files, or bimbam mean genotype files, or gene expression files are required."<<endl; error=true;
-	}
+	//if (flag!=1 && a_mode!=43 && a_mode!=5) {
+	//	cout<<"error! either plink binary files, or bimbam mean genotype files, or gene expression files are required."<<endl; error=true;
+	//}
 	
 	if (file_pheno.empty() && (a_mode==43 || a_mode==5) ) {
 		cout<<"error! phenotype file is required."<<endl; error=true;
@@ -746,23 +746,22 @@ void PARAM::ProcessCvtPhen ()
 	for (size_t i=0; i<indicator_pheno.size(); i++) {
 		k=1;
 		for (size_t j=0; j<indicator_pheno[i].size(); j++) {
-			if (indicator_pheno[i][j]==0) {k=0;}
+			if (!indicator_pheno[i][j]) {k=0;}
 		}
 		indicator_idv.push_back(k);
 	}
 	
 	//remove individuals with missing covariates
 	if ((indicator_cvt).size()!=0) {
-		for (vector<int>::size_type i=0; i<(indicator_idv).size(); ++i) {
+		for (size_t i=0; i<(indicator_idv).size(); ++i) {
 			indicator_idv[i] = (indicator_idv[i] && indicator_cvt[i]);
 		}
 	}
 	
 	//obtain ni_test
 	ni_test=0; 
-	for (vector<int>::size_type i=0; i<(indicator_idv).size(); ++i) {
-		if (indicator_idv[i]==0) {continue;}
-		ni_test++;
+	for (size_t i=0; i<(indicator_idv).size(); ++i) {
+		if (indicator_idv[i]) ni_test++;
 	}
 	
 	if (ni_test==0) {

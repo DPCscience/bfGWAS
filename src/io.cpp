@@ -463,6 +463,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 {
 	indicator_snp.clear();
 	snpInfo.clear();
+    sampleIDs.clear();
     
     VcfFileReader inFile;
     VcfHeader header;
@@ -471,16 +472,12 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     // Set to only store the GT genotype field.
     VcfRecordGenotype::addStoreField("GT");
     VcfRecordGenotype::addStoreField("EC");
-    
-    // Open the VCF file & read the header.
     if(!inFile.open(file_vcf.c_str(), header)) {
         std::cerr << "Unable to open " << file_vcf << "\n";
         exit(1);
     }
-    uint ni_total = (uint)header.getNumSamples();
     
-	gsl_vector *genotype=gsl_vector_alloc (W->size1);
-    vector<bool> genotype_miss(W->size1, 0);
+    uint ni_total = (uint)header.getNumSamples();
     
 	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
 	gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);
@@ -518,6 +515,9 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     
     ns_test=0;
     genMarker temp_genMarker;
+    
+    gsl_vector *genotype=gsl_vector_alloc (ni_test);
+    vector<bool> genotype_miss(ni_test, 0);
 
 	while(inFile.readRecord(record)) {
         
@@ -536,8 +536,10 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 		maf=0; n_miss=0; flag_poly=0; geno_old=-9;
 		n_0=0; n_1=0; n_2=0;
 		c_idv=0;
+        genotype_miss.clear();
         
         for (size_t i=0; i<ni_total; ++i) {
+            
             if (indicator_idv[i]) {continue;}
             
             geno = UcharToDouble(getUcharDosageFromRecord(record, i));
@@ -553,6 +555,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             
             maf+=geno;
             c_idv++;
+            
         }
         
 		maf/=2.0*(double)(ni_test-n_miss);
@@ -571,7 +574,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 		}
 		
 		//filter SNP if it is correlated with W
-		for (size_t i=0; i<genotype->size; ++i) {
+		for (size_t i=0; i<ni_test; ++i) {
 			if (genotype_miss[i]) {geno=maf*2.0; gsl_vector_set (genotype, i, geno);}
 		}
 		
