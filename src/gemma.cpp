@@ -1291,10 +1291,10 @@ void GEMMA::BatchRun (PARAM &cPar)
 		//run bslmm if rho==1
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
             
-            uchar** UtX = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
+          uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
 
 		  //read genotypes X (not UtX)
-		  cPar.ReadGenotypes (UtX, G, false);
+		  cPar.ReadGenotypes (X_Genotype, G, false);
             gsl_matrix_free(G);
             gsl_matrix_free(W);
 
@@ -1305,11 +1305,11 @@ void GEMMA::BatchRun (PARAM &cPar)
           cBslmm.ns_neib = 2 * cBslmm.win + 1;
          
 		  time_start=clock();	
-		  cBslmm.MCMC(UtX, y);
+		  cBslmm.MCMC(X_Genotype, y);
 		  cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		  cBslmm.CopyToParam(cPar);
             
-          FreeUCharMatrix(UtX, ns_test);
+          FreeUCharMatrix(X_Genotype, cPar.ns_test);
             
 		}  //else, if rho!=1
         

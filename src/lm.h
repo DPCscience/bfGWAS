@@ -29,10 +29,14 @@
 #else
 #include "param.h"
 #include "io.h"
+#include "ReadVCF.h"
 #endif
 
 using namespace std;
-
+typedef short int int16;
+typedef unsigned char uchar;
+typedef unsigned short uint16;
+typedef unsigned int uint;
 
 class LM {
 	
@@ -70,5 +74,5 @@ public:
 	void AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y);
 	void WriteFiles ();
 };
-void MatrixCalcLmLR (const gsl_matrix *X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr);
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test);
 #endif

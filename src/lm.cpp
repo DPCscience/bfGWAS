@@ -553,19 +553,21 @@ void LM::AnalyzePlink (const gsl_matrix *W, const gsl_vector *y)
 
 
 //make sure that both y and X are centered already
-void MatrixCalcLmLR (const gsl_matrix *X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr) 
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test)
 {
+    gsl_vector *xvec = gsl_vector_alloc(y->size);
 	double yty, xty, xtx, log_lr;
 	gsl_blas_ddot(y, y, &yty);
 
-	for (size_t i=0; i<X->size2; ++i) {
-	  gsl_vector_const_view X_col=gsl_matrix_const_column (X, i);
-	  gsl_blas_ddot(&X_col.vector, &X_col.vector, &xtx);
-	  gsl_blas_ddot(&X_col.vector, y, &xty);
+	for (size_t i=0; i<ni_test; ++i) {
+        
+      getGTgslVec(X, xvec, i, y->size, ns_test);
+      gsl_blas_ddot(xvec, xvec, &xtx);
+	  gsl_blas_ddot(xvec, y, &xty);
 
 	  log_lr=0.5*((double)y->size)*(log(yty)-log(yty-xty*xty/xtx));
 	  pos_loglr.push_back(make_pair(i,log_lr) );
 	}
-	
+	gsl_vector_free(xvec);
 	return;
 }
