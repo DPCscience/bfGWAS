@@ -32,6 +32,10 @@
 
 using namespace std;
 
+typedef unsigned char uchar;
+typedef unsigned short uint16;
+typedef unsigned int uint;
+typedef short int int16;
 
 
 int main(int argc, char * argv[])

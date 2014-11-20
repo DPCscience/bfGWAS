@@ -90,11 +90,12 @@ void PARAM::ReadFiles (void)
 			if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, p_column)==false) {error=true;}			
 		}
 		
-		if (!file_geno.empty()) {			
+		if (!file_geno.empty() || !file_vcf.empty()) {
 			if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, p_column)==false) {error=true;}		
 			
 			if (CountFileLines (file_geno, ns_total)==false) {error=true;}	
 		}
+        
 		
 		if (!file_ebv.empty() ) {
 			if (ReadFile_column (file_ebv, indicator_bv, vec_bv, 1)==false) {error=true;}
@@ -152,6 +153,29 @@ void PARAM::ReadFiles (void)
 		
 		ns_total=indicator_snp.size();
 	}
+    
+    //read genotype and phenotype file for VCF format
+    if (!file_vcf.empty()) {
+        
+        //phenotype file before genotype file
+        if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, p_column)==false)
+            {error=true;}
+        
+        //post-process covariates and phenotypes, obtain ni_test, save all useful covariates
+        ProcessCvtPhen();
+        
+        //obtain covariate matrix
+        gsl_matrix *W=gsl_matrix_alloc (ni_test, n_cvt);
+        CopyCvt (W);
+        
+        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, sampleIDs) == false )
+            
+            {error=true;}
+        
+        gsl_matrix_free(W);
+        
+        ns_total=indicator_snp.size();
+    }
 	
 	//read genotype and phenotype file for bimbam format
 	if (!file_geno.empty()) {
@@ -200,7 +224,7 @@ void PARAM::ReadFiles (void)
 		
 		ni_test=0; 
 		for (vector<int>::size_type i=0; i<(indicator_idv).size(); ++i) {
-			indicator_idv[i]*=indicator_read[i];
+			indicator_idv[i] =(indicator_idv[i] && indicator_read[i]);
 			ni_test+=indicator_idv[i];
 		}
 		
@@ -567,15 +591,25 @@ void PARAM::PrintSummary ()
 	return;
 }
 
-
+void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
+    
+ if(!file_vcf.empty()){
+    if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K)==false )
+        {error=true;}
+    }
+    
+    return;
+}
 
 void PARAM::ReadGenotypes (gsl_matrix *UtX, gsl_matrix *K, const bool calc_K) {
+    
 	string file_str;
 	
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bed";
 		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K)==false) {error=true;}
 	}
+    
 	else {
 		if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, UtX, K, calc_K)==false) {error=true;}
 	}
@@ -720,7 +754,7 @@ void PARAM::ProcessCvtPhen ()
 	//remove individuals with missing covariates
 	if ((indicator_cvt).size()!=0) {
 		for (vector<int>::size_type i=0; i<(indicator_idv).size(); ++i) {
-			indicator_idv[i]*=indicator_cvt[i];
+			indicator_idv[i] = (indicator_idv[i] && indicator_cvt[i]);
 		}
 	}
 	
@@ -781,10 +815,11 @@ void PARAM::CopyCvtPhen (gsl_matrix *W, gsl_vector *y, size_t flag)
 {
 	size_t ci_test=0;
 	
-	for (vector<int>::size_type i=0; i<indicator_idv.size(); ++i) {
+	for (size_t i=0; i<indicator_idv.size(); ++i) {
 		if (flag==0) {
 			if (indicator_idv[i]==0) {continue;}
-		} else {
+		}
+        else {
 			if (indicator_cvt[i]==0) {continue;}
 		}
 		

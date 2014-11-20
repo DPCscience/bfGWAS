@@ -493,53 +493,52 @@ void BSLMM::InitialMCMC (const gsl_matrix *UtX, const gsl_vector *Uty, vector<si
  gsl_vector_set_zero(Xtyr);
  
  gsl_vector * yres = gsl_vector_alloc(ni_test);
- gsl_vector * Xtxvec = gsl_vector_alloc(1);
- 
+ gsl_vector * Xtxvec = gsl_vector_alloc(cHyp.n_gamma);
+     gsl_vector_set_zero(Xtxvec);
+
  double xty, yty;
  gsl_blas_ddot(Uty, Uty, &yty);
  
  for (size_t i=1; i < cHyp.n_gamma; ++i){
+     //cout << "i = " << i << "," ;
  gsl_matrix_set_col(Xr, (i-1), xvec);
  gsl_matrix_const_view Xr_sub = gsl_matrix_const_submatrix(Xr, 0, 0, ni_test, i);
  
- if (i>1) Xtxvec = gsl_vector_alloc(i);
- gsl_vector_set_zero(Xtxvec);
- gsl_blas_dgemv(CblasTrans, 1.0, &Xr_sub.matrix, xvec, 0.0, Xtxvec);
+ gsl_vector_view Xtxvec_sub = gsl_vector_subvector(Xtxvec, 0, i);
+ gsl_blas_dgemv(CblasTrans, 1.0, &Xr_sub.matrix, xvec, 0.0, &Xtxvec_sub.vector);
  
  gsl_vector_view XtX_subrow = gsl_matrix_subrow(XtXr, (i-1), 0, i);
  gsl_vector_view XtX_subcol = gsl_matrix_subcolumn(XtXr, (i-1), 0, i);
- gsl_vector_memcpy(&XtX_subrow.vector, Xtxvec);
- gsl_vector_memcpy(&XtX_subcol.vector, Xtxvec);
+ gsl_vector_memcpy(&XtX_subrow.vector, &Xtxvec_sub.vector);
+ gsl_vector_memcpy(&XtX_subcol.vector, &Xtxvec_sub.vector);
  
  gsl_blas_ddot(xvec, Uty, &xty);
  gsl_vector_set(Xtyr, (i-1), xty);
  
  CalcRes(Xr, Uty, XtXr, Xtyr, yres, i, yty);
  for (size_t j=0; j<rank_loglr.size(); ++j) {
- posr = mapRank2pos[rank_loglr[j].first];
- gsl_matrix_get_col(xvec, UtX, posr);
- rank_loglr[j].second = CalcLR(yres, xvec);
+     posr = mapRank2pos[rank_loglr[j].first];
+     gsl_matrix_get_col(xvec, UtX, posr);
+     rank_loglr[j].second = CalcLR(yres, xvec);
  }
- stable_sort (rank_loglr.begin(), rank_loglr.end(), comp_lr); //sort the initial rank.
+ stable_sort (rank_loglr.begin(), rank_loglr.end(), comp_lr); 
  
  radd = rank_loglr[0].first;
  posr = mapRank2pos[radd];
  gsl_matrix_get_col(xvec, UtX, posr);
  rank.push_back(radd);
- 
  rank_loglr.erase(rank_loglr.begin());
- gsl_vector_free(Xtxvec);
  }
- 
+     stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
+     PrintVector(rank);
+     
+ gsl_vector_free(Xtxvec);
  gsl_matrix_free(Xr);
  gsl_matrix_free(XtXr);
  gsl_vector_free(Xtyr);
  gsl_vector_free(xvec);
  gsl_vector_free(yres);
-     gsl_vector_free(Xtxvec);
- stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
- //PrintVector(rank);
- 
+     
      /*
  vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
  size_t order;
@@ -996,7 +995,7 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
         lambda += gsl_matrix_get(XtX, i, i);
     }
     lambda /= double(s_size);
-    lambda *= 0.00000001;
+    lambda *= 0.0000001;
     //cout << "labmda = " << lambda << endl;
     
     EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);

@@ -33,6 +33,11 @@
 #endif
 
 using namespace std;
+typedef unsigned char uchar;
+typedef unsigned short uint16;
+typedef unsigned int uint;
+
+using namespace std;
 
 class PRDT {
 	
@@ -45,9 +50,9 @@ public:
 	string file_geno;
 	string file_out;
 	
-	vector<vector<int> > indicator_pheno;
-	vector<int> indicator_cvt;
-	vector<int> indicator_idv;
+	vector<vector<bool> > indicator_pheno;
+	vector<bool> indicator_cvt;
+	vector<bool> indicator_idv;
 	vector<SNPINFO> snpInfo;
 	map<string, double> mapRS2est;
 	

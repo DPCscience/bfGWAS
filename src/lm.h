@@ -54,8 +54,8 @@ public:
 	size_t n_cvt;
 	double time_opt;		//time spent
 	
-	vector<int> indicator_idv;				//indicator for individuals (phenotypes), 0 missing, 1 available for analysis
-	vector<int> indicator_snp;				//sequence indicator for SNPs: 0 ignored because of (a) maf, (b) miss, (c) non-poly; 1 available for analysis
+	vector<bool> indicator_idv;				//indicator for individuals (phenotypes), 0 missing, 1 available for analysis
+	vector<bool> indicator_snp;				//sequence indicator for SNPs: 0 ignored because of (a) maf, (b) miss, (c) non-poly; 1 available for analysis
 	
 	vector<SNPINFO> snpInfo;		//record SNP information
 	

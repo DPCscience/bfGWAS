@@ -25,8 +25,15 @@
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
 
-using namespace std;
+#include "VcfFileReader.h"
+#include "StringBasics.h"
+#include "StringHash.h"
+#include "MemoryAllocators.h"
 
+using namespace std;
+typedef unsigned char uchar;
+typedef unsigned short uint16;
+typedef unsigned int uint;
 
 
 class SNPINFO {
@@ -37,9 +44,22 @@ public:
 	long int base_position;
 	string a_minor;
 	string a_major;
-	size_t n_miss;
+	int n_miss;
 	double missingness;
 	double maf;	
+};
+
+struct genMarker
+{
+    string rs;
+    string chr;
+    long int bp;
+    string Ref;
+    string Alt;
+    
+    void iniRecord(VcfRecord& record);
+    void printMarker();
+    
 };
 
 //JY
@@ -100,6 +120,7 @@ public:
 	vector<size_t> p_column;			//which phenotype column needs analysis
 	size_t d_pace;		//display pace
 	
+    string file_vcf;
 	string file_bfile;
 	string file_geno;
 	string file_pheno;
@@ -186,15 +207,16 @@ public:
 	double time_Proposal;  //time spend on constructing the proposal distribution (i.e. the initial lmm or lm analysis)
 
 	// Data
+    vector<string> sampleIDs;
 	vector<vector<double> > pheno;			//a vector record all phenotypes, NA replaced with -9
 	vector<vector<double> > cvt;			//a vector record all covariates, NA replaced with -9	
-	vector<vector<int> > indicator_pheno;			//a matrix record when a phenotype is missing for an individual; 0 missing, 1 available
-	vector<int> indicator_idv;				//indicator for individuals (phenotypes), 0 missing, 1 available for analysis
-	vector<int> indicator_snp;				//sequence indicator for SNPs: 0 ignored because of (a) maf, (b) miss, (c) non-poly; 1 available for analysis
-	vector<int> indicator_cvt;				//indicator for covariates, 0 missing, 1 available for analysis
+	vector<vector<bool> > indicator_pheno;			//a matrix record when a phenotype is missing for an individual; 0 missing, 1 available
+	vector<bool> indicator_idv;				//indicator for individuals (phenotypes), 0 missing, 1 available for analysis
+	vector<bool> indicator_snp;				//sequence indicator for SNPs: 0 ignored because of (a) maf, (b) miss, (c) non-poly; 1 available for analysis
+	vector<bool> indicator_cvt;				//indicator for covariates, 0 missing, 1 available for analysis
 	
-	vector<int> indicator_bv;				//indicator for estimated breeding value file, 0 missing, 1 available for analysis
-	vector<int> indicator_read;				//indicator for read file, 0 missing, 1 available for analysis
+	vector<bool> indicator_bv;				//indicator for estimated breeding value file, 0 missing, 1 available for analysis
+	vector<bool> indicator_read;				//indicator for read file, 0 missing, 1 available for analysis
 	vector<double> vec_read;				//total number of reads
 	vector<double> vec_bv;					//breeding values
 	vector<size_t> est_column;

@@ -59,7 +59,7 @@ using namespace std;
 
 
 GEMMA::GEMMA(void):	
-version("0.96_922LR"), date("10/15/2014"), year("2011")
+version("0.96_922LR"), date("11/18/2014"), year("2014")
 {}
 
 void GEMMA::PrintHeader (void)
@@ -374,6 +374,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.clear();
 			str.assign(argv[i]);
 			cPar.file_geno=str;
+		}
+        else if (strcmp(argv[i], "-vcf")==0) {
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+			++i;
+			str.clear();
+			str.assign(argv[i]);
+			cPar.file_vcf=str;
 		}
 		else if (strcmp(argv[i], "-p")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
@@ -819,7 +826,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 			gsl_vector *u_hat=gsl_vector_alloc (cPar.ni_test);
 			
 			//read kinship matrix and set u_hat
-			vector<int> indicator_all;
+			vector<bool> indicator_all;
 			size_t c_bv=0;
 			for (size_t i=0; i<cPar.indicator_idv.size(); i++) {
 				indicator_all.push_back(1);
@@ -1269,10 +1276,10 @@ void GEMMA::BatchRun (PARAM &cPar)
 	
 	//BSLMM
 	if (cPar.a_mode==11 || cPar.a_mode==12 || cPar.a_mode==13) {
-		gsl_vector *y=gsl_vector_alloc (cPar.ni_test);
-		gsl_matrix *W=gsl_matrix_alloc (y->size, cPar.n_cvt);	
+        
+		gsl_vector *y=gsl_vector_alloc (cPar.ni_test); // phenotype
+		gsl_matrix *W=gsl_matrix_alloc (y->size, cPar.n_cvt); //covariate matx
 		gsl_matrix *G=gsl_matrix_alloc (y->size, y->size);
-		gsl_matrix *UtX=gsl_matrix_alloc (y->size, cPar.ns_test);	
 		
 		//set covariates matrix W and phenotype vector y		
 		//an intercept should be included in W, 
@@ -1283,26 +1290,33 @@ void GEMMA::BatchRun (PARAM &cPar)
 
 		//run bslmm if rho==1
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
+            
+            uchar** UtX = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
+
 		  //read genotypes X (not UtX)
 		  cPar.ReadGenotypes (UtX, G, false);
+            gsl_matrix_free(G);
+            gsl_matrix_free(W);
 
         //perform BSLMM analysis
 		  BSLMM cBslmm;
             cBslmm.CopyFromParam(cPar);
-          
-        //Setup neighbourhood window and prior variance for beta
-          //cBslmm.win = 20;
+
           cBslmm.ns_neib = 2 * cBslmm.win + 1;
-          //cBslmm.Wvar = 0.42 * 0.42;
-            //JY
          
 		  time_start=clock();	
 		  cBslmm.MCMC(UtX, y);
 		  cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		  cBslmm.CopyToParam(cPar);
-		  //else, if rho!=1
-		} else {
-		gsl_matrix *U=gsl_matrix_alloc (y->size, y->size); 
+            
+          FreeUCharMatrix(UtX, ns_test);
+            
+		}  //else, if rho!=1
+        
+        else {
+        
+        gsl_matrix * UtX = gsl_matrix_alloc(cPar.ni_test, cPar.ns_test);
+		gsl_matrix *U=gsl_matrix_alloc (y->size, y->size);
 		gsl_vector *eval=gsl_vector_alloc (y->size);
 		gsl_matrix *UtW=gsl_matrix_alloc (y->size, W->size2);
 		gsl_vector *Uty=gsl_vector_alloc (y->size);
@@ -1371,19 +1385,18 @@ void GEMMA::BatchRun (PARAM &cPar)
 		cBslmm.CopyToParam(cPar);
 		
 		//release all matrices and vectors
-		gsl_matrix_free (G);	
+		gsl_matrix_free (G);
+        gsl_matrix_free (W);
 		gsl_matrix_free (U);
 		gsl_matrix_free (UtW);
 		gsl_vector_free (eval);
 		gsl_vector_free (Uty);
-
+        gsl_matrix_free (UtX);
 		}
-		gsl_matrix_free (W);
+		
 		gsl_vector_free (y);
-		gsl_matrix_free (UtX);
-	} 
-	
-	
+			
+    }
 		
 	cPar.time_total=(clock()-time_begin)/(double(CLOCKS_PER_SEC)*60.0);
 	
