@@ -1488,10 +1488,6 @@ void BSLMM::SetXgamma (LModel &model_old, LModel &model_new, uchar **X, const gs
 
 void BSLMM::LModel::InitialVar(size_t &ni_test, size_t &s_max)
 {
-    if (cHyp.n_gamma != rank.size()) {
-        std::cerr << "wrong model size ... \n" ;
-        exit(1);
-    }
     Xgamma = gsl_matrix_alloc (ni_test, s_max);
     XtX = gsl_matrix_alloc (s_max, s_max);
     Xty = gsl_vector_alloc (s_max);
@@ -1846,6 +1842,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
     LModel model_old, model_new;
     model_old.InitialVar(ni_test, s_max);
     model_new.InitialVar(ni_test, s_max);
+    cout << "create two LModel structures success...\n";
     
     gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 6);
 	gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
@@ -1871,6 +1868,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 	
 	vector<pair<size_t, double> > pos_loglr;
 	time_start=clock();
+    cout << "start calculating marginal LRT...\n";
 	MatrixCalcLmLR (X_Genotype, z, pos_loglr, ns_test, ni_test); //Simple linear regression save time?
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
 	time_Proposal=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
@@ -1878,7 +1876,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
     // Jingjing add a vector of "snpPos" structs snp_pos
     vector<snpPos> snp_pos;
     CreateSnpPosVec(snp_pos);
-    printSNPInfo(snp_pos, 100);
+    printSNPInfo(snp_pos, 10); // print out a few markers' info
 	
     InitialMap(pos_loglr, snp_pos);
     double *p_gamma = new double[ns_test];
@@ -1886,6 +1884,8 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 	CreateGammaProposal(p_gamma);
 	
 	//initial parameters
+    cout << "start initializing mcmc...\n";
+    
 	InitialMCMC (X_Genotype, z, model_old, pos_loglr, snp_pos);
 	cHyp_initial=model_old.cHyp;
     
