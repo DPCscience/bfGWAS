@@ -204,28 +204,28 @@ void BSLMM::WriteVector(const gsl_vector * X, const string &filename){
     return;
 }//write gsl_vector X with filename = ***.txt
 
-void BSLMM::PrintVector(const gsl_vector * x){
+void PrintVector(const gsl_vector * x){
     for(size_t i=0; i < x->size; ++i){
         cout << gsl_vector_get(x, i) << ", ";
     }
     cout << endl; 
 }
 
-void BSLMM::PrintVector(vector <double> &x){
+void PrintVector(vector <double> &x){
     for(size_t i=0; i<x.size(); ++i){
         cout << x[i] << ", ";
     }
     cout << endl; 
 }
 
-void BSLMM::PrintVector(vector <size_t> &x){
+void PrintVector(vector <size_t> &x){
     for(size_t i=0; i<x.size(); ++i){
         cout << x[i] << ", ";
     }
     cout << endl;
 }
 
-void BSLMM::PrintVector(double *x){
+void PrintVector(double *x){
     for(size_t i=0; i<41; ++i){
         cout << x[i] << ", ";
     }
@@ -1878,7 +1878,8 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 
     // Jingjing add a vector of "snpPos" structs snp_pos
     vector<snpPos> snp_pos;
-    CreateSnpPosVec(snp_pos);   
+    CreateSnpPosVec(snp_pos);
+    printSNPInfo(snp_pos, 100);
 	
     InitialMap(pos_loglr, snp_pos);
     double *p_gamma = new double[ns_test];
@@ -1909,6 +1910,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 	size_t w=0, w_col; // pos declared earlier (JY)
     int flag_gamma=0;
 	
+    cout << "start MCMC... \n" ;
 	for (size_t t=0; t<total_step; ++t) {
         
 		if (t%d_pace==0 || t==total_step-1) {ProgressBar ("Running MCMC ", t, total_step-1, (double)n_accept/(double)(t*n_mh+1));}
@@ -1930,6 +1932,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
             
             time_start=clock();
             
+            cout << "start MHPropose... \n" ;
             logMHratio = MHPropose(X_Genotype, p_gamma, z, ztz, model_old, model_new, flag_gamma, logPost_new, logPost_old);
             
             time_set+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
@@ -1937,6 +1940,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
             if (logMHratio>0 || log(gsl_rng_uniform(gsl_r))<logMHratio) {accept=1; n_accept++;}
 			else {accept=0;}
             
+            cout << "start MHMove... \n" ;
             MHmove(accept, flag_gamma, model_old, model_new, logPost_old, logPost_new);
             
         }
@@ -1959,6 +1963,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 		//Save data
 		if (t<w_step) {continue;}
 		else {
+            cout << "start MHSave... \n" ;
 			MHsave(t, w, Result_hyp, Result_gamma, model_old, beta_g, mean_z, pos_loglr, snp_pos);
 		}
 	}

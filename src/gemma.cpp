@@ -1284,25 +1284,29 @@ void GEMMA::BatchRun (PARAM &cPar)
 		//set covariates matrix W and phenotype vector y		
 		//an intercept should be included in W, 
 		cPar.CopyCvtPhen (W, y, 0);
-		
+        
 		//center y, even for case/control data
 		cPar.pheno_mean=CenterVector(y);
+        cout << "pheno_mean = " << cPar.pheno_mean << "\n";
+        PrintVector(y);
 
 		//run bslmm if rho==1
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
             
           uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
-
+            
+            
 		  //read genotypes X (not UtX)
 		  cPar.ReadGenotypes (X_Genotype, G, false);
+            print(cPar.file_vcf.c_str(), X_Genotype, 100, 100, cPar.sampleIDs);
+            
             gsl_matrix_free(G);
             gsl_matrix_free(W);
 
         //perform BSLMM analysis
 		  BSLMM cBslmm;
             cBslmm.CopyFromParam(cPar);
-
-          cBslmm.ns_neib = 2 * cBslmm.win + 1;
+            cBslmm.ns_neib = 2 * cBslmm.win + 1;
          
 		  time_start=clock();	
 		  cBslmm.MCMC(X_Genotype, y);

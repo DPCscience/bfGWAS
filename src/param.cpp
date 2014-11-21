@@ -36,7 +36,42 @@
 using namespace std;
 
 
+void genMarker::iniRecord(VcfRecord& record){
+    
+    rs = record.getIDStr();
+    chr = record.getChromStr();
+    bp = record.get1BasedPosition();
+    Ref = record.getRefStr();
+    Alt = record.getAltStr();
+    
+    return;
+}
 
+void genMarker::printMarker(){
+    
+    std::cout << "ID : " << rs <<"; ";
+    std::cout << "chr : " << chr <<"; ";
+    std::cout << "bp : " << bp <<"; ";
+    std::cout << "Ref : " << Ref <<"; ";
+    std::cout << "Alt : " << Alt <<"\n";
+    
+    return;
+}
+
+void snpPos::printMarker(){
+    
+    std::cout << "position : " << pos << "; ";
+    std::cout << "ID : " << rs <<"; ";
+    std::cout << "chr : " << chr <<"; ";
+    std::cout << "bp : " << bp <<"; \n";
+}
+
+void printSNPInfo(vector<snpPos> &snp_pos, int numMarker)
+{
+    for (int i=0; i<numMarker; i++) {
+        snp_pos[i].printMarker();
+    }
+}
 
 
 PARAM::PARAM(void):	
@@ -157,6 +192,7 @@ void PARAM::ReadFiles (void)
     //read genotype and phenotype file for VCF format
     if (!file_vcf.empty()) {
         
+        cout << "start reading pheno file...\n";
         //phenotype file before genotype file
         if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, p_column)==false)
             {error=true;}
@@ -168,8 +204,8 @@ void PARAM::ReadFiles (void)
         gsl_matrix *W=gsl_matrix_alloc (ni_test, n_cvt);
         CopyCvt (W);
         
-        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, sampleIDs) == false )
-            
+        cout << "start reading vcf file...\n";
+        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, ni_total, sampleIDs) == false )
             {error=true;}
         
         gsl_matrix_free(W);
@@ -743,6 +779,8 @@ void PARAM::ProcessCvtPhen ()
 	//convert indicator_pheno to indicator_idv
 	int k=1;
 	indicator_idv.clear();
+    cout << "indicator_pheno.size = " << indicator_pheno.size() << "\n";
+    
 	for (size_t i=0; i<indicator_pheno.size(); i++) {
 		k=1;
 		for (size_t j=0; j<indicator_pheno[i].size(); j++) {
@@ -750,6 +788,7 @@ void PARAM::ProcessCvtPhen ()
 		}
 		indicator_idv.push_back(k);
 	}
+    cout << "indicator_indv.size = " << indicator_idv.size() << "\n";
 	
 	//remove individuals with missing covariates
 	if ((indicator_cvt).size()!=0) {
@@ -763,6 +802,7 @@ void PARAM::ProcessCvtPhen ()
 	for (size_t i=0; i<(indicator_idv).size(); ++i) {
 		if (indicator_idv[i]) ni_test++;
 	}
+    cout << "ni_test = " << ni_test << "\n";
 	
 	if (ni_test==0) {
 		error=true;

@@ -186,12 +186,7 @@ public:
     //JY revised
     double ProposeGamma (LModel &model_old, LModel &rank_new, const double *p_gamma, const size_t &repeat, uchar **X,  gsl_vector *z, const double &ztz, int &flag_gamma);
     
-    void WriteMatrix(const gsl_matrix * X, const string &filename);
-    void WriteVector(const gsl_vector * X, const string &filename);
-    void PrintVector(const gsl_vector * x);
-    void PrintVector(vector <double> &x);
-    void PrintVector(vector <size_t> &x);
-    void PrintVector(double *x);
+
     void NormRes(gsl_vector * z_res);
     
     //MCMC sub-functions
@@ -224,6 +219,9 @@ public:
     
     void SetXgamma (LModel &model_old, LModel &model_new, uchar **X, const gsl_vector *y);
     
+    void WriteMatrix(const gsl_matrix * X, const string &filename);
+    void WriteVector(const gsl_vector * X, const string &filename);
+    
 	//utility functions
 //	double vec_sum (gsl_vector *v);
 //	void vec_center (gsl_vector *v);
@@ -233,6 +231,10 @@ public:
 };
 
 
+void PrintVector(const gsl_vector * x);
+void PrintVector(vector <double> &x);
+void PrintVector(vector <size_t> &x);
+void PrintVector(double *x);
 
 
 

@@ -23,6 +23,7 @@
 #include "param_float.h"
 #else
 #include "param.h"
+#include "VcfFileReader.h"
 #endif
 
 using namespace std;

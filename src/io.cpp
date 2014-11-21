@@ -259,6 +259,8 @@ bool ReadFile_pheno (const string &file_pheno, vector<vector<bool> > &indicator_
 	indicator_pheno.clear();
 	pheno.clear();
 	
+    cout << "open phenotype file ... " << file_pheno << "\n";
+    
 	igzstream infile (file_pheno.c_str(), igzstream::in);
 //	ifstream infile (file_pheno.c_str(), ifstream::in);
 	if (!infile) {cout<<"error! fail to open phenotype file: "<<file_pheno<<endl; return false;}
@@ -272,6 +274,7 @@ bool ReadFile_pheno (const string &file_pheno, vector<vector<bool> > &indicator_
 	vector<double> pheno_row;
 	vector<bool> ind_pheno_row;
 	
+    
 	size_t p_max=*max_element(p_column.begin(), p_column.end() );
 	map<size_t, size_t> mapP2c;
 	for (size_t i=0; i<p_column.size(); i++) {
@@ -280,6 +283,7 @@ bool ReadFile_pheno (const string &file_pheno, vector<vector<bool> > &indicator_
 		ind_pheno_row.push_back(0);
 	}	
 	
+    size_t numPheno=0;
 	while (!safeGetline(infile, line).eof()) {
 		ch_ptr=strtok ((char *)line.c_str(), " , \t");
 		
@@ -287,15 +291,21 @@ bool ReadFile_pheno (const string &file_pheno, vector<vector<bool> > &indicator_
 		while (i<p_max ) {			
 			if (mapP2c.count(i+1)!=0) {
 				if (strcmp(ch_ptr, "NA")==0) {ind_pheno_row[mapP2c[i+1]]=0; pheno_row[mapP2c[i+1]]=-9;}
-				else {p=atof(ch_ptr); ind_pheno_row[mapP2c[i+1]]=1; pheno_row[mapP2c[i+1]]=p;}
+                else
+                {
+                    p=atof(ch_ptr); ind_pheno_row[mapP2c[i+1]]=1;
+                    pheno_row[mapP2c[i+1]]=p;
+                }
 			}
 			i++;
 			ch_ptr=strtok (NULL, " , \t");	
 		}
 		
 		indicator_pheno.push_back(ind_pheno_row);	
-		pheno.push_back(pheno_row);			
+		pheno.push_back(pheno_row);
+        numPheno++;
 	}
+    cout << "Load numPheno = " << numPheno << "\n";
  
 	infile.close();
 	infile.clear();	
@@ -459,7 +469,7 @@ bool ReadFile_fam (const string &file_fam, vector<vector<bool> > &indicator_phen
 
 
 // Read VCF genotype file, the first time,
-bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, vector<string> &sampleIDs)
+bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, size_t &ni_total, vector<string> &sampleIDs)
 {
 	indicator_snp.clear();
 	snpInfo.clear();
@@ -472,12 +482,16 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     // Set to only store the GT genotype field.
     VcfRecordGenotype::addStoreField("GT");
     VcfRecordGenotype::addStoreField("EC");
+    
+    cout << "open vcf file ...\n";
     if(!inFile.open(file_vcf.c_str(), header)) {
         std::cerr << "Unable to open " << file_vcf << "\n";
         exit(1);
     }
     
-    uint ni_total = (uint)header.getNumSamples();
+    ni_total = indicator_idv.size();
+    //uint ni_total = (uint)header.getNumSamples();
+    cout << "ni_total = " << ni_total << endl;
     
 	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
 	gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);
@@ -504,21 +518,23 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 	size_t n_miss;
 	size_t n_0, n_1, n_2;
 	int16 flag_poly;
-	
-	ni_test=0;
+
 	for (size_t i=0; i<ni_total; ++i) {
         if (indicator_idv[i]) {
             sampleIDs.push_back(header.getSampleName(i));
-            ni_test++;
         }
-	}
+	} //header samplename dose not match
+    
+    cout << "sampleIDs size = " << sampleIDs.size() << "ni_test = " <<ni_test << "\n";
     
     ns_test=0;
     genMarker temp_genMarker;
     
-    gsl_vector *genotype=gsl_vector_alloc (ni_test);
+    gsl_vector *genotype = gsl_vector_alloc(W->size1);
+    cout << "genotype size = " << W->size1 << "\n" ;
     vector<bool> genotype_miss(ni_test, 0);
 
+    cout << "start reading record ... \n";
 	while(inFile.readRecord(record)) {
         
         temp_genMarker.iniRecord(record);
@@ -588,6 +604,9 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 		indicator_snp.push_back(1);
 		ns_test++;
 	}
+    
+    cout << "vcf read first time success ... \n";
+    cout << "ns_test = " << ns_test << "\n";
 	
 	gsl_vector_free (genotype);
 	gsl_matrix_free (WtW);

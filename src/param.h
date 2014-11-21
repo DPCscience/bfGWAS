@@ -68,8 +68,10 @@ struct snpPos{
     string rs;
     string chr;
     long int bp;
+    void printMarker();
 };
 //JY
+void printSNPInfo(vector<snpPos> &snp_pos, int numMarker);
 
 //results for lmm
 class SUMSTAT {
