@@ -382,6 +382,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.assign(argv[i]);
 			cPar.file_vcf=str;
 		}
+        else if (strcmp(argv[i], "-vcfp")==0) {
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+			++i;
+			str.clear();
+			str.assign(argv[i]);
+			cPar.file_vcf_pheno=str;
+		}
 		else if (strcmp(argv[i], "-p")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
@@ -799,12 +806,14 @@ void GEMMA::BatchRun (PARAM &cPar)
 	time_begin=clock();	
 	
 	//Read Files
-	cout<<"Reading Files ... "<<endl;
+	cout<<"Reading Files ... " << endl;
 	cPar.ReadFiles();
 	if (cPar.error==true) {cout<<"error! fail to read files. "<<endl; return;}
+    cout << "Readinf file first time cost " << (clock()-time_begin)/(double(CLOCKS_PER_SEC)*60.0) << "mints \n";
 
 	cPar.CheckData();
 	if (cPar.error==true) {cout<<"error! fail to check data. "<<endl; return;}
+    cout << "Pass check data ..." << endl;
 
 	//Prediction for bslmm	
 	if (cPar.a_mode==41 || cPar.a_mode==42) {
@@ -1297,8 +1306,11 @@ void GEMMA::BatchRun (PARAM &cPar)
             
             
 		  //read genotypes X (not UtX)
+        clock_t time_readfile = clock();
 		  cPar.ReadGenotypes (X_Genotype, G, false);
-            print(cPar.file_vcf.c_str(), X_Genotype, 100, 100, cPar.sampleIDs);
+        cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
+            
+            print(cPar.file_vcf.c_str(), X_Genotype, 100, 100, cPar.InputSampleID);
             
             gsl_matrix_free(G);
             gsl_matrix_free(W);

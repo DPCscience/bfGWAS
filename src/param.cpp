@@ -192,9 +192,12 @@ void PARAM::ReadFiles (void)
     //read genotype and phenotype file for VCF format
     if (!file_vcf.empty()) {
         
-        cout << "start reading pheno file...\n";
+        cout << "Create VCF sampleID to index hash table...\n";
         //phenotype file before genotype file
-        if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, p_column)==false)
+        CreatVcfHash(file_vcf, sampleID2vcfInd);
+        
+        cout << "start reading pheno file, save Input Sample IDs...\n";
+        if (ReadFile_vcf_pheno (file_vcf_pheno, indicator_pheno, pheno, p_column, InputSampleID)==false)
             {error=true;}
         
         //post-process covariates and phenotypes, obtain ni_test, save all useful covariates
@@ -204,8 +207,8 @@ void PARAM::ReadFiles (void)
         gsl_matrix *W=gsl_matrix_alloc (ni_test, n_cvt);
         CopyCvt (W);
         
-        cout << "start reading vcf file...\n";
-        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, ni_total, sampleIDs) == false )
+        cout << "start reading vcf file first time ...\n";
+        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd) == false )
             {error=true;}
         
         gsl_matrix_free(W);
@@ -630,7 +633,7 @@ void PARAM::PrintSummary ()
 void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
     
  if(!file_vcf.empty()){
-    if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K)==false )
+    if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
         {error=true;}
     }
     

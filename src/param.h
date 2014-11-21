@@ -29,6 +29,8 @@
 #include "StringBasics.h"
 #include "StringHash.h"
 #include "MemoryAllocators.h"
+#include <iostream>     // std::cout, std::endl
+#include <iomanip>
 
 using namespace std;
 typedef unsigned char uchar;
@@ -116,6 +118,9 @@ public:
 class PARAM {
 public:	
 	// IO related parameters
+    
+    StringIntHash sampleID2vcfInd;
+    
 	bool mode_silence;
 	int a_mode;				//analysis mode, 1/2/3/4 for Frequentist tests
 	int k_mode;				//kinship read mode: 1: n by n matrix, 2: id/id/k_value; 		
@@ -123,6 +128,7 @@ public:
 	size_t d_pace;		//display pace
 	
     string file_vcf;
+    string file_vcf_pheno;
 	string file_bfile;
 	string file_geno;
 	string file_pheno;
@@ -209,7 +215,7 @@ public:
 	double time_Proposal;  //time spend on constructing the proposal distribution (i.e. the initial lmm or lm analysis)
 
 	// Data
-    vector<string> sampleIDs;
+    vector<String> InputSampleID;
 	vector<vector<double> > pheno;			//a vector record all phenotypes, NA replaced with -9
 	vector<vector<double> > cvt;			//a vector record all covariates, NA replaced with -9	
 	vector<vector<bool> > indicator_pheno;			//a matrix record when a phenotype is missing for an individual; 0 missing, 1 available

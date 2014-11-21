@@ -1767,7 +1767,6 @@ double BSLMM::MHPropose(uchar **X_Genotype, const double *p_gamma, gsl_vector *z
     if (model_new.rank.size() > 0 && model_new.rank.size() <= 20)
         { model_new.AssignVar(X_Genotype, z, mapRank2pos, ns_test); }
     else { SetXgamma (model_old, model_new, X_Genotype, z); }
-    
     logPost_new = model_new.CalcPosterior(ztz, ni_test, ns_test, gsl_r, a_mode);
     cout << "Calcposterior success." << endl;
     
