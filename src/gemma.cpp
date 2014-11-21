@@ -1297,7 +1297,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 		//center y, even for case/control data
 		cPar.pheno_mean=CenterVector(y);
         cout << "pheno_mean = " << cPar.pheno_mean << "\n";
-        PrintVector(y);
+        //PrintVector(y);
 
 		//run bslmm if rho==1
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
@@ -1307,20 +1307,24 @@ void GEMMA::BatchRun (PARAM &cPar)
             
 		  //read genotypes X (not UtX)
         clock_t time_readfile = clock();
+            
 		  cPar.ReadGenotypes (X_Genotype, G, false);
+            
         cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
             
-            print(cPar.file_vcf.c_str(), X_Genotype, 100, 100, cPar.InputSampleID);
+           // print(cPar.file_vcf.c_str(), X_Genotype, 5, 10, cPar.InputSampleID);
             
             gsl_matrix_free(G);
             gsl_matrix_free(W);
 
         //perform BSLMM analysis
 		  BSLMM cBslmm;
+            cout << "copy data from param ...\n";
             cBslmm.CopyFromParam(cPar);
             cBslmm.ns_neib = 2 * cBslmm.win + 1;
          
-		  time_start=clock();	
+            cout << "start bslmm.mcmc ...\n";
+		  time_start=clock();
 		  cBslmm.MCMC(X_Genotype, y);
 		  cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		  cBslmm.CopyToParam(cPar);

@@ -1380,13 +1380,18 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
 
         double geno, geno_mean;
         size_t n_miss;
-        int c_idv=0, c_snp=0;
+        int c_idv=0, c_snp=0, ctest_snp = 0;
+        
+        cout << "indicator_snp.size = " <<indicator_snp.size() << "\n";
+        cout << "ns_test = " << ns_test << "\n";
         
         while(inFile.readRecord(record))
         {
 
             // Add each individual's genotype
-            if (!indicator_snp[c_snp]) {continue;}
+            //cout << "c_snp = " << c_snp <<  "; ctest_snp = " << ctest_snp << "; indicator_snp[c_snp] = "<< indicator_snp[c_snp]  << "\n";
+            
+            if (!indicator_snp[c_snp]) {c_snp++; continue;}
             
             c_idv=0; geno_mean=0; n_miss=0;
             
@@ -1396,6 +1401,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
             {
                 if (!indicator_idv[j]) {continue;}
                 geno = UcharToDouble( getUcharDosageFromRecord(record, SampleVcfPos[j]) );
+                //cout << "geno = " << geno << ", ";
                 if (geno == -9) {genotype_miss[c_idv]=1; n_miss++;}
                 else {
                     gsl_vector_set (genotype, c_idv, geno);
@@ -1404,18 +1410,22 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
                 c_idv++;
             }
             geno_mean/=(double)(ni_test-n_miss);
+            //cout << "n_miss = " << n_miss << "\n";
+            //cout << "\n geno_mean = " << geno_mean << "\n ";
 
             for (size_t i=0; i < ni_test; ++i) {
-                if (genotype_miss[i]) {geno=0;}
-                else { geno = gsl_vector_get (genotype, i); geno -= geno_mean;}
+                if (genotype_miss[i]) {geno=geno_mean;} // do not center genotype data in UCHAR**
+                else { geno = gsl_vector_get (genotype, i);}
                 
                 gsl_vector_set (genotype, i, geno);
-                UtX[c_snp][i] = DoubleToUchar(geno);
+                UtX[ctest_snp][i] = DoubleToUchar(geno);
             }
-            
-            if (calc_K==true) {gsl_blas_dsyr (CblasUpper, 1.0, genotype, K);}
+            gsl_vector_add_constant(genotype, -geno_mean); // center genotype gsl_vector here
             
             c_snp++;
+            ctest_snp++;
+            
+            if (calc_K==true) {gsl_blas_dsyr (CblasUpper, 1.0, genotype, K);}
         }
         
         if (calc_K==true) {
