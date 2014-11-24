@@ -52,6 +52,7 @@ void Ginv(gsl_matrix *XtX_gtemp);
 void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, const double &lambda);
 void EigenInverse(gsl_matrix *XtX);
 void CholeskyInverse(gsl_matrix *XtX);
+void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta);
 
 #endif
 

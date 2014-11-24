@@ -400,16 +400,24 @@ void topdm(gsl_matrix *Omega){
     gsl_matrix *evec_temp = gsl_matrix_alloc(size_o, size_o);
     gsl_eigen_symmv_workspace *w = gsl_eigen_symmv_alloc(size_o);
     gsl_eigen_symmv(Omega_temp, eval_temp, evec_temp, w);
+        
+        double EPS = 0.0;
+        for (size_t i=0; i<size_o; i++) {
+            EPS+=gsl_matrix_get(Omega, i, i);
+        }
+        EPS /= (double)size_o;
+        EPS *= 0.00000001;
+        
     
     size_t neig = 0;
         
-        double EPS = 0.0000001;
+        //double EPS = 0.0000001;
         for(size_t i = 0; i < size_o; i++){
             evali = gsl_vector_get(eval_temp, i);
             if (evali < EPS)
                 {
                     gsl_matrix_set(D, i, i, EPS); neig++;
-                    //cout << "eigen value = EPS = " << EPS << endl;
+                    cout << "eigen value = EPS = " << EPS << endl;
                 }
             else {gsl_matrix_set(D, i, i, evali); }
             
@@ -505,6 +513,7 @@ void EigenInverse(gsl_matrix *XtX){
     }
     
     XtX_eiginv = XtX_eig.llt().solve(Identity_Y);
+    //Standard Cholesky decomposition (LL^T) of a matrix
     
     for(size_t i=0; i < s_size; ++i){
         for (size_t j=i; j<s_size; ++j) {
@@ -514,6 +523,31 @@ void EigenInverse(gsl_matrix *XtX){
         }
     }
     return;
+}
+
+void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta)
+{
+    size_t s_size = Xty -> size;
+    
+    MatrixXd XtX_eig(s_size, s_size);
+    VectorXd Xty_eig(s_size);
+    VectorXd beta_eig(s_size);
+    
+    for(size_t i=0; i < s_size; ++i){
+        Xty_eig(i) = gsl_vector_get(Xty, i);
+        XtX_eig(i, i) = gsl_matrix_get(XtX, i, i);
+        for (size_t j=(i+1); j<s_size; ++j) {
+            XtX_eig(i, j) = gsl_matrix_get(XtX, i, j);
+            XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
+        }
+    }
+    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    
+	for(size_t i=0; i < s_size; ++i){
+        gsl_vector_set(beta, i, beta_eig(i));
+    }
+    
+	return;
 }
 
 
@@ -533,7 +567,7 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
                  XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
              }
      }
-    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));

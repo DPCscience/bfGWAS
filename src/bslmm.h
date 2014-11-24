@@ -63,7 +63,7 @@ public:
         void AssignVar(uchar **X, gsl_vector *y, map<size_t, size_t> &mapRank2pos, size_t &ns_test);
         
         void getSubVar(size_t size_s);
-        double CalcPosterior(const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode);
+        double CalcPosterior(const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, double &trace_G);
         
         void SetXgamma (uchar **X, map<size_t, size_t> &mapRank2pos, size_t &ns_test);
         void Copy(LModel &model);
@@ -145,9 +145,9 @@ public:
 	void WriteLog ();
 	void WriteLR ();
 	void WriteBV (const gsl_vector *bv);
-	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w);
+	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
 	void WriteParam (const gsl_vector *alpha);
-	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
+	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col);
 	
 	//Subfunctions inside MCMC
 	void CalcPgamma (double *p_gamma);
@@ -230,8 +230,7 @@ public:
 //	bool comp_lr (pair<size_t, double> a, pair<size_t, double> b);
 };
 
-
-void PrintVector(const gsl_vector * x);
+void PrintVector(gsl_vector * x);
 void PrintVector(vector <double> &x);
 void PrintVector(vector <size_t> &x);
 void PrintVector(double *x);
