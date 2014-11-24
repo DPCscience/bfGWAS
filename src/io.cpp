@@ -724,7 +724,10 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 	gsl_vector_free (Wtx);
 	gsl_vector_free (WtWiWtx);
 	gsl_permutation_free (pmt);
-	
+    
+    
+    inFile.close();
+    //inFile.clear();
 	return true;
 }
 
@@ -1441,6 +1444,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
         
         gsl_vector_free (genotype);
         cout << "read vcf file second time success ... \n" ;
+        inFile.close();
         return true;
     }
 

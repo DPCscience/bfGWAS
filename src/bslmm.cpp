@@ -212,6 +212,13 @@ void PrintVector(gsl_vector * x){
     cout << endl; 
 }
 
+void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol){
+    for (size_t i=0; i<nrow; i++) {
+        gsl_vector_view row = gsl_matrix_subrow(X, i, 0, ncol);
+        PrintVector(&row.vector);
+    }
+}
+
 void PrintVector(vector <double> &x){
     for(size_t i=0; i<x.size(); ++i){
         cout << x[i] << ", ";
@@ -1561,7 +1568,7 @@ void BSLMM::LModel::FreeMem()
     gsl_vector_free(Xbeta);
 }
 
-double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, double &trace_G)
+double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, const double &trace_G)
 {
     double logpost=0.0;
     
@@ -1581,49 +1588,55 @@ double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &
      
     // cout << "calculate postrior with ranks:\n";
      //PrintVector(rank);
-     trace_G=0.0;
     double d, P_yy=yty, logdet_O=0.0;
     size_t s_size = rank.size();
-    getSubVar(s_size);
-     
-     for (size_t i=0; i<s_size; i++) {
-         trace_G += gsl_matrix_get(XtX, i, i);
-     }
-     //cout << "trace_G = trace(X'X) = " << trace_G;
-     double sigma_a2 = (double)ns_test* cHyp.h / (trace_G * (1.0-cHyp.h)*exp(cHyp.logp));
-     //double sigma_a2=cHyp.h/(trace_G * (1.0-cHyp.h)*exp(cHyp.logp)*(double)ns_test);
-    // cout << "; sigma_a2" << sigma_a2 << endl;
-     
+     double sigma_a2=cHyp.h/((1.0-cHyp.h) * exp(cHyp.logp) * (double)ns_test * trace_G);
+     getSubVar(s_size);
     
     gsl_matrix *Omega=gsl_matrix_alloc (s_size, s_size);
     gsl_matrix *M_temp=gsl_matrix_alloc (s_size, s_size);
     gsl_vector *beta_hat=gsl_vector_alloc (s_size);
     gsl_vector *Xty_temp=gsl_vector_alloc (s_size);
-    
-     
     gsl_vector_memcpy (Xty_temp, &Xty_sub.vector);
-     //cout << "Xty_temp.vector: ";
-    // PrintVector(Xty_temp);
     
     //calculate Omega
-     //cout << "\n XtX_sub: " << gsl_matrix_get(&XtX_sub.matrix, 0, 0) << ", " << gsl_matrix_get(&XtX_sub.matrix, s_size-1, s_size-1) << "\n";    gsl_matrix_memcpy (Omega, &XtX_sub.matrix);
+     gsl_matrix_memcpy (Omega, &XtX_sub.matrix);
     gsl_matrix_scale (Omega, sigma_a2);
     gsl_matrix_set_identity (M_temp);
     gsl_matrix_add (Omega, M_temp);
     
-    //calculate beta_hat
-    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat);	//solve Omega * beta_hat = Xty for beta_hat
+   //  cout << "Print out Omega sub-matrix:\n";
+   //  PrintMatrix(Omega, 3, 10);
      
-    // cout << "Print estimated beta_hat : \n";
-    // PrintVector(beta_hat) ;
+    //calculate beta_hat
+   //  cout << "Print estimated Xty_temp : \n";
+   //  PrintVector(Xty_temp) ;
+     
+    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat);	//solve Omega * beta_hat = Xty for beta_hat
+   //  cout << "logdet_0 = " << logdet_O << "\n";
+    
     gsl_vector_scale (beta_hat, sigma_a2);
+     cout << "Print estimated beta_hat : \n";
+     PrintVector(beta_hat) ;
+     
     gsl_blas_ddot (Xty_temp, beta_hat, &d);
     P_yy-=d;
+    // cout << "; P_yy = " << P_yy << endl;
+     if(P_yy <= 0) {cerr << "Error: P_yy <= 0\n";
+         cout << "cHyp.h = " << cHyp.h << "; exp(cHyp.logp) = " << exp(cHyp.logp);
+         cout << "; sigma_a2=" << sigma_a2 << endl;
+         
+         EigenSolve(Omega, Xty_temp, beta_hat);
+         gsl_blas_ddot (Xty_temp, beta_hat, &d);
+         P_yy=yty - d;
+         cout << "Print estimated beta_hat from eigensolve : \n";
+         PrintVector(beta_hat);
+     }
     
     //sample tau
     double tau=1.0;
     if (a_mode==11) {tau =gsl_ran_gamma (gsl_r, (double)ni_test/2.0,  2.0/P_yy); }
-    // cout << "\n tau = " << tau;
+   //  cout << "; tau = " << tau;
     
     //sample beta
     for (size_t i=0; i<s_size; i++)
@@ -1632,8 +1645,8 @@ double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &
         gsl_vector_set(beta, i, d);
     }
      
-  //  cout << "\n Sample beta =  \n";
-   //  PrintVector(&beta_sub.vector);
+    //cout << "\n Sample beta =  \n";
+    // PrintVector(&beta_sub.vector);
     gsl_blas_dtrsv(CblasUpper, CblasNoTrans, CblasNonUnit, Omega, &beta_sub.vector);
     
     gsl_vector_scale(&beta_sub.vector, sqrt(sigma_a2/tau));
@@ -1647,9 +1660,10 @@ double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &
         cHyp.pve/=cHyp.pve+1.0/tau;
         cHyp.pge=1.0;
     }
-    
-    logpost=-0.5*logdet_O;
-    // cout << "after logdet_0 logpost= " << logpost << "\n";
+     
+
+    logpost= -0.5*logdet_O;
+     //cout << "after logdet_0 logpost= " << logpost << "\n";
 
     if (a_mode==11) {logpost-=0.5*(double)ni_test*log(P_yy);}
     else {logpost-=0.5*P_yy;}
@@ -1663,7 +1677,7 @@ double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &
     gsl_vector_free (beta_hat);
     gsl_vector_free (Xty_temp);
     }
-   // cout << "log posterior = " << logpost << "\n";
+    cout << "log posterior = " << logpost << "\n";
     return logpost;
 }
 
@@ -1914,7 +1928,8 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 	vector<pair<size_t, double> > pos_loglr;
 	time_start=clock();
     cout << "start calculating marginal LRT...\n";
-	MatrixCalcLmLR (X_Genotype, z, pos_loglr, ns_test, ni_test); //Simple linear regression save time?
+	MatrixCalcLmLR (X_Genotype, z, pos_loglr, ns_test, ni_test, trace_G); //Simple linear regression save time?
+    cout << "trace_G = trace(X'X) = " << trace_G;
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
 	time_Proposal=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 
@@ -1933,8 +1948,11 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
     
 	InitialMCMC (X_Genotype, z, model_old, pos_loglr, snp_pos);
 	cHyp_initial=model_old.cHyp;
-    
     model_old.AssignVar(X_Genotype, z, mapRank2pos, ns_test);
+    cout << "print out first 10 * 10 submatrix of XtX:\n";
+    PrintMatrix(model_old.XtX, 10, 10);
+    
+    
     model_old.getSubVar(model_old.rank.size());
     logPost_old = model_old.CalcPosterior(ztz, ni_test, ns_test, gsl_r, a_mode, trace_G);
 

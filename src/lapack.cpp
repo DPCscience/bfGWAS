@@ -401,17 +401,21 @@ void topdm(gsl_matrix *Omega){
     gsl_eigen_symmv_workspace *w = gsl_eigen_symmv_alloc(size_o);
     gsl_eigen_symmv(Omega_temp, eval_temp, evec_temp, w);
         
-        double EPS = 0.0;
+        double eval_sum = 0.0;
+        size_t posin = 0;
         for (size_t i=0; i<size_o; i++) {
-            EPS+=gsl_matrix_get(Omega, i, i);
+            evali = gsl_vector_get(eval_temp, i);
+            if (evali > 0) {
+                eval_sum+=gsl_vector_get(eval_temp, i);
+                posin++;
+            }
+            else continue;
         }
-        EPS /= (double)size_o;
-        EPS *= 0.00000001;
+        eval_sum /= (double)posin;
         
-    
     size_t neig = 0;
         
-        //double EPS = 0.0000001;
+        double EPS = eval_sum * 0.0000001;
         for(size_t i = 0; i < size_o; i++){
             evali = gsl_vector_get(eval_temp, i);
             if (evali < EPS)
@@ -433,10 +437,10 @@ void topdm(gsl_matrix *Omega){
     gsl_matrix_free(U);
     gsl_matrix_free(evec_temp);
     gsl_vector_free(eval_temp);
-    /*
+    
     if(neig > 0 ){
             cout << "topdm success with number of negative eigen = " << neig << endl;
-        }*/
+        }
     }
     return;
 }

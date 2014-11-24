@@ -63,7 +63,7 @@ public:
         void AssignVar(uchar **X, gsl_vector *y, map<size_t, size_t> &mapRank2pos, size_t &ns_test);
         
         void getSubVar(size_t size_s);
-        double CalcPosterior(const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, double &trace_G);
+        double CalcPosterior(const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, const double &trace_G);
         
         void SetXgamma (uchar **X, map<size_t, size_t> &mapRank2pos, size_t &ns_test);
         void Copy(LModel &model);
@@ -234,7 +234,7 @@ void PrintVector(gsl_vector * x);
 void PrintVector(vector <double> &x);
 void PrintVector(vector <size_t> &x);
 void PrintVector(double *x);
-
+void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol);
 
 
 #endif
