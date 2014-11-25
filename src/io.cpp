@@ -375,7 +375,7 @@ bool ReadFile_pheno (const string &file_pheno, vector<vector<bool> > &indicator_
 		pheno.push_back(pheno_row);
         numPheno++;
 	}
-    cout << "Load numPheno = " << numPheno << "\n";
+   // cout << "Load numPheno = " << numPheno << "\n";
  
 	infile.close();
 	infile.clear();	
@@ -609,26 +609,26 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     vector<uint> SampleVcfPos;
     uint vcfpos;
     
-    cout << "SampleVcfPos: " ;
+    //cout << "SampleVcfPos: " ;
     for (int i=0; i<(int)ni_total; i++) {
         vcfpos = (uint)sampleID2vcfInd.Integer(InputSampleID[i]);
         
         SampleVcfPos.push_back(vcfpos);
-        if (i < 10) cout << SampleVcfPos[i] << ", ";
+        //if (i < 10) cout << SampleVcfPos[i] << ", ";
     }
     
-    cout << "/n sampleIDs size = " << InputSampleID.size() << "; ni_test = " <<ni_test << "\n";
-    cout << "SampleVcfPos.size = " << SampleVcfPos.size() << "\n";
+   // cout << "/n sampleIDs size = " << InputSampleID.size() << "; ni_test = " <<ni_test << "\n";
+   // cout << "SampleVcfPos.size = " << SampleVcfPos.size() << "\n";
     
     ns_test=0;
     genMarker temp_genMarker;
     char c;
     
     gsl_vector *genotype = gsl_vector_alloc(W->size1);
-    cout << "genotype size = " << W->size1 << "\n" ;
+   // cout << "genotype size = " << W->size1 << "\n" ;
     vector<bool> genotype_miss(ni_test, 0);
 
-    cout << "start reading record ... \n";    
+   // cout << "start reading record ... \n";
 	while(inFile.readRecord(record)) {
         
         temp_genMarker.iniRecord(record);
@@ -716,7 +716,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 	}
     
     cout << "vcf read first time success ... \n";
-    cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
+   // cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
 	
 	gsl_vector_free (genotype);
 	gsl_matrix_free (WtW);
@@ -1385,8 +1385,8 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
         size_t n_miss;
         int c_idv=0, c_snp=0, ctest_snp = 0;
         
-        cout << "indicator_snp.size = " <<indicator_snp.size() << "\n";
-        cout << "ns_test = " << ns_test << "\n";
+       // cout << "indicator_snp.size = " <<indicator_snp.size() << "\n";
+       // cout << "ns_test = " << ns_test << "\n";
         
         while(inFile.readRecord(record))
         {
