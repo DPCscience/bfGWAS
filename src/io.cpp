@@ -622,7 +622,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     
     ns_test=0;
     genMarker temp_genMarker;
-    char c;
+    uchar c;
     
     gsl_vector *genotype = gsl_vector_alloc(W->size1);
    // cout << "genotype size = " << W->size1 << "\n" ;
@@ -1400,11 +1400,12 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
             
             vector<bool> genotype_miss(ni_test, 0);
             
+            cout << "Geno for marker " << c_idv << ": \n";
             for (uint j=0; j < ni_total; ++j)
             {
                 if (!indicator_idv[j]) {continue;}
                 geno = UcharToDouble( getUcharDosageFromRecord(record, SampleVcfPos[j]) );
-                //cout << "geno = " << geno << ", ";
+                if(c_idv < 10 && j < 10) cout << "geno = " << geno << ", ";
                 if (geno == -9) {genotype_miss[c_idv]=1; n_miss++;}
                 else {
                     gsl_vector_set (genotype, c_idv, geno);
@@ -1412,6 +1413,8 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
                 }
                 c_idv++;
             }
+            cout << "\n";
+
             geno_mean/=(double)(ni_test-n_miss);
             //cout << "n_miss = " << n_miss << "\n";
             //cout << "\n geno_mean = " << geno_mean << "\n ";

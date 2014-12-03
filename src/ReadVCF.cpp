@@ -107,8 +107,8 @@ else{
     {
         int alleleIndex = record.getGT(smNum, i);
         if(alleleIndex == VcfGenotypeSample::MISSING_GT)
-        { intc = -2; }
-        else if(alleleIndex == 1)
+        { intc = -2; break;}
+        else if(alleleIndex > 0)
         { intc+=1; }
     }
     c = IntToUchar(intc);
@@ -119,47 +119,47 @@ else{
 float StringToFloat(const char* s) {
     float f;
     f=strtof(s, NULL);
-    std::cout << "string" << s << "is float " << f << "\n";
-    return(f);
+    //std::cout << "string" << s << "is float " << f << "\n";
+    return f;
 }
 
 float UcharToFloat(const uchar c){
     if (c != UCHAR_MAX) {
-        int intc = (int)c;
+        int intc = c;
         return (((float)intc) * 0.01);
     }
-    else return(-9);
+    else return -9;
 }
 
 double UcharToDouble(const uchar c){
     if (c != UCHAR_MAX) {
-        int intc = (int)c;
+        int intc = c;
         return (((double)intc) * 0.01);
     }
-    else return(-9);
+    else return -9;
 }
 
 uchar FloatToUchar(const float dosage){
     if (dosage >= 0.0  && dosage <= 2.0) {
         int intc = (int)(dosage*100.0);
-        return ((uchar)intc);
+        return  intc;
     }
-    else return (UCHAR_MAX);
+    else return UCHAR_MAX;
 }
 
 uchar DoubleToUchar(const double dosage){
     if (dosage >= 0.0  && dosage <= 2.0) {
         int intc=(int)(dosage*100.0);
-        return (uchar)intc;
+        return intc;
     }
     else return UCHAR_MAX;
 }
 
 uchar IntToUchar(const int intc){
     if (intc >= 0  && intc <= 2) {
-        return ((uchar)(intc * 100));
+        return (intc * 100);
     }
-    else return (UCHAR_MAX);
+    else return UCHAR_MAX;
 }
 
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test){
@@ -171,8 +171,8 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             gsl_vector_set(xvec, j, geno);
             geno_mean += geno;
         }
-        geno_mean /= ni_test;
-        gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
+        geno_mean /= -(double)ni_test;
+        gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
     }
     
     else {
