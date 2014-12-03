@@ -640,6 +640,8 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
     return;
 }
 
+
+
 void PARAM::ReadGenotypes (gsl_matrix *UtX, gsl_matrix *K, const bool calc_K) {
     
 	string file_str;

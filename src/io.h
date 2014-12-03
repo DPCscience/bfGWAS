@@ -77,6 +77,8 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 
 bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd);
 
+
+
 bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd);
 
 bool ReadFile_vcf_pheno (const string &file_vcf_pheno, vector<vector<bool> > &indicator_pheno, vector<vector<double> > &pheno, const vector<size_t> &p_column, vector<String> &InputSampleID);

@@ -575,3 +575,4 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 	gsl_vector_free(xvec);
 	return;
 }
+

@@ -31,7 +31,7 @@ SRC_DIR  = ./src
 
 CPP = g++
 
-CPPFLAGS = -ggdb -Wall -O3 -I./libStatGen/include/ -D__ZLIB_AVAILABLE__ -D_FILE_OFFSET_BITS=64 -D__STDC_LIMIT_MACROS
+CPPFLAGS = -ggdb -pg -Wall -O3 -I./libStatGen/include/ -D__ZLIB_AVAILABLE__ -D_FILE_OFFSET_BITS=64 -D__STDC_LIMIT_MACROS
 
 ifdef FORCE_DYNAMIC
 LIBS = -lgsl -lgslcblas -lblas -pthread -lz -lm ./libStatGen/libStatGen.a

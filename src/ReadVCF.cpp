@@ -197,6 +197,8 @@ bool getGTgslMat(uchar ** X, gsl_matrix *Xgsl, vector<size_t> marker_idx, const 
 }
 
 
+
+
 bool print(const char* description, genotypeMatrix& info, uint numMarkers, uint numSamples)
 {
     std::cout << "\n\t\t\t" << description << "\n\t\t";
@@ -266,6 +268,7 @@ bool print(const char* description, uchar **genotypes, uint numMarkers, uint num
     std::cout << "Succesfully output sub-genotype\n";
     return 1;
 }
+
 
 
 

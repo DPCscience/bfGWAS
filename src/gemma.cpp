@@ -59,7 +59,7 @@ using namespace std;
 
 
 GEMMA::GEMMA(void):	
-version("0.96_922LR"), date("11/18/2014"), year("2014")
+version("0.96_readvcf"), date("12/03/2014"), year("2014")
 {}
 
 void GEMMA::PrintHeader (void)
@@ -1303,6 +1303,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
             
           uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
+
             
             
 		  //read genotypes X (not UtX)
@@ -1312,7 +1313,7 @@ void GEMMA::BatchRun (PARAM &cPar)
             
         cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
             
-           print(cPar.file_vcf.c_str(), X_Genotype, 10, 10, cPar.InputSampleID);
+          // print(cPar.file_vcf.c_str(), X_Genotype, 10, 10, cPar.InputSampleID);
             
             gsl_matrix_free(G);
             gsl_matrix_free(W);
@@ -1325,7 +1326,7 @@ void GEMMA::BatchRun (PARAM &cPar)
          
             cout << "start bslmm.mcmc ...\n";
 		  time_start=clock();
-		  cBslmm.MCMC(X_Genotype, y);
+		  cBslmm.MCMC(X_Genotype, y, 1);
 		  cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		  cBslmm.CopyToParam(cPar);
             

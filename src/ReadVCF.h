@@ -56,6 +56,7 @@ bool print(const char* description, genotypeMatrix& info, uint numSamples, uint 
 bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, vector<String> &sampleIDs);
 
 
+
 float StringToFloat(const char* s);
 float UcharToFloat(const uchar c);
 double UcharToDouble(const uchar c);
@@ -68,5 +69,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 bool getGTgslMat(uchar ** X, gsl_vector *Xgsl, vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test);
 
 uchar getUcharDosageFromRecord(VcfRecord &record, const uint smNum);
+
+
 
 
