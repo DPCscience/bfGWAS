@@ -228,6 +228,17 @@ public:
 //	double calc_var (gsl_vector *v);
 //	void calc_sigma (MCMC &cMcmc);
 //	bool comp_lr (pair<size_t, double> a, pair<size_t, double> b);
+    
+    void InitialMCMC (const uchar **UtX, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos);
+    void SetXgamma (const gsl_matrix *X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, const vector<size_t> &rank_new, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new);
+    double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
+    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const size_t s_size, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp);
+    
+    double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, const gsl_matrix *X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, gsl_matrix * Pmatx, int &flag_gamma);
+    void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const gsl_matrix * Pmatx, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
+    void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w);
+    void MCMC (const uchar **X, const gsl_vector *y);
+    
 };
 
 void PrintVector(gsl_vector * x);
