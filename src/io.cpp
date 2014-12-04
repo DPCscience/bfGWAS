@@ -562,8 +562,9 @@ bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd){
 // Read VCF genotype file, the first time,
 bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd)
 {
-	indicator_snp.clear();
-	snpInfo.clear();
+	
+    indicator_snp.clear();
+    snpInfo.clear();
     
     VcfFileReader inFile;
     VcfHeader header;
@@ -729,6 +730,125 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     inFile.close();
     //inFile.clear();
 	return true;
+}
+
+
+//read VCF file given multiple file names
+// Read VCF genotype file, the first time,
+bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, const gsl_matrix *WtW, const gsl_matrix *WtWi, gsl_vector *Wtx, gsl_vector *WtWiWtx, const vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, const vector<uint> &SampleVcfPos)
+{
+    VcfFileReader inFile;
+    VcfHeader header;
+    VcfRecord record;
+    // Set to only store the GT genotype field.
+    VcfRecordGenotype::addStoreField("GT");
+    VcfRecordGenotype::addStoreField("EC");
+    cout << "open vcf file ...\n";
+    if(!inFile.open(file_vcf.c_str(), header)) {
+        std::cerr << "Unable to open " << file_vcf << "\n";
+        exit(1);
+    }
+    
+    double v_x, v_w;
+    size_t c_idv=0;
+    
+    string rs;
+    long int b_pos;
+    string chr;
+    string major;
+    string minor;
+    double cM=-9;
+    
+    double maf, geno, geno_old;
+    size_t n_miss;
+    size_t n_0, n_1, n_2;
+    int16 flag_poly;
+    
+    genMarker temp_genMarker;
+    uchar c;
+    
+    gsl_vector *genotype = gsl_vector_alloc(W->size1);
+    // cout << "genotype size = " << W->size1 << "\n" ;
+    vector<bool> genotype_miss(ni_test, 0);
+    
+    // cout << "start reading record ... \n";
+    while(inFile.readRecord(record)) {
+        
+        temp_genMarker.iniRecord(record);
+        chr = temp_genMarker.chr;
+        rs = temp_genMarker.rs;
+        b_pos = temp_genMarker.bp;
+        minor = temp_genMarker.Alt;
+        major = temp_genMarker.Ref;
+        
+        if (setSnps.size()!=0 && setSnps.count(rs)==0) {
+            indicator_snp.push_back(0);
+            continue;
+        }
+        
+        maf=0; n_miss=0; flag_poly=0; geno_old=-9;
+        n_0=0; n_1=0; n_2=0;
+        c_idv=0;
+        
+        for (size_t i=0; i<indicator_idv.size(); ++i) {
+            
+            if (!indicator_idv[i]) {continue;}
+            
+            c = getUcharDosageFromRecord(record, SampleVcfPos[i]);
+            geno = UcharToDouble(c);
+            if (geno == -9) {genotype_miss[c_idv]=1; n_miss++; c_idv++; continue;}
+            
+            if (geno>=0 && geno<=0.5) {n_0++;}
+            if (geno>0.5 && geno<1.5) {n_1++;}
+            if (geno>=1.5 && geno<=2.0) {n_2++;}
+            gsl_vector_set (genotype, c_idv, geno);
+            
+            if (flag_poly==0) {geno_old=geno; flag_poly=2;}
+            if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
+            
+            maf+=geno;
+            c_idv++;
+        }
+        
+        maf/=2.0*(double)(ni_test-n_miss);
+        
+        SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
+        snpInfo.push_back(sInfo);
+        
+        if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
+        
+        if ( (maf<maf_level || maf> (1.0-maf_level)) && maf_level!=-1 ) {indicator_snp.push_back(0); continue;}
+        
+        if (flag_poly!=1) {indicator_snp.push_back(0); continue;}
+        
+        if (hwe_level!=0) {
+            if (CalcHWE(n_0, n_2, n_1)<hwe_level) {indicator_snp.push_back(0); continue;}
+        }
+        
+        //filter SNP if it is correlated with W
+        for (size_t i=0; i<ni_test; ++i) {
+            if (genotype_miss[i]) {
+                geno=maf*2.0;
+                gsl_vector_set (genotype, i, geno);
+            }
+        }
+        
+        gsl_blas_dgemv (CblasTrans, 1.0, W, genotype, 0.0, Wtx);
+        gsl_blas_dgemv (CblasNoTrans, 1.0, WtWi, Wtx, 0.0, WtWiWtx);
+        gsl_blas_ddot (genotype, genotype, &v_x);
+        gsl_blas_ddot (Wtx, WtWiWtx, &v_w);
+        if (v_w/v_x >= r2_level) {indicator_snp.push_back(0); continue;}
+        
+        indicator_snp.push_back(1);
+        ns_test++;
+    }
+    
+    cout << "vcf read first time success from vcf file: " << file_vcf<< "\n";
+    cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
+    
+    gsl_vector_free (genotype);
+    inFile.close();
+    return true;
 }
 
 
@@ -1449,6 +1569,97 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
         inFile.close();
         return true;
     }
+
+// read multiple vcf files second time
+bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd)
+{
+    size_t ni_total = indicator_idv.size();
+    vector<uint> SampleVcfPos;
+    for (int i=0; i<(int)ni_total; i++) {
+        uint vcfpos = (uint)sampleID2vcfInd.Integer(InputSampleID[i]);
+        SampleVcfPos.push_back(vcfpos);
+    }
+    
+    cout << "start reading vcf files for second time ...\n";
+    
+    VcfFileReader inFile;
+    VcfHeader header;
+    VcfRecord record;
+    // Set to only store the GT genotype field.
+    VcfRecordGenotype::addStoreField("GT");
+    VcfRecordGenotype::addStoreField("EC");
+    
+    ifstream infile2(file_vcfs.c_str(), ifstream::in);
+    string vcf_file;
+    int file_num = 0;
+    
+    if (calc_K==true) {gsl_matrix_set_zero (K);}
+    gsl_vector *genotype=gsl_vector_alloc (ni_test);
+    double geno, geno_mean;
+    size_t n_miss;
+    int c_idv=0, c_snp=0, ctest_snp = 0;
+
+     while (getline(infile2, vcf_file)) {
+         if(!inFile.open(vcf_file.c_str(), header))
+         {cerr<<"error reading genotype file:"<<vcf_file<<endl; exit(1);}
+         while(inFile.readRecord(record))
+         {
+             if (!indicator_snp[c_snp]) {c_snp++; continue;}
+             
+             c_idv=0; geno_mean=0; n_miss=0;
+             
+             vector<bool> genotype_miss(ni_test, 0);
+             
+             for (uint j=0; j < ni_total; ++j)
+             {
+                 if (!indicator_idv[j]) {continue;}
+                 geno = UcharToDouble( getUcharDosageFromRecord(record, SampleVcfPos[j]) );
+                 if (geno == -9) {genotype_miss[c_idv]=1; n_miss++;}
+                 else {
+                     gsl_vector_set (genotype, c_idv, geno);
+                     geno_mean += geno;
+                 }
+                 c_idv++;
+             }
+             geno_mean/=(double)(ni_test-n_miss);
+
+             for (size_t i=0; i < ni_test; ++i) {
+                 if (genotype_miss[i]) {geno=geno_mean;} // do not center genotype data in UCHAR**
+                 else { geno = gsl_vector_get (genotype, i);}
+                 
+                 gsl_vector_set (genotype, i, geno);
+                 UtX[ctest_snp][i] = DoubleToUchar(geno);
+             }
+             gsl_vector_add_constant(genotype, -geno_mean); // center genotype gsl_vector here
+             
+             c_snp++;
+             ctest_snp++;
+             
+             if (calc_K==true) {gsl_blas_dsyr (CblasUpper, 1.0, genotype, K);}
+         }
+
+         inFile.close();
+         file_num++;
+    
+     }
+    infile2.close();
+    
+    if (calc_K==true) {
+        gsl_matrix_scale (K, 1.0/(double)ns_test);
+        
+        for (size_t i=0; i<genotype->size; ++i) {
+            for (size_t j=0; j<i; ++j) {
+                geno=gsl_matrix_get (K, j, i);
+                gsl_matrix_set (K, i, j, geno);
+            }
+        }
+    }
+    
+    gsl_vector_free (genotype);
+    cout << "read vcf file second time success ... \n" ;
+    
+    return true;
+}
 
 
 

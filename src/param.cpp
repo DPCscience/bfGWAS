@@ -18,12 +18,27 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <cstring>
 #include <sys/stat.h>
 #include <cmath>
 #include <algorithm>
+#include <vector>
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "gsl/gsl_vector.h"
+#include "gsl/gsl_matrix.h"
+#include "gsl/gsl_linalg.h"
+#include "gsl/gsl_blas.h"
+#include "gsl/gsl_cdf.h"
+
+#include "lapack.h"
+#include "gzstream.h"
+#include "mathfunc.h"
+#include "ReadVCF.h"
+#include "bslmm.h"
 
 #ifdef FORCE_FLOAT
 #include "param_float.h"
@@ -208,6 +223,8 @@ void PARAM::ReadFiles (void)
         CopyCvt (W);
         
         cout << "start reading vcf file first time ...\n";
+        indicator_snp.clear();
+        snpInfo.clear();
         if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd) == false )
             {error=true;}
         
@@ -216,6 +233,67 @@ void PARAM::ReadFiles (void)
         ns_total=indicator_snp.size();
     }
 	
+    //read genotype and phenotype file from multiple VCF files
+    if (!file_vcfs.empty()) {
+        
+        ifstream infile(file_vcfs.c_str(), ifstream::in);
+        if(infile.good()) {
+            getline(infile, file_vcf);
+            cout << "Create VCF sampleID to index hash table...\n";
+            //phenotype file before genotype file
+            CreatVcfHash(file_vcf, sampleID2vcfInd);
+            
+            cout << "start reading pheno file, save Input Sample IDs...\n";
+            if (ReadFile_vcf_pheno (file_vcf_pheno, indicator_pheno, pheno, p_column, InputSampleID)==false)
+            {error=true;}
+            
+            //post-process covariates and phenotypes, obtain ni_test, save all useful covariates
+            ProcessCvtPhen();
+        }
+        else {cerr << "Error: openning " << file_vcfs << endl; exit(1);}
+        infile.close();
+        
+        gsl_matrix *W=gsl_matrix_alloc (ni_test, n_cvt);
+        CopyCvt (W);
+        gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
+        gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);
+        gsl_vector *Wtx=gsl_vector_alloc (W->size2);
+        gsl_vector *WtWiWtx=gsl_vector_alloc (W->size2);
+        gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, W, W, 0.0, WtW);
+        gsl_matrix_memcpy(WtWi, WtW);
+        EigenInverse(WtWi);
+        
+        vector<uint> SampleVcfPos;
+        uint vcfpos;
+        for (int i=0; i<(int)indicator_idv.size(); i++) {
+            vcfpos = (uint)sampleID2vcfInd.Integer(InputSampleID[i]);
+            SampleVcfPos.push_back(vcfpos);
+        }
+        indicator_snp.clear();
+        snpInfo.clear();
+        ns_test=0;
+        int file_num = 0;
+        
+        cout << "start reading vcf file first time ...\n";
+        ifstream infile2(file_vcfs.c_str(), ifstream::in);
+        while (getline(infile2, file_vcf)) {
+            cout << " First time loading data from VCF file: " << file_vcf << endl;
+            if (ReadFile_vcf(file_vcf, setSnps, W, WtW, WtWi, Wtx, WtWiWtx, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, SampleVcfPos) == false )
+            {error=true;}
+            file_num++;
+        }
+        infile2.close();
+        
+        gsl_matrix_free(W);
+        gsl_matrix_free (WtW);
+        gsl_matrix_free (WtWi);
+        gsl_vector_free (Wtx);
+        gsl_vector_free (WtWiWtx);
+        
+        ns_total=indicator_snp.size();
+        cout << "Total number of files loaded: " << file_num << endl;
+    }
+    
 	//read genotype and phenotype file for bimbam format
 	if (!file_geno.empty()) {
 		//annotation file before genotype file
@@ -636,6 +714,12 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
     if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
         {error=true;}
     }
+    
+ if(!file_vcfs.empty()){
+    if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
+        {error=true;}
+    }
+    
     
     return;
 }

@@ -382,6 +382,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.assign(argv[i]);
 			cPar.file_vcf=str;
 		}
+        else if (strcmp(argv[i], "-vcfs")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.file_vcfs=str;
+        }
         else if (strcmp(argv[i], "-vcfp")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
@@ -1304,9 +1311,7 @@ void GEMMA::BatchRun (PARAM &cPar)
             
           uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
 
-            
-            
-		  //read genotypes X (not UtX)
+            //read genotypes X (not UtX)
         clock_t time_readfile = clock();
             
 		  cPar.ReadGenotypes (X_Genotype, G, false);
