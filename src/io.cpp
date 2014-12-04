@@ -743,7 +743,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     // Set to only store the GT genotype field.
     VcfRecordGenotype::addStoreField("GT");
     VcfRecordGenotype::addStoreField("EC");
-    cout << "open vcf file ...\n";
+    //cout << "open vcf file ...\n";
     if(!inFile.open(file_vcf.c_str(), header)) {
         std::cerr << "Unable to open " << file_vcf << "\n";
         exit(1);
@@ -842,16 +842,11 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
         indicator_snp.push_back(1);
         ns_test++;
     }
-    
-    cout << "vcf read first time success from vcf file: " << file_vcf<< "\n";
-    cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
-    
+    cout << "ns_test = " << ns_test << "; indicator_snp.size = " << indicator_snp.size()<<"\n";
     gsl_vector_free (genotype);
     inFile.close();
     return true;
 }
-
-
 
 
 
@@ -1581,14 +1576,12 @@ bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector
     }
     
     cout << "start reading vcf files for second time ...\n";
-    
     VcfFileReader inFile;
     VcfHeader header;
     VcfRecord record;
     // Set to only store the GT genotype field.
     VcfRecordGenotype::addStoreField("GT");
     VcfRecordGenotype::addStoreField("EC");
-    
     ifstream infile2(file_vcfs.c_str(), ifstream::in);
     string vcf_file;
     int file_num = 0;
@@ -1607,9 +1600,7 @@ bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector
              if (!indicator_snp[c_snp]) {c_snp++; continue;}
              
              c_idv=0; geno_mean=0; n_miss=0;
-             
              vector<bool> genotype_miss(ni_test, 0);
-             
              for (uint j=0; j < ni_total; ++j)
              {
                  if (!indicator_idv[j]) {continue;}

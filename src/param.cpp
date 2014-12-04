@@ -277,7 +277,7 @@ void PARAM::ReadFiles (void)
         cout << "start reading vcf file first time ...\n";
         ifstream infile2(file_vcfs.c_str(), ifstream::in);
         while (getline(infile2, file_vcf)) {
-            cout << " First time loading data from VCF file: " << file_vcf << endl;
+            cout << " First time loading data from: " << file_vcf << endl;
             if (ReadFile_vcf(file_vcf, setSnps, W, WtW, WtWi, Wtx, WtWiWtx, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, SampleVcfPos) == false )
             {error=true;}
             file_num++;
@@ -713,14 +713,11 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
  if(!file_vcf.empty()){
     if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
         {error=true;}
-    }
-    
+    }    
  if(!file_vcfs.empty()){
     if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
         {error=true;}
-    }
-    
-    
+    }    
     return;
 }
 
