@@ -212,6 +212,13 @@ void PrintVector(gsl_vector * x){
     cout << endl; 
 }
 
+void PrintVector(gsl_vector * x, size_t s){
+    for(size_t i=0; i < s; ++i){
+        cout << gsl_vector_get(x, i) << ", ";
+    }
+    cout << endl;
+}
+
 void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol){
     for (size_t i=0; i<nrow; i++) {
         gsl_vector_view row = gsl_matrix_subrow(X, i, 0, ncol);
@@ -1629,6 +1636,15 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, rank_old.size(), Xb_old, beta_old, cHyp_old);
     }
     
+    cout << "First 10 responses: \n";
+    PrintVector(z, 10);
+    cout << "First 10 Xtz: \n";
+    PrintVector(Xtz_old, 10);
+    cout << "First 10 X : \n";
+    PrintMatrix(Xgamma_old, 10, 10);
+    cout << "First 10 XtX : \n";
+    PrintMatrix(XtX_old, 10, 10);
+    
     //calculate centered z_hat, and pve
     if (a_mode==13) {
         if (cHyp_old.n_gamma==0) {
@@ -2035,7 +2051,7 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     gsl_blas_ddot(z_res, z_res, &SSR);
     double R2 = 1.0 - (SSR / ztz);
     R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
-    //cout << "R2 = "<< R2 << endl;
+    cout << "R2 = "<< R2 << endl;
     if(R2 <= 0.0) {
         cout << "R2 = " << setprecision(6) << R2 << " <= 0, ";
         cout << "beta_hat estimate from calculating residuals: \n ";

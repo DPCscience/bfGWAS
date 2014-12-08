@@ -209,7 +209,7 @@ void PARAM::ReadFiles (void)
         
         cout << "Create VCF sampleID to index hash table...\n";
         //phenotype file before genotype file
-        CreatVcfHash(file_vcf, sampleID2vcfInd);
+        CreatVcfHash(file_vcf, sampleID2vcfInd, file_sample);
         
         cout << "start reading pheno file, save Input Sample IDs...\n";
         if (ReadFile_vcf_pheno (file_vcf_pheno, indicator_pheno, pheno, p_column, InputSampleID)==false)
@@ -225,7 +225,7 @@ void PARAM::ReadFiles (void)
         cout << "start reading vcf file first time ...\n";
         indicator_snp.clear();
         snpInfo.clear();
-        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd) == false )
+        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd, file_sample) == false )
             {error=true;}
         
         gsl_matrix_free(W);
@@ -241,7 +241,7 @@ void PARAM::ReadFiles (void)
             getline(infile, file_vcf);
             cout << "Create VCF sampleID to index hash table...\n";
             //phenotype file before genotype file
-            CreatVcfHash(file_vcf, sampleID2vcfInd);
+            CreatVcfHash(file_vcf, sampleID2vcfInd, file_sample);
             
             cout << "start reading pheno file, save Input Sample IDs...\n";
             if (ReadFile_vcf_pheno (file_vcf_pheno, indicator_pheno, pheno, p_column, InputSampleID)==false)
@@ -278,7 +278,7 @@ void PARAM::ReadFiles (void)
         ifstream infile2(file_vcfs.c_str(), ifstream::in);
         while (getline(infile2, file_vcf)) {
             cout << " First time loading data from: " << file_vcf << endl;
-            if (ReadFile_vcf(file_vcf, setSnps, W, WtW, WtWi, Wtx, WtWiWtx, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, SampleVcfPos) == false )
+            if (ReadFile_vcf(file_vcf, setSnps, W, WtW, WtWi, Wtx, WtWiWtx, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, SampleVcfPos, file_sample) == false )
             {error=true;}
             file_num++;
         }
@@ -711,11 +711,11 @@ void PARAM::PrintSummary ()
 void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
     
  if(!file_vcf.empty()){
-    if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
+    if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
         {error=true;}
     }    
- if(!file_vcfs.empty()){
-    if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd)==false )
+ else if(!file_vcfs.empty()){
+    if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
         {error=true;}
     }    
     return;

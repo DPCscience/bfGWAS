@@ -127,6 +127,7 @@ public:
 	vector<size_t> p_column;			//which phenotype column needs analysis
 	size_t d_pace;		//display pace
 	
+    string file_sample;
     string file_vcfs;
     string file_vcf;
     string file_vcf_pheno;

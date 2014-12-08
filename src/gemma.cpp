@@ -389,6 +389,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
             str.assign(argv[i]);
             cPar.file_vcfs=str;
         }
+        else if (strcmp(argv[i], "-fsample")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.file_sample=str;
+        }
         else if (strcmp(argv[i], "-vcfp")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
