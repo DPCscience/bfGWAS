@@ -283,26 +283,34 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
 	ofstream outfile (file_str.c_str(), ofstream::out);
 	if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
 	
-	outfile<<"orig_pos"<<"\t"<<"markerID"<<"\t"<<"chr"<<"\t"
+	outfile<<"geno_pos"<<"\t"<<"markerID"<<"\t"<<"chr"<<"\t"
 			<<"bp"<<"\t"<<"alpha"<<"\t" << "lrt" << "\t"
 			<<"beta"<<"\t"<<"gamma" << endl; //JY added gamma_var
 	
     
-    size_t r;
+    size_t r, pos;
 	for (size_t i=0; i<ns_test; ++i) {
         
+        // save the data along the order of all variants, snp_pos is sorted by order
 		outfile<<snp_pos[i].pos << "\t" << snp_pos[i].rs<<"\t" << snp_pos[i].chr<<"\t"
 		<<snp_pos[i].bp<<"\t";
 		
-        r = mapRank2Order[i];
+        r = mapOrder2Rank[i];
+        pos = mapOrder2pos[i];
+        if (pos == snp_pos[i].pos) {
+      
 		outfile<<scientific<<setprecision(6)<<gsl_vector_get(alpha, i)<<"\t" << pos_loglr[r].second << "\t";
         
-		if (beta_g[i].second!=0) {
-			outfile<<beta_g[i].first/beta_g[i].second<<"\t"<< beta_g[i].second/(double)w <<endl;
+		if (beta_g[pos].second!=0) {
+			outfile<<beta_g[pos].first/beta_g[pos].second<<"\t"<< beta_g[pos].second/(double)w <<endl;
 		}
 		else {
 			outfile<<0.0<<"\t"<<0.0 <<endl;
 		}
+            
+        }
+        else {cerr << "pos dose not match snp_pos[i].pos...\n"; exit(1);}
+        
 	}		
 	
 	outfile.clear();	
@@ -1820,6 +1828,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                 gsl_matrix_set (Result_hyp, w_col, 6, logPost_old);
                 
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
+                    // beta_g saved by position
+                    
                     pos=mapRank2pos[rank_old[i]]+1;
                     
                     gsl_matrix_set (Result_gamma, w_col, i, pos);
@@ -2038,7 +2048,7 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
         lambda += gsl_matrix_get(XtX, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.000001;
+    lambda *= 0.00000001;
    // cout << "labmda = " << lambda << endl;
     
     EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);
@@ -2050,8 +2060,8 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     double SSR;
     gsl_blas_ddot(z_res, z_res, &SSR);
     double R2 = 1.0 - (SSR / ztz);
-    R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
-    cout << "R2 = "<< R2 << endl;
+    // R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
+   // cout << "R2 = "<< R2 << endl;
     if(R2 <= 0.0) {
         cout << "R2 = " << setprecision(6) << R2 << " <= 0, ";
         cout << "beta_hat estimate from calculating residuals: \n ";
@@ -2769,7 +2779,7 @@ void BSLMM::CreateSnpPosVec(vector<snpPos> &snp_pos)
     size_t tt=0;
     
     for (size_t i=0; i < ns_total; ++i){
-        if(indicator_snp[i] == 0) {continue;}
+        if(!indicator_snp[i]) {continue;}
 
         rs = snpInfo[i].rs_number;
         chr = snpInfo[i].chr;

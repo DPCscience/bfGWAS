@@ -704,8 +704,8 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 		ns_test++;
        // cout << "ns_test = " << ns_test ;
 	}
-    cout << "genotype vector:\n";
-    PrintVector(genotype, 10);
+    //cout << "genotype vector:\n";
+   // PrintVector(genotype, 10);
     cout << "vcf read first time success ... \n";
    // cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
 	
@@ -1512,9 +1512,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
                 
                 gsl_vector_set (genotype, i, geno);
                 UtX[ctest_snp][i] = DoubleToUchar(geno);
-                if (ctest_snp==0 && i < 10) {
-                    cout << geno << ":" << (int)UtX[ctest_snp][i] << ", ";
-                }
+               // if (ctest_snp==0 && i < 10) cout << geno << ":" << (int)UtX[ctest_snp][i] << ", ";
             }
             gsl_vector_add_constant(genotype, -geno_mean); // center genotype gsl_vector here
             
