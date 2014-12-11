@@ -64,8 +64,8 @@ void ReadFile_eigenD (const string &file_d, bool &error, gsl_vector *eval);
 bool BimbamKin (const string &file_geno, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
 bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
 
-bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector<bool> &indicator_snp, gsl_matrix *UtX, gsl_matrix *K, const bool calc_K);
-bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, gsl_matrix *UtX, gsl_matrix *K, const bool calc_K);
+bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **UtX, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test);
+bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **UtX, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test);
 
 bool ReadFile_est (const string &file_est, const vector<size_t> &est_column, map<string, double> &mapRS2est);
 

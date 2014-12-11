@@ -1312,24 +1312,25 @@ void GEMMA::BatchRun (PARAM &cPar)
 		cPar.pheno_mean=CenterVector(y);
         cout << "pheno_mean = " << cPar.pheno_mean << "\n";
         //PrintVector(y);
-
+        
+        
 		//run bslmm if rho==1
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
-            
-          uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
-
+        
             //read genotypes X (not UtX)
         clock_t time_readfile = clock();
             
+        uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
 		  cPar.ReadGenotypes (X_Genotype, G, false);
             
         cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
             
-           print(cPar.file_vcfs.c_str(), X_Genotype, 10, 10, cPar.InputSampleID);
+           print(X_Genotype, 10, 10);
             
             gsl_matrix_free(G);
             gsl_matrix_free(W);
 
+            
         //perform BSLMM analysis
 		  BSLMM cBslmm;
             cout << "copy data from param ...\n";
@@ -1348,7 +1349,7 @@ void GEMMA::BatchRun (PARAM &cPar)
         
         else {
         
-        gsl_matrix * UtX = gsl_matrix_alloc(cPar.ni_test, cPar.ns_test);
+        //gsl_matrix * UtX = gsl_matrix_alloc(cPar.ni_test, cPar.ns_test);
 		gsl_matrix *U=gsl_matrix_alloc (y->size, y->size);
 		gsl_vector *eval=gsl_vector_alloc (y->size);
 		gsl_matrix *UtW=gsl_matrix_alloc (y->size, W->size2);
@@ -1357,7 +1358,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 		
 		//read relatedness matrix G		
 		if (!(cPar.file_kin).empty()) {		
-			cPar.ReadGenotypes (UtX, G, false);
+			//cPar.ReadGenotypes (UtX, G, false);
 			
 			//read relatedness matrix G
 			ReadFile_kin (cPar.file_kin, cPar.indicator_idv, cPar.mapID2num, cPar.k_mode, cPar.error, G);
@@ -1366,7 +1367,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 			//center matrix G
 			CenterMatrix (G);
 		} else {
-			cPar.ReadGenotypes (UtX, G, true);
+			//cPar.ReadGenotypes (UtX, G, true);
 		}
 		
 		//eigen-decomposition and calculate trace_G
@@ -1395,7 +1396,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 		//Creat and calcualte UtX, use a large memory
 		cout<<"Calculating UtX..."<<endl;
 		time_start=clock();							
-		CalcUtX (U, UtX);
+		//CalcUtX (U, UtX);
 		cPar.time_UtX=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		
 		//perform BSLMM analysis
@@ -1410,7 +1411,7 @@ void GEMMA::BatchRun (PARAM &cPar)
             
 		time_start=clock();	
 		if (cPar.a_mode==12) {  //ridge regression				
-			cBslmm.RidgeR(U, UtX, Uty, eval, cPar.l_remle_null);
+		//	cBslmm.RidgeR(U, UtX, Uty, eval, cPar.l_remle_null);
 		} else {	//Run MCMC
 			//cBslmm.MCMC(UtX,  y);
 		}
@@ -1424,7 +1425,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 		gsl_matrix_free (UtW);
 		gsl_vector_free (eval);
 		gsl_vector_free (Uty);
-        gsl_matrix_free (UtX);
+       // gsl_matrix_free (UtX);
 		}
 		
 		gsl_vector_free (y);

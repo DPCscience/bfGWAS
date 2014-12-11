@@ -248,7 +248,7 @@ public:
 	void CheckParam (); 
 	void CheckData ();	
 	void PrintSummary ();
-	void ReadGenotypes (gsl_matrix *UtX, gsl_matrix *K, const bool calc_K);
+	//void ReadGenotypes (gsl_matrix *UtX, gsl_matrix *K, const bool calc_K);
 	void ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K);
     
 	void CheckCvt ();

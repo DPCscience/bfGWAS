@@ -52,6 +52,7 @@ struct genotypeMatrix
 
 
 bool print(const char* description, genotypeMatrix& info, uint numSamples, uint numMarkers);
+bool print(uchar **genotypes, uint numMarkers, uint numSamples);
 
 bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, vector<String> &sampleIDs);
 
@@ -71,6 +72,7 @@ bool getGTgslMat(uchar ** X, gsl_vector *Xgsl, vector<size_t> marker_idx, const 
 
 uchar getUcharDosageFromRecord(VcfRecord &record, const uint smNum);
 double getDoubleDosageFromRecord(VcfRecord& record, const uint smNum);
+
 
 
 

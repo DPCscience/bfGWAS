@@ -709,8 +709,19 @@ void PARAM::PrintSummary ()
 }
 
 void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
+ 
+    string file_str;
+	
+	if (!file_bfile.empty()) {
+		file_str=file_bfile+".bed";
+		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test)==false) {error=true;}
+	}
     
- if(!file_vcf.empty()){
+	else if(!file_geno.empty()) {
+		if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test)==false) {error=true;}
+	}
+	
+ else if(!file_vcf.empty()){
     if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
         {error=true;}
     }    
@@ -719,10 +730,11 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
         {error=true;}
     }    
     return;
+    
 }
 
 
-
+/*
 void PARAM::ReadGenotypes (gsl_matrix *UtX, gsl_matrix *K, const bool calc_K) {
     
 	string file_str;
@@ -737,7 +749,7 @@ void PARAM::ReadGenotypes (gsl_matrix *UtX, gsl_matrix *K, const bool calc_K) {
 	}
 	
 	return;
-}
+}*/
 		
 
 

@@ -278,6 +278,35 @@ bool print(const char* description, uchar **genotypes, uint numMarkers, uint num
     return 1;
 }
 
+bool print(uchar **genotypes, uint numMarkers, uint numSamples)
+{
+    int intc;
+    float fc;
+    std::cout << "\n" << "Dosage GT: \n";
+    for(uint i = 0; i < numMarkers; i++)
+    {
+        for(uint j = 0; j < numSamples; j++)
+        {
+            std::cout << "\t";
+            intc = (int)genotypes[i][j];
+            //std::cout << intc << ":" ;
+            
+            if(genotypes[i][j] != UCHAR_MAX)
+            {
+                fc = (float)(intc);
+                std::cout << fc * 0.01;
+            }
+            else
+                std::cout << "GT missing";
+        }
+        std::cout << "\n";
+    }
+    
+    std::cout << "Succesfully output sub-genotype\n";
+    return 1;
+}
+
+
 bool print(const char* description, genotypeMatrix& info, uint numMarkers, uint numSamples)
 {
     std::cout << "\n\t\t\t" << description << "\n\t\t";
