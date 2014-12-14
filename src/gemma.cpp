@@ -1325,7 +1325,7 @@ void GEMMA::BatchRun (PARAM &cPar)
             
         cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
             
-           print(X_Genotype, 10, 10);
+           print(X_Genotype, 100, 10);
             
             gsl_matrix_free(G);
             gsl_matrix_free(W);
