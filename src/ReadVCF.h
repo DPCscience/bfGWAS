@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include "param.h"
+#include "compress.h"
 
 typedef short int int16;
 typedef unsigned char uchar;
@@ -68,6 +69,8 @@ uchar IntToUchar(const int intc);
 uchar DoubleToUchar(const double doseage);
 
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test);
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector <size_t> CompBuffSizeVec, size_t UnCompBufferSize);
+
 bool getGTgslMat(uchar ** X, gsl_vector *Xgsl, vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test);
 
 uchar getUcharDosageFromRecord(VcfRecord &record, const uint smNum);

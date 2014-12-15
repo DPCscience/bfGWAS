@@ -41,6 +41,7 @@
 #include "mathfunc.h"
 #include "ReadVCF.h"
 #include "bslmm.h"
+#include "compress.h"
 
 #ifdef FORCE_FLOAT
 #include "io_float.h"
@@ -1827,7 +1828,7 @@ bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector
 
 
 //Read bimbam mean genotype file, the second time, recode "mean" genotype and calculate K
-bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test)
+bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test, vector <size_t> CompBuffSizeVec)
 {
 	ifstream infile (file_bed.c_str(), ios::binary);
 	if (!infile) {cout<<"error reading bed file:"<<file_bed<<endl; return false;}
@@ -1851,7 +1852,12 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 	if (calc_K==true) {gsl_matrix_set_zero (K);}
 	
 	gsl_vector *genotype=gsl_vector_alloc (ni_test);
-	
+    uchar *genouchar = new uchar[ni_test];
+    size_t sourceBufferSize = ni_test * sizeof(uchar);
+    const size_t BufferSize = compressBound(sourceBufferSize);
+    size_t compressedBufferSize = BufferSize;
+	CompBuffSizeVec.clear();
+    
 	double geno, geno_mean;
 	size_t n_miss;
 	size_t c_idv=0, c_snp=0, c=0;
@@ -1891,9 +1897,17 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 		for (size_t i=0; i<genotype->size; ++i) {
 			geno=gsl_vector_get (genotype, i);
 			if (geno==-9.0) {geno=geno_mean;}
-            UtX[c_snp][i]=DoubleToUchar(geno);
+            genouchar[i] = DoubleToUchar(geno);
+            //UtX[c_snp][i]=DoubleToUchar(geno);
             gsl_vector_set (genotype, i, (geno-geno_mean));
 		}
+        compressedBufferSize = BufferSize;
+        if(!CompressGenoVec(genouchar, sourceBufferSize, UtX[c_snp], compressedBufferSize))
+            {cerr << "compress buffer error...\n";}
+        else {
+            CompBuffSizeVec[c_snp] = compressedBufferSize;
+            cout << "compressed Buffer size = " << compressedBufferSize << endl;
+        }
         
         //JY add
         gsl_blas_ddot(genotype, genotype, &vtx);
@@ -1919,6 +1933,7 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 	}
 	
 	gsl_vector_free (genotype);
+    delete [] genouchar;
 	infile.clear();
 	infile.close();
 	

@@ -201,6 +201,43 @@ uchar IntToUchar(const int intc){
 }
 
 // get genotype vector gor given column
+
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector <size_t> CompBuffSizeVec, size_t UnCompBufferSize){
+    
+    if (marker_i < ns_test ) {
+        
+        double geno, geno_mean = 0.0;
+        size_t compressedBufferSize = CompBuffSizeVec[marker_i];
+        uchar * UnCompBuffer = (uchar *) malloc(UnCompBufferSize);
+        if(!DecompressGenoVec(UnCompBuffer, UnCompBufferSize, X[marker_i], compressedBufferSize))
+        {
+            cerr << "error decompressing geno vec ... \n";
+            exit(-1);
+        }
+        else{
+            for (size_t j=0; j<ni_test; j++) {
+                geno = UcharToDouble(UnCompBuffer[j]);
+                //cout << geno << ", ";
+                if (geno < 0.0 || geno > 2.0) {
+                    cerr << "wrong genotype value = " << geno << endl;
+                    exit(1);
+                }
+                gsl_vector_set(xvec, j, geno);
+                geno_mean += geno;
+            }
+            geno_mean /= (double)ni_test;
+            geno_mean = -geno_mean;
+            gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+        }
+        free(UnCompBuffer);
+    }
+    else {
+        std::cerr << "Error return genotype vector...\n";
+        exit(-1);
+    }
+}
+
+
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test){
 
     double geno, geno_mean = 0.0;

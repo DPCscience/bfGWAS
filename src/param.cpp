@@ -711,10 +711,11 @@ void PARAM::PrintSummary ()
 void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
  
     string file_str;
+    UnCompBufferSize = ni_test * sizeof(uchar);
 	
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bed";
-		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test)==false) {error=true;}
+		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test, CompBuffSizeVec)==false) {error=true;}
 	}
 	
     else if(!file_vcf.empty()){

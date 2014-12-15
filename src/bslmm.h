@@ -72,6 +72,8 @@ public:
     };
     
 	// IO related parameters
+    size_t UnCompBufferSize;
+    vector <size_t> CompBuffSizeVec;
 	int a_mode;
 	size_t d_pace;
 	

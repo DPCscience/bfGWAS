@@ -64,6 +64,8 @@ using namespace std;
 
 void BSLMM::CopyFromParam (PARAM &cPar) 
 {
+    UnCompBufferSize = cPar.UnCompBufferSize;
+    CompBuffSizeVec = cPar.CompBuffSizeVec;
     win = cPar.win;
     nadd_accept = cPar.nadd_accept;
     ndel_accept= cPar.ndel_accept;
@@ -431,7 +433,7 @@ void BSLMM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
 	for (size_t i=0; i<rank.size(); ++i) {
 		pos=mapRank2pos[rank[i]];        
 		gsl_vector_view Xgamma_col=gsl_matrix_column (Xgamma, i);
-        getGTgslVec(X, &Xgamma_col.vector, pos, ni_test, ns_test);
+        getGTgslVec(X, &Xgamma_col.vector, pos, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
     }	
 	return;
 }
@@ -683,7 +685,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector
  gsl_matrix * Xr = gsl_matrix_alloc(ni_test, model.cHyp.n_gamma);
  gsl_matrix_set_zero(Xr);
  gsl_vector * xvec = gsl_vector_alloc(ni_test);
-     getGTgslVec(X, xvec, posr, ni_test, ns_test);
+     getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
  
  gsl_matrix * XtXr = gsl_matrix_alloc(model.cHyp.n_gamma, model.cHyp.n_gamma);
  gsl_matrix_set_zero(XtXr);
@@ -716,14 +718,14 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector
  CalcRes(Xr, Uty, XtXr, Xtyr, yres, i, yty);
  for (size_t j=0; j<rank_loglr.size(); ++j) {
      posr = mapRank2pos[rank_loglr[j].first];
-     getGTgslVec(X, xvec, posr, ni_test, ns_test);
+     getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
      rank_loglr[j].second = CalcLR(yres, xvec);
  }
  stable_sort (rank_loglr.begin(), rank_loglr.end(), comp_lr); 
  
  radd = rank_loglr[0].first;
  posr = mapRank2pos[radd];
-     getGTgslVec(X, xvec, posr, ni_test, ns_test);
+     getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
  model.rank.push_back(radd);
  rank_loglr.erase(rank_loglr.begin());
  }
@@ -813,7 +815,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
     gsl_matrix_set_zero(Xr);
     gsl_vector * xvec = gsl_vector_alloc(ni_test);
-    getGTgslVec(X, xvec, posr, ni_test, ns_test); //get geno column
+    getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize); //get geno column
     
     gsl_matrix * XtXr = gsl_matrix_alloc(cHyp.n_gamma, cHyp.n_gamma);
     gsl_matrix_set_zero(XtXr);
@@ -845,7 +847,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         CalcRes(Xr, Uty, XtXr, Xtyr, yres, i, yty);
         for (size_t j=0; j<rank_loglr.size(); ++j) {
             posr = mapRank2pos[rank_loglr[j].first];
-            getGTgslVec(X, xvec, posr, ni_test, ns_test); // get geno column
+            getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize); // get geno column
             rank_loglr[j].second = CalcLR(yres, xvec);
         }
         stable_sort (rank_loglr.begin(), rank_loglr.end(), comp_lr); //sort the initial rank.
@@ -853,7 +855,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         radd = rank_loglr[0].first;
        // cout << "rank added: " << radd << ", ";
         posr = mapRank2pos[radd];
-        getGTgslVec(X, xvec, posr, ni_test, ns_test);
+        getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
         rank.push_back(radd);
         rank_loglr.erase(rank_loglr.begin());
     }
@@ -2142,7 +2144,7 @@ gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, uchar **
         rank_j = mapOrder2Rank[orderj];
         if((orderj >= 0) && (orderj < (long int)ns_test) && (j != win) && (mapRank2in.count(rank_j) == 0)){
             posj = mapOrder2pos[orderj];
-            getGTgslVec(X, xvec, posj, ni_test, ns_test);
+            getGTgslVec(X, xvec, posj, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
             p_BF[j]=CalcLR(z_res, xvec); //calc loglr
             j_ind.push_back(1);
             countj += 1.0;

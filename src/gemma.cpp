@@ -1320,7 +1320,9 @@ void GEMMA::BatchRun (PARAM &cPar)
             //read genotypes X (not UtX)
         clock_t time_readfile = clock();
             
-        uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
+       // uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
+            uchar ** X_Genotype = new uchar*[cPar.ns_test];
+            
 		  cPar.ReadGenotypes (X_Genotype, G, false);
             
         cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";

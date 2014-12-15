@@ -118,7 +118,8 @@ public:
 class PARAM {
 public:	
 	// IO related parameters
-    
+    size_t UnCompBufferSize;
+    vector <size_t> CompBuffSizeVec;
     StringIntHash sampleID2vcfInd;
     
 	bool mode_silence;
