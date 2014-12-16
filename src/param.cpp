@@ -708,11 +708,41 @@ void PARAM::PrintSummary ()
 	return;
 }
 
+/*void PARAM::ReadGenotypes (vector<uchar*> &UtX, gsl_matrix *K, const bool calc_K) {
+    
+    string file_str;
+    UnCompBufferSize = (ni_test) * sizeof(uchar);
+    cout << "UnCompBufferSize = " << UnCompBufferSize << endl;
+    
+    if (!file_bfile.empty()) {
+        file_str=file_bfile+".bed";
+        if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test, CompBuffSizeVec)==false) {error=true;}
+    }
+    
+    else if(!file_vcf.empty()){
+        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
+        {error=true;}
+    }
+    
+    else if(!file_vcfs.empty()){
+        if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
+        {error=true;}
+    }
+    
+    else{
+        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test)==false) {error=true;}
+    }
+ 
+    return;
+    
+}*/
+
 void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
  
     string file_str;
-    UnCompBufferSize = ni_test * sizeof(uchar);
-	
+    UnCompBufferSize = (ni_test) * sizeof(uchar);
+    cout << "UnCompBufferSize = " << UnCompBufferSize << endl;
+    
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bed";
 		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test, CompBuffSizeVec)==false) {error=true;}

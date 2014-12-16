@@ -248,6 +248,14 @@ void PrintVector(double *x){
     }
     cout << endl; 
 }
+
+void PrintVector(uchar *x, size_t length){
+    for(size_t i=0; i<length; ++i){
+        cout << (int)x[i] << ", ";
+    }
+    cout << endl;
+}
+
 // JY add function to write function
 
 void BSLMM::WriteBV (const gsl_vector *bv) 

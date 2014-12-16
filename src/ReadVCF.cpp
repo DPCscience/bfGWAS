@@ -1,89 +1,5 @@
 #include "ReadVCF.h"
-
-
-
-void genotypeMatrix::initializeMatrix(const char* filename)
-{
-    genotypesSize = 0;
-    
-    IFILE inputFile = ifopen(filename, "r");
-    if(inputFile == NULL)
-    {
-        std::cerr << "Unable to open " << filename << "\n";
-        exit(1);
-    }
-    
-    while(inputFile->ifgetc() == '#')
-    {
-
-        if(inputFile->discardLine() < 0)
-        {
-            break;
-        }
-    }
-    
-    // Count data lines
-    while(inputFile->discardLine() >= 0 && genotypesSize < 999)
-    {
-        ++genotypesSize;
-    }
-    // Increase genotypesSize size by 1 in case there
-    // is not a new line at end of last marker
-    ++genotypesSize;
-    std::cout << "Total # of markers to load = " << genotypesSize << "\n";
-    ifclose(inputFile);
-    
-    ////////////////////////////////////////
-    // Now we have the number of markers.
-    // Pass 2 - store marker information.
-    VcfFileReader inFile;
-    VcfHeader header;
-    VcfRecord record;
-    
-    // Set to only store the GT genotype field.
-    VcfRecordGenotype::addStoreField("GT");
-    VcfRecordGenotype::addStoreField("EC");
-    
-    // Open the VCF file & read the header.
-    inFile.open(filename, header);
-    
-    uint numSamples = (uint)header.getNumSamples();
-    if (numSamples>100) {
-        numSamples=100;
-    }
-    std::cout << "Total # of Samples to load = " << numSamples << "\n";
-    // Store the sample names
-    for(uint i = 0; i < numSamples; i++)
-    {
-        sampleIDs.push_back(header.getSampleName(i));
-    }
-    
-    ////////////
-    // Allocate the genotypes Matrix.
-    //Testing a subset data
-    genotypes = AllocateUCharMatrix(genotypesSize, numSamples);
-    InitialUCharMatrix(genotypes, genotypesSize, numSamples, UCHAR_MAX);
-    
-    // Read each record
-    uint markerIndex = 0;
-    genMarker temp_genMarker;
-    
-    while(inFile.readRecord(record) && markerIndex < genotypesSize)
-    {
-        // Add the marker
-        temp_genMarker.iniRecord(record);
-        markers.push_back(temp_genMarker);
-        // Add each individual's genotype
-        
-        for(uint smNum = 0; smNum < numSamples; smNum++)
-        {
-            genotypes[markerIndex][smNum] = getUcharDosageFromRecord(record, smNum);
-        }
-        //std::cout << "\n";
-        ++markerIndex;
-    }
-    
-}
+#include "bslmm.h"
 
 double getDoubleDosageFromRecord(VcfRecord& record, const uint smNum)
 {
@@ -202,13 +118,14 @@ uchar IntToUchar(const int intc){
 
 // get genotype vector gor given column
 
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector <size_t> CompBuffSizeVec, size_t UnCompBufferSize){
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize){
     
     if (marker_i < ns_test ) {
         
         double geno, geno_mean = 0.0;
         size_t compressedBufferSize = CompBuffSizeVec[marker_i];
-        uchar * UnCompBuffer = (uchar *) malloc(UnCompBufferSize);
+        uchar * UnCompBuffer;
+        
         if(!DecompressGenoVec(UnCompBuffer, UnCompBufferSize, X[marker_i], compressedBufferSize))
         {
             cerr << "error decompressing geno vec ... \n";
@@ -264,7 +181,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 }
 
 //get genotype matrix for given column vector
-bool getGTgslMat(uchar ** X, gsl_matrix *Xgsl, vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test){
+bool getGTgslMat(uchar ** X, gsl_matrix *Xgsl, std::vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test){
     
     size_t marker_i;
     gsl_vector *xvec = gsl_vector_alloc(ni_test);
@@ -280,7 +197,7 @@ bool getGTgslMat(uchar ** X, gsl_matrix *Xgsl, vector<size_t> marker_idx, const 
 }
 
 // print sub genotype uchar array
-bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, vector<String> &sampleIDs)
+bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, std::vector<String> &sampleIDs)
 {
     std::cout << "\n\t\t\t" << description << "\n\t\t";
     std::cout << "Sample ID : ";
@@ -314,6 +231,46 @@ bool print(const char* description, uchar **genotypes, uint numMarkers, uint num
     std::cout << "Succesfully output sub-genotype\n";
     return 1;
 }
+
+void print(uchar **UtX, uint numMarkers, uint numSamples, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize)
+{
+    int intc;
+    float fc;
+    std::cout << "\n" << "Dosage GT: \n";
+    size_t compressedBufferSize;
+    uchar * TempBuffer = (uchar *)malloc(UnCompBufferSize);
+    
+    for(uint i = 0; i < numMarkers; i++)
+    {
+      // cout << "compressedBufferSize = " << CompBuffSizeVec[i] << endl;
+        compressedBufferSize = CompBuffSizeVec[i];
+        
+        int result = uncompress(TempBuffer, &UnCompBufferSize, UtX[i],compressedBufferSize);
+        if (result != Z_OK) {
+            zerr(result);
+            exit(-1);
+        }
+        else{
+            //cout << "Adjusted UnCompBuffer with size : " << UnCompBufferSize << endl;
+            for(uint j = 0; j < numSamples; j++)
+            {
+             intc = (int)TempBuffer[j];
+            // std::cout << intc << ":" ;
+             if(TempBuffer[j] != UCHAR_MAX)
+             {
+                 fc = (float)(intc);
+                 std::cout << fc * 0.01 << ", ";
+             }
+             else
+                 std::cout << "GT missing";
+            }
+            std::cout << "\n";
+        }
+    }
+    free(TempBuffer);
+    std::cout << "Succesfully output sub-genotype\n";
+}
+
 
 bool print(uchar **genotypes, uint numMarkers, uint numSamples)
 {

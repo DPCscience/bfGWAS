@@ -4,6 +4,7 @@
 #include "MemoryAllocators.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <limits.h>
 #include <math.h>
@@ -47,15 +48,17 @@ struct genotypeMatrix
     uchar** genotypes;
     uint genotypesSize;
     
-    void initializeMatrix(const char* filename);
+   // void initializeMatrix(const char* filename);
     
 };
 
+void print(uchar **UtX, uint numMarkers, uint numSamples, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize);
 
 bool print(const char* description, genotypeMatrix& info, uint numSamples, uint numMarkers);
+
 bool print(uchar **genotypes, uint numMarkers, uint numSamples);
 
-bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, vector<String> &sampleIDs);
+bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, std::vector<String> &sampleIDs);
 
 
 
@@ -69,9 +72,10 @@ uchar IntToUchar(const int intc);
 uchar DoubleToUchar(const double doseage);
 
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test);
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector <size_t> CompBuffSizeVec, size_t UnCompBufferSize);
 
-bool getGTgslMat(uchar ** X, gsl_vector *Xgsl, vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test);
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize);
+
+bool getGTgslMat(uchar ** X, gsl_vector *Xgsl, std::vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test);
 
 uchar getUcharDosageFromRecord(VcfRecord &record, const uint smNum);
 double getDoubleDosageFromRecord(VcfRecord& record, const uint smNum);

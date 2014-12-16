@@ -248,6 +248,7 @@ void PrintVector(gsl_vector * x);
 void PrintVector(vector <double> &x);
 void PrintVector(vector <size_t> &x);
 void PrintVector(double *x);
+void PrintVector(uchar *x, size_t length);
 void PrintVector(gsl_vector * x, size_t s);
 void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol);
 
