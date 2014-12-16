@@ -1855,14 +1855,14 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 	gsl_vector *genotype = gsl_vector_alloc (ni_test);
     uchar *geno_uchar = new uchar[ni_test];
     size_t sourceBufferSize = (ni_test) * sizeof(uchar);
-    size_t UnCompBufferSize=sourceBufferSize;
+   // size_t UnCompBufferSize=sourceBufferSize;
     
     const size_t BufferSize = (size_t)(compressBound(sourceBufferSize));
     uchar * TempCompBuffer = (uchar*)malloc(BufferSize);
     uchar * TempBuffer = (uchar*)malloc(sourceBufferSize);
 
     size_t compressedBufferSize = BufferSize;
-    cout << "Source Buffer Size = " << sourceBufferSize << "; Comp Buffer Bound = " << BufferSize << "; size of uchar = " << sizeof(uchar) << endl;
+    cout << "Source Buffer Size = " << sourceBufferSize << "; Comp Buffer Bound = " << BufferSize  << endl;
     
 	CompBuffSizeVec.clear();
     
@@ -1912,10 +1912,10 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 		}
         
         compressedBufferSize = BufferSize;
-        if(c_snp < 10) {
-            cout << "source geno: \n";
-            PrintVector(geno_uchar, 10);
-        }
+      //  if(c_snp < 10) {
+        //    cout << "source geno: \n";
+          //  PrintVector(geno_uchar, 10);
+       // }
         result = compress(TempCompBuffer, &compressedBufferSize, geno_uchar, sourceBufferSize);
         if (result != Z_OK) {
             zerr(result);
@@ -1924,15 +1924,15 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
         else {
             UtX[c_snp] = (uchar*)malloc(compressedBufferSize);
             memcpy(UtX[c_snp], TempCompBuffer, compressedBufferSize);
-            
-            UnCompBufferSize=sourceBufferSize;
-            result = uncompress(TempBuffer, &UnCompBufferSize, UtX[c_snp],compressedBufferSize);
-            if(c_snp < 10)  {
-                zerr(result);
-                //cout << "uncompressed buffer size = " << UnCompBufferSize << endl;
-                PrintVector(TempBuffer, 10);
-            }
             CompBuffSizeVec.push_back(compressedBufferSize);
+            
+           // UnCompBufferSize=sourceBufferSize;
+          //  result = uncompress(TempBuffer, &UnCompBufferSize, UtX[c_snp],compressedBufferSize);
+          //  if(c_snp < 10)  {
+            //    zerr(result);
+                //cout << "uncompressed buffer size = " << UnCompBufferSize << endl;
+              //  PrintVector(TempBuffer, 10);
+           // }
            // cout << "compressed Buffer size = " << compressedBufferSize << endl;
         }
         

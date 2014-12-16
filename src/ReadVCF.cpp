@@ -121,14 +121,15 @@ uchar IntToUchar(const int intc){
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize){
     
     if (marker_i < ns_test ) {
-        
         double geno, geno_mean = 0.0;
         size_t compressedBufferSize = CompBuffSizeVec[marker_i];
-        uchar * UnCompBuffer;
+        uchar * UnCompBuffer = (uchar*)malloc(UnCompBufferSize);
         
-        if(!DecompressGenoVec(UnCompBuffer, UnCompBufferSize, X[marker_i], compressedBufferSize))
+        int result = uncompress(UnCompBuffer, &UnCompBufferSize, X[marker_i],compressedBufferSize);
+        
+        if(result != Z_OK)
         {
-            cerr << "error decompressing geno vec ... \n";
+            zerr(result);
             exit(-1);
         }
         else{
@@ -137,7 +138,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                 //cout << geno << ", ";
                 if (geno < 0.0 || geno > 2.0) {
                     cerr << "wrong genotype value = " << geno << endl;
-                    exit(1);
+                    exit(-1);
                 }
                 gsl_vector_set(xvec, j, geno);
                 geno_mean += geno;
@@ -149,7 +150,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
         free(UnCompBuffer);
     }
     else {
-        std::cerr << "Error return genotype vector...\n";
+        std::cerr << "Marker index out of range \n";
         exit(-1);
     }
 }

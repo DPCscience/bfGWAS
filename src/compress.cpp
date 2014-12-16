@@ -8,7 +8,7 @@
 
 void zerr(int ret)
 {
-    fputs("zpipe: ", stderr);
+   // fputs("zpipe: ", stderr);
     switch (ret) {
         case Z_ERRNO:
             if (ferror(stdin))

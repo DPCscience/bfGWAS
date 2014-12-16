@@ -3,8 +3,8 @@
 #include <string.h>
 #include <assert.h>
 #include <iostream>
-#include "/net/fantasia/home/yjingj/software/zlib-1.2.8/zlib.h"
-#include "/net/fantasia/home/yjingj/software/zlib-1.2.8/zconf.h"
+#include "zlib.h"
+#include "zconf.h"
 
 //#include "stdafx.h"   // not actually needed
 //#define ZLIB_WINAPI   // actually actually needed (for linkage)
@@ -29,4 +29,5 @@ int DecompressGenoVec(uchar * UnCompBuffer, size_t &UnCompBufferSize, uchar * co
 int GetMaxCompressedLen(int nLenSrc );
 
 int CompressData( const BYTE* abSrc, int nLenSrc, BYTE* abDst, int nLenDst );
+
 int UncompressData( const BYTE* abSrc, int nLenSrc, BYTE* abDst, int nLenDst );

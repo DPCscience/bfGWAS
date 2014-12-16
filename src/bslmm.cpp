@@ -1570,7 +1570,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     vector<pair<size_t, double> > pos_loglr;
     
     time_start=clock();
-    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, trace_G); //const genotype
+    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, trace_G, CompBuffSizeVec, UnCompBufferSize); //const genotype
     cout << "trace_G = trace(X'X) = " << trace_G << endl;
     
     // Jingjing add a vector of "snpPos" structs snp_pos
@@ -3009,7 +3009,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 	vector<pair<size_t, double> > pos_loglr;
 	time_start=clock();
     cout << "start calculating marginal LRT...\n";
-	MatrixCalcLmLR (X_Genotype, z, pos_loglr, ns_test, ni_test, trace_G); //Simple linear regression save time?
+	//MatrixCalcLmLR (X_Genotype, z, pos_loglr, ns_test, ni_test, trace_G); //Simple linear regression save time?
     cout << "trace_G = trace(X'X) = " << trace_G;
     
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
