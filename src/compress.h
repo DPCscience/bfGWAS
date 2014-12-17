@@ -22,10 +22,6 @@ typedef unsigned char BYTE;
 
 void zerr(int ret);
 
-int CompressGenoVec(uchar * sourceBuffer, size_t sourceBufferSize, uchar * compressedBuffer, size_t &compressedBufferSize);
-
-int DecompressGenoVec(uchar * UnCompBuffer, size_t &UnCompBufferSize, uchar * compressedBuffer, size_t compressedBufferSize);
-
 int GetMaxCompressedLen(int nLenSrc );
 
 int CompressData( const BYTE* abSrc, int nLenSrc, BYTE* abDst, int nLenDst );

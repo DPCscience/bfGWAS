@@ -132,6 +132,8 @@ public:
     string file_vcfs;
     string file_vcf;
     string file_vcf_pheno;
+    string GTfield;
+    
 	string file_bfile;
 	string file_geno;
 	string file_pheno;

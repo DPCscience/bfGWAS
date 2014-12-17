@@ -54,8 +54,6 @@ struct genotypeMatrix
 
 void print(uchar **UtX, uint numMarkers, uint numSamples, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize);
 
-bool print(const char* description, genotypeMatrix& info, uint numSamples, uint numMarkers);
-
 bool print(uchar **genotypes, uint numMarkers, uint numSamples);
 
 bool print(const char* description, uchar **genotypes, uint numMarkers, uint numSamples, std::vector<String> &sampleIDs);

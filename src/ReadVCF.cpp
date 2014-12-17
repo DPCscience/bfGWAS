@@ -1,6 +1,8 @@
 #include "ReadVCF.h"
 #include "bslmm.h"
 
+
+
 double getDoubleDosageFromRecord(VcfRecord& record, const uint smNum)
 {
     //Read EC, dosage data from vcf in hex string
@@ -302,37 +304,5 @@ bool print(uchar **genotypes, uint numMarkers, uint numSamples)
 }
 
 
-bool print(const char* description, genotypeMatrix& info, uint numMarkers, uint numSamples)
-{
-    std::cout << "\n\t\t\t" << description << "\n\t\t";
-    std::cout << "Sample ID : ";
-    std::cout << "\n";
-    for(uint i = 0; i < numSamples; i++)
-    {
-        std::cout << "\t" << info.sampleIDs[i];
-    }
-    std::cout << "\n";
-    
-    uchar c;
-    std::cout << "\n" << "Dosage GT: \n";
-    for(uint i = 0; i < numMarkers; i++)
-    {
-        info.markers[i].printMarker();
-        for(uint j = 0; j < numSamples; j++)
-        {
-            std::cout << "\t";
-            
-            if(info.genotypes[i][j] != UCHAR_MAX)
-            {c = info.genotypes[i][j];
-                std::cout << (float)c * 0.01;}
-            else
-                std::cout << "GT missing";
-        }
-        std::cout << "\n";
-    }
-    
-    std::cout << "Succesfully output sub-genotype\n";
-    return 1;
-}
 
 
