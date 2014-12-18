@@ -81,6 +81,16 @@ void snpPos::printMarker(){
     std::cout << "bp : " << bp <<"; \n";
 }
 
+void SNPINFO::printMarker(){
+    
+    std::cout << "ID : " << rs_number <<"; ";
+    std::cout << "chr : " << chr <<"; ";
+    std::cout << "bp : " << base_position <<"; ";
+    std::cout << "Ref : " << a_major <<"; ";
+    std::cout << "Alt : " << a_minor <<"\n";
+    std::cout << "missingness = " << missingness<< "; maf = " << maf << "\n";
+}
+
 void printSNPInfo(vector<snpPos> &snp_pos, int numMarker)
 {
     for (int i=0; i<numMarker; i++) {

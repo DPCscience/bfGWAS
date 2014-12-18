@@ -606,7 +606,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     size_t c_idv=0; //count individual number in each record
     //cout << "ni_total = indicator_idv.size() =" << indicator_idv.size() << endl;
     
-    vector<uint> SampleVcfPos;
+    vector<uint> SampleVcfPos; // with length = ni_total
     uint vcfpos;
     cout << "SampleVcfPos: " ;
     for (int i=0; i<(int)ni_total; i++) {
@@ -637,9 +637,8 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
         continue;
     }
     else{
-        tab_count=0; c_idv=0;
+        c_idv=0; n_0=0; n_1=0; n_2=0;
         maf=0; n_miss=0; flag_poly=0; geno_old=-9;
-        n_0=0; n_1=0; n_2=0;
         
         pch= (char *)line.c_str();
         
@@ -668,6 +667,15 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
                     continue;
                 }
             }
+            
+            else if ((tab_count == 6) && (pch[0] == 'F')){
+                SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
+                snpInfo.push_back(sInfo); //save marker information
+                indicator_snp.push_back(0);
+                continue;
+                //failed filter, continue with next record
+            }
+            
             else if (tab_count == 8)
             {
                 // parse FORMAT field
@@ -703,8 +711,12 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
                     }
                 }
             }
-            else if ( (tab_count>=9) && ((tab_count-9) == SampleVcfPos[c_idv]) &&indicator_idv[c_idv] )
+            else if ( (tab_count>=9) && ((tab_count-9) == SampleVcfPos[c_idv]))
                 {
+                  if ( !indicator_idv[c_idv] ) {
+                        c_idv++;
+                  }
+                  else{
                     p = pch; // make p reach to the key index
                     if (GTpos>0) {
                         for (int i=0; (i<GTpos) && (p!=NULL); ++i) {
@@ -739,15 +751,16 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
                     if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
                     maf+=geno;
                     c_idv++;
+                  }
                 }
             pch = (nch == NULL) ? NULL : nch+1;
         }
         
-        maf/=2.0*(double)(ni_test-n_miss);
-        //cout << "maf = " << maf << "\n";
-        
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
         snpInfo.push_back(sInfo); //save marker information
+        
+        maf/=2.0*(double)(ni_test-n_miss);
+        //cout << "maf = " << maf << "\n";
         
         if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
         //cout << "pass missness criteron...\n";
@@ -782,8 +795,11 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
         
         indicator_snp.push_back(1);
         ns_test++;
+        if (ns_test < 5) {
+                sInfo.printMarker();
+                PrintVector(genotype, 10);
+            }
         }
-        PrintVector(genotype, 10);
     }
     //cout << "genotype vector:\n";
     // PrintVector(genotype, 10);

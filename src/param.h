@@ -48,7 +48,9 @@ public:
 	string a_major;
 	int n_miss;
 	double missingness;
-	double maf;	
+	double maf;
+    
+    void printMarker();
 };
 
 struct genMarker
