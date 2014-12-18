@@ -1,0 +1,100 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+ no time accumulated
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+  0.00      0.00     0.00        2     0.00     0.00  std::_Rb_tree<std::string, std::pair<std::string const, long>, std::_Select1st<std::pair<std::string const, long> >, std::less<std::string>, std::allocator<std::pair<std::string const, long> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, long> >*)
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__Z11ProgressBarSsdd
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__Z9VectorVarPK10gsl_vector
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN11gzstreambuf4openEPKci
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN14genotypeMatrix16initializeMatrixEPKc
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN2LM13CopyFromParamER5PARAM
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN3LMM13CopyFromParamER5PARAM
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN4PRDT13CopyFromParamER5PARAM
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN5BSLMM13CopyFromParamER5PARAM
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN5GEMMAC2Ev
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN5MVLMM13CopyFromParamER5PARAM
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I__ZN9genMarker9iniRecordER9VcfRecord
+  0.00      0.00     0.00        1     0.00     0.00  _GLOBAL__sub_I_main
+  0.00      0.00     0.00        1     0.00     0.00  GEMMA::~GEMMA()
+  0.00      0.00     0.00        1     0.00     0.00  std::_Rb_tree<std::string, std::string, std::_Identity<std::string>, std::less<std::string>, std::allocator<std::string> >::_M_erase(std::_Rb_tree_node<std::string>*)
+  0.00      0.00     0.00        1     0.00     0.00  std::_Rb_tree<std::string, std::pair<std::string const, std::string>, std::_Select1st<std::pair<std::string const, std::string> >, std::less<std::string>, std::allocator<std::pair<std::string const, std::string> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, std::string> >*)
+  0.00      0.00     0.00        1     0.00     0.00  std::_Rb_tree<std::string, std::pair<std::string const, int>, std::_Select1st<std::pair<std::string const, int> >, std::less<std::string>, std::allocator<std::pair<std::string const, int> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, int> >*)
+  0.00      0.00     0.00        1     0.00     0.00  cleanup
+  0.00      0.00     0.00        1     0.00     0.00  main
+
+			Call graph
+
+
+granularity: each sample hit covers 2 byte(s) no time propagated
+
+index % time    self  children    called     name
+                0.00    0.00       1/1           frame_downheap [447]
+[1]      0.0    0.00    0.00       1         cleanup [1]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2]      0.0    0.00    0.00       1         main [2]
+-----------------------------------------------
+                0.00    0.00       2/2           PARAM::~PARAM() [4088]
+[2962]   0.0    0.00    0.00       2         std::_Rb_tree<std::string, std::pair<std::string const, long>, std::_Select1st<std::pair<std::string const, long> >, std::less<std::string>, std::allocator<std::pair<std::string const, long> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, long> >*) [2962]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2963]   0.0    0.00    0.00       1         _GLOBAL__sub_I__Z11ProgressBarSsdd [2963]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2964]   0.0    0.00    0.00       1         _GLOBAL__sub_I__Z9VectorVarPK10gsl_vector [2964]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2965]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN11gzstreambuf4openEPKci [2965]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2966]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN14genotypeMatrix16initializeMatrixEPKc [2966]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2967]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN2LM13CopyFromParamER5PARAM [2967]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2968]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN3LMM13CopyFromParamER5PARAM [2968]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2969]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN4PRDT13CopyFromParamER5PARAM [2969]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2970]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN5BSLMM13CopyFromParamER5PARAM [2970]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2971]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN5GEMMAC2Ev [2971]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2972]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN5MVLMM13CopyFromParamER5PARAM [2972]
+-----------------------------------------------
+                0.00    0.00       1/1           frame_downheap [447]
+[2973]   0.0    0.00    0.00       1         _GLOBAL__sub_I__ZN9genMarker9iniRecordER9VcfRecord [2973]
+-----------------------------------------------
+                0.00    0.00       1/1           _Unwind_GetGR [3427]
+[2974]   0.0    0.00    0.00       1         _GLOBAL__sub_I_main [2974]
+-----------------------------------------------
+                0.00    0.00       1/1           PARAM::~PARAM() [4088]
+[2975]   0.0    0.00    0.00       1         GEMMA::~GEMMA() [2975]
+-----------------------------------------------
+                0.00    0.00       1/1           PARAM::~PARAM() [4088]
+[2976]   0.0    0.00    0.00       1         std::_Rb_tree<std::string, std::string, std::_Identity<std::string>, std::less<std::string>, std::allocator<std::string> >::_M_erase(std::_Rb_tree_node<std::string>*) [2976]
+-----------------------------------------------
+                0.00    0.00       1/1           PARAM::~PARAM() [4088]
+[2977]   0.0    0.00    0.00       1         std::_Rb_tree<std::string, std::pair<std::string const, std::string>, std::_Select1st<std::pair<std::string const, std::string> >, std::less<std::string>, std::allocator<std::pair<std::string const, std::string> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, std::string> >*) [2977]
+-----------------------------------------------
+                0.00    0.00       1/1           PARAM::~PARAM() [4088]
+[2978]   0.0    0.00    0.00       1         std::_Rb_tree<std::string, std::pair<std::string const, int>, std::_Select1st<std::pair<std::string const, int> >, std::less<std::string>, std::allocator<std::pair<std::string const, int> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, int> >*) [2978]
+-----------------------------------------------
+
+Index by function name
+
+ [2963] _GLOBAL__sub_I__Z11ProgressBarSsdd (io.cpp) [2970] _GLOBAL__sub_I__ZN5BSLMM13CopyFromParamER5PARAM (bslmm.cpp) [2977] std::_Rb_tree<std::string, std::pair<std::string const, std::string>, std::_Select1st<std::pair<std::string const, std::string> >, std::less<std::string>, std::allocator<std::pair<std::string const, std::string> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, std::string> >*)
+ [2964] _GLOBAL__sub_I__Z9VectorVarPK10gsl_vector (mathfunc.cpp) [2971] _GLOBAL__sub_I__ZN5GEMMAC2Ev (gemma.cpp) [2978] std::_Rb_tree<std::string, std::pair<std::string const, int>, std::_Select1st<std::pair<std::string const, int> >, std::less<std::string>, std::allocator<std::pair<std::string const, int> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, int> >*)
+ [2965] _GLOBAL__sub_I__ZN11gzstreambuf4openEPKci (gzstream.cpp) [2972] _GLOBAL__sub_I__ZN5MVLMM13CopyFromParamER5PARAM (mvlmm.cpp) [2962] std::_Rb_tree<std::string, std::pair<std::string const, long>, std::_Select1st<std::pair<std::string const, long> >, std::less<std::string>, std::allocator<std::pair<std::string const, long> > >::_M_erase(std::_Rb_tree_node<std::pair<std::string const, long> >*)
+ [2966] _GLOBAL__sub_I__ZN14genotypeMatrix16initializeMatrixEPKc (ReadVCF.cpp) [2973] _GLOBAL__sub_I__ZN9genMarker9iniRecordER9VcfRecord (param.cpp) [1] cleanup
+ [2967] _GLOBAL__sub_I__ZN2LM13CopyFromParamER5PARAM (lm.cpp) [2974] _GLOBAL__sub_I_main (main.cpp) [2] main
+ [2968] _GLOBAL__sub_I__ZN3LMM13CopyFromParamER5PARAM (lmm.cpp) [2975] GEMMA::~GEMMA()
+ [2969] _GLOBAL__sub_I__ZN4PRDT13CopyFromParamER5PARAM (prdt.cpp) [2976] std::_Rb_tree<std::string, std::string, std::_Identity<std::string>, std::less<std::string>, std::allocator<std::string> >::_M_erase(std::_Rb_tree_node<std::string>*)
