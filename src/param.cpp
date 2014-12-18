@@ -225,7 +225,7 @@ void PARAM::ReadFiles (void)
         cout << "start reading vcf file first time ...\n";
         indicator_snp.clear();
         snpInfo.clear();
-        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd, file_sample) == false )
+        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd, file_sample, GTfield) == false )
             {error=true;}
         
         gsl_matrix_free(W);

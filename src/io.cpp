@@ -565,11 +565,12 @@ bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd, const 
 }
 
 // Read VCF genotype file, the first time,
-bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample, const string &GTfield)
+bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample, string &GTfield)
 {
     if (GTfield.empty()) {
-        GTfield = "GT";
+        GTfield = "GT"; //defalt load GT Data
     }
+    int lkey = GTfield.size(); //length of the field-key string
     
     indicator_snp.clear();
     snpInfo.clear();
@@ -591,88 +592,162 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     int sig;
     LUDecomp (WtW, pmt, &sig);
     LUInvert (WtW, pmt, WtWi);
-    
     double v_x, v_w;
-    size_t c_idv=0;
     
-    string rs;
-    long int b_pos;
-    string chr;
-    string major;
-    string minor;
-    double cM=-9;
+    string rs; long int b_pos = 0; string chr;
+    string major; string minor; double cM=-9;
+    string s;
     
     double maf, geno, geno_old;
-    size_t n_miss;
-    size_t n_0, n_1, n_2;
-    int16 flag_poly;
+    size_t n_miss, n_0, n_1, n_2;
+    int flag_poly;
     
     size_t ni_total = indicator_idv.size();
+    size_t c_idv=0; //count individual number in each record
     //cout << "ni_total = indicator_idv.size() =" << indicator_idv.size() << endl;
+    
     vector<uint> SampleVcfPos;
     uint vcfpos;
-    
     cout << "SampleVcfPos: " ;
     for (int i=0; i<(int)ni_total; i++) {
         vcfpos = (uint)sampleID2vcfInd.Integer(InputSampleID[i]);
         SampleVcfPos.push_back(vcfpos);
-    }
+        if (i>0 && (SampleVcfPos[i] <= SampleVcfPos[i-1])) {
+            cerr << "Individual IDs in phenotype file are not in the same order as in VCF\n";
+            exit(-1);
+        }
+    } // SampleVcfPos must be monotone increasing
     
-    ns_test=0;
+    ns_test=0; // variable defined in param.h
     gsl_vector *genotype = gsl_vector_alloc(W->size1);
     // cout << "genotype size = " << W->size1 << "\n" ;
     vector<bool> genotype_miss(ni_test, 0);
     
-    char *rec_ptr;
+    char *pch, *p, *nch=NULL, *n;
+    size_t tab_count;
+    int GTpos=0, k=0;
+    string line;
+    
     // cout << "start reading record ... \n";
     while(!safeGetline(infile, line).eof()) {
-        rec_ptr=strtok((char *)line.c_str(), "\t");
-        if (strcmp(rec_ptr, "#")) {
-            break;
-        }
-        
-        chr = temp_genMarker.chr;
-        rs = temp_genMarker.rs;
-        b_pos = temp_genMarker.bp;
-        minor = temp_genMarker.Alt;
-        major = temp_genMarker.Ref;
-        
-        if (setSnps.size()!=0 && setSnps.count(rs)==0) {
-            indicator_snp.push_back(0);
-            continue;
-        }
-        
+    if (line[0] == '#') {
+           // if (strncmp(line, "#CHROM", 6) == 0) {
+             //parse for individual IDs
+            //}
+        continue;
+    }
+    else{
+        tab_count=0; c_idv=0;
         maf=0; n_miss=0; flag_poly=0; geno_old=-9;
         n_0=0; n_1=0; n_2=0;
-        c_idv=0;
         
-        for (size_t i=0; i<ni_total; ++i) {
-            
-            if (!indicator_idv[i]) {continue;}
-            
-            geno = getDoubleDosageFromRecord(record, SampleVcfPos[i]);
-            if (geno == -9) {genotype_miss[c_idv]=1; n_miss++; c_idv++; continue;}
-            
-            if (geno>=0 && geno<=0.5) {n_0++;}
-            if (geno>0.5 && geno<1.5) {n_1++;}
-            if (geno>=1.5 && geno<=2.0) {n_2++;}
-            gsl_vector_set (genotype, c_idv, geno);
-            
-            if (flag_poly==0) {geno_old=geno; flag_poly=2;}
-            if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
-            
-            maf+=geno;
-            c_idv++;
-            
+        pch= (char *)line.c_str();
+        
+        for (tab_count=0; pch != NULL; tab_count++) {
+            nch=strchr(pch, '\t'); //point to the position of next '\t'
+            if (tab_count<5) {
+                if (nch == NULL) { s.assign( pch );}
+                else s.assign( pch, nch-pch ); // field string s
+                
+                switch (tab_count) {
+                    case 0:
+                        chr = s; break;
+                    case 1:
+                        b_pos=atol(s.c_str()); break;
+                    case 2:
+                        rs = s; break;
+                    case 3:
+                        major = s; break;
+                    case 4:
+                        minor = s; break;
+                    default:
+                        break;
+                }
+                if (setSnps.size()!=0 && setSnps.count(rs)==0) {
+                    indicator_snp.push_back(0);
+                    continue;
+                }
+            }
+            else if (tab_count == 8)
+            {
+                // parse FORMAT field
+                if (pch[0] == GTfield[0] && pch[1] == GTfield[1] && ((nch==pch+2)||pch[2]==':') ) {
+                    GTpos=0; //GT start in the first position
+                }
+                else if (nch == NULL){ cerr << "VCF has FORMAT field but dose not have any genotype\n";}
+                else{
+                    k=0; //index of key characters
+                    GTpos=0;
+                    p=pch;
+                    while (p<nch) {
+                        if (*p == ':') {
+                            if (k >= lkey) {
+                                break;
+                            }
+                            else {
+                                ++GTpos;
+                                k=0;
+                            }
+                        }
+                        else {
+                            if (GTfield[k] == *p) {
+                                ++k;
+                            }
+                            else { k=0; }
+                        }
+                     ++p;
+                    }
+                    if ((p==nch) && (k != lkey)) {
+                        cerr << "Cannot find" << GTfield << "at marker" << chr << ":" << b_pos << endl;
+                        exit(-1);
+                    }
+                }
+            }
+            else if ( (tab_count>=9) && ((tab_count-9) == SampleVcfPos[c_idv]) &&indicator_idv[c_idv] )
+                {
+                    p = pch; // make p reach to the key index
+                    if (GTpos>0) {
+                        for (int i=0; (i<GTpos) && (p!=NULL); ++i) {
+                            n = strchr(p, ':');
+                            p = (n == NULL) ? NULL : n+1;
+                        }
+                    }
+                    
+                    if ((p==NULL) || ((p[0]=='.') && (p[2]=='.')) ) {
+                        geno = -9;//missing
+                        genotype_miss[c_idv]=1; n_miss++; c_idv++; continue;
+                    }
+                    else if ( (p[1] == '/') || (p[1] == '|') ) {
+                        //read bi-allelic GT
+                        if (p[0]=='.') {
+                            geno = (double)(p[2] -'0');
+                        }
+                        else if (p[2]=='.') {
+                            geno = (double)(p[0] -'0');
+                        }
+                        else geno = (double)((p[0] - '0') + (p[2]- '0'));
+                    }
+                    else {
+                        //read dosage data
+                        geno = strtod(p, NULL);
+                    }
+                    if (geno>=0 && geno<=0.5) {n_0++;}
+                    if (geno>0.5 && geno<1.5) {n_1++;}
+                    if (geno>=1.5 && geno<=2.0) {n_2++;}
+                    gsl_vector_set (genotype, c_idv, geno);
+                    if (flag_poly==0) {geno_old=geno; flag_poly=2;}
+                    if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
+                    maf+=geno;
+                    c_idv++;
+                }
+            pch = (nch == NULL) ? NULL : nch+1;
         }
-        
-        //PrintVector(genotype);
         
         maf/=2.0*(double)(ni_test-n_miss);
         //cout << "maf = " << maf << "\n";
         
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
-        snpInfo.push_back(sInfo);
+        snpInfo.push_back(sInfo); //save marker information
         
         if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
         //cout << "pass missness criteron...\n";
@@ -707,10 +782,13 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
         
         indicator_snp.push_back(1);
         ns_test++;
-        // cout << "ns_test = " << ns_test ;
+        }
+        PrintVector(genotype, 10);
     }
     //cout << "genotype vector:\n";
     // PrintVector(genotype, 10);
+    cout << "VCF tab_count = " << tab_count << endl;
+    cout << "ns_test = " << ns_test ;
     cout << "vcf read first time success ... \n";
     // cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
     
@@ -722,7 +800,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     gsl_permutation_free (pmt);
     
     
-    inFile.close();
+    infile.close();
     //inFile.clear();
     return true;
 }

@@ -3,6 +3,34 @@
 
 
 
+
+
+//parse for individual IDs and number
+/*int parseInds(char* line, std::set<std::string>& idset, int startIdx = 9) {
+    char* pch = line;
+    char* nch = NULL;
+    int i, j;
+    
+    icols.clear();
+    for(i=0, j=0; pch != NULL; ++i) {
+        nch = strchr(pch, '\t');
+        if ( i >= startIdx ) {
+            std::string id = (nch == NULL) ? std::string(pch) : std::string(pch,nch-pch);
+            if ( idset.empty() || (idset.find(id) != idset.end()) ) {
+                icols.push_back(i - startIdx);
+                inds.push_back(id);
+                ++j;
+            }
+        }
+        pch = ( nch == NULL ) ? NULL : nch + 1;
+    }
+    //notice("icols.size() = %d",(int)icols.size());
+    return j;
+}*/
+
+
+
+
 double getDoubleDosageFromRecord(VcfRecord& record, const uint smNum)
 {
     //Read EC, dosage data from vcf in hex string
