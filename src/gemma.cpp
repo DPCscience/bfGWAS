@@ -358,7 +358,7 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 	string str;
 	
 	for(int i = 1; i < argc; i++) {		
-		if (strcmp(argv[i], "-bfile")==0 || strcmp(argv[i], "--bfile")==0 || strcmp(argv[i], "-b")==0) {
+		if (strcmp(argv[i], "-bfile")==0 || strcmp(argv[i], "-b")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
 			str.clear();
@@ -1315,50 +1315,47 @@ void GEMMA::BatchRun (PARAM &cPar)
 		//an intercept should be included in W, 
 		cPar.CopyCvtPhen (W, y, 0);
         
-		//center y, even for case/control data
-		cPar.pheno_mean=CenterVector(y);
+        // reorder y for reading vcf files
+        if((!cPar.file_vcf.empty()) || (!cPar.file_vcfs.empty()))
+            cPar.ReorderPheno(y);
+        
+        //center y, even for case/control data
+        cPar.pheno_mean=CenterVector(y);
         cout << "pheno_mean = " << cPar.pheno_mean << "\n";
         //PrintVector(y);
-        
         
 		//run bslmm if rho==1
 		if (cPar.rho_min==1 && cPar.rho_max==1) {
         
             //read genotypes X (not UtX)
-        clock_t time_readfile = clock();
-            
-       // uchar** X_Genotype = AllocateUCharMatrix(cPar.ns_test, cPar.ni_test);
+            clock_t time_readfile = clock();
+ 
             cout << "allocate uchar* vector with length : " << cPar.ns_test << endl;
             uchar ** X_Genotype = new uchar*[cPar.ns_test];
             cPar.ReadGenotypes (X_Genotype, G, false); //load genotypes
-
-          //  vector<uchar*> UtX(cPar.ns_test);
-          //  cPar.ReadGenotypes (UtX, G, false);
             
-        cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
+            cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
             
            // PrintVector(cPar.CompBuffSizeVec);
-            cout << "UnCompBufferSize = " << cPar.UnCompBufferSize << endl;
-           //print(UtX, 10, 10, cPar.CompBuffSizeVec, cPar.UnCompBufferSize);
+            //cout << "UnCompBufferSize = " << cPar.UnCompBufferSize << endl;
             print(X_Genotype, 10, 10, cPar.CompBuffSizeVec, cPar.UnCompBufferSize);
 
             gsl_matrix_free(G);
             gsl_matrix_free(W);
 
-            
-        //perform BSLMM analysis
-		  BSLMM cBslmm;
-            cout << "copy data from param ...\n";
+            //perform BSLMM analysis
+            BSLMM cBslmm;
+           // cout << "copy data from param ...\n";
             cBslmm.CopyFromParam(cPar);
             cBslmm.ns_neib = 2 * cBslmm.win + 1;
          
-            cout << "start bslmm.mcmc ...\n";
-		  time_start=clock();
-		  cBslmm.MCMC(X_Genotype, y, 1);
-		  cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
-		  cBslmm.CopyToParam(cPar);
+           // cout << "start bslmm.mcmc ...\n";
+            time_start=clock();
+            cBslmm.MCMC(X_Genotype, y, 1);
+            cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
+            cBslmm.CopyToParam(cPar);
             
-          FreeUCharMatrix(X_Genotype, cPar.ns_test);
+            FreeUCharMatrix(X_Genotype, cPar.ns_test);
             
 		}  //else, if rho!=1
         

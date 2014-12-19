@@ -140,14 +140,17 @@ void PARAM::ReadFiles (void)
 	
 	//for prediction
 	if (!file_epm.empty()) {
+        
 		if (ReadFile_est (file_epm, est_column, mapRS2est)==false) {error=true;}
 		
 		if (!file_bfile.empty()) {
+           // cout << "start reading .bim file \n";
 			file_str=file_bfile+".bim";
 			if (ReadFile_bim (file_str, snpInfo)==false) {error=true;}		
 			
+            //cout << "start reading .fam file \n";
 			file_str=file_bfile+".fam";
-			if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, p_column)==false) {error=true;}			
+			if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, p_column, InputSampleID)==false) {error=true;}
 		}
 		
 		if (!file_geno.empty() || !file_vcf.empty()) {
@@ -194,10 +197,10 @@ void PARAM::ReadFiles (void)
 	//read genotype and phenotype file for plink format
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bim";
-		if (ReadFile_bim (file_str, snpInfo)==false) {error=true;}		
-		
+		if (ReadFile_bim (file_str, snpInfo)==false) {error=true;}
+        
 		file_str=file_bfile+".fam";
-		if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, p_column)==false) {error=true;}
+		if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, p_column, InputSampleID)==false) {error=true;}
 		
 		//post-process covariates and phenotypes, obtain ni_test, save all useful covariates
 		ProcessCvtPhen();
@@ -217,16 +220,17 @@ void PARAM::ReadFiles (void)
     //read genotype and phenotype file for VCF format
     if (!file_vcf.empty()) {
         
-        cout << "Create VCF sampleID to index hash table...\n";
+        //cout << "Create VCF sampleID to index hash table...\n";
         //phenotype file before genotype file
-        CreatVcfHash(file_vcf, sampleID2vcfInd, file_sample);
+        //CreatVcfHash(file_vcf, sampleID2vcfInd, file_sample);
         
         cout << "start reading pheno file, save Input Sample IDs...\n";
         if (ReadFile_vcf_pheno (file_vcf_pheno, indicator_pheno, pheno, p_column, InputSampleID)==false)
             {error=true;}
+        //Save all Pheno Sample IDs
         
         //post-process covariates and phenotypes, obtain ni_test, save all useful covariates
-        ProcessCvtPhen();
+        ProcessCvtPhen(); //create PhenoID2Ind map
         
         //obtain covariate matrix
         gsl_matrix *W=gsl_matrix_alloc (ni_test, n_cvt);
@@ -235,12 +239,12 @@ void PARAM::ReadFiles (void)
         cout << "start reading vcf file first time ...\n";
         indicator_snp.clear();
         snpInfo.clear();
-        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, InputSampleID, sampleID2vcfInd, file_sample, GTfield) == false )
+        if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
             {error=true;}
         
         gsl_matrix_free(W);
         
-        ns_total=indicator_snp.size();
+        ns_total=indicator_snp.size();//save the total # of variants
     }
 	
     //read genotype and phenotype file from multiple VCF files
@@ -273,12 +277,12 @@ void PARAM::ReadFiles (void)
         gsl_matrix_memcpy(WtWi, WtW);
         EigenInverse(WtWi);
         
-        vector<uint> SampleVcfPos;
-        uint vcfpos;
-        for (int i=0; i<(int)indicator_idv.size(); i++) {
-            vcfpos = (uint)sampleID2vcfInd.Integer(InputSampleID[i]);
-            SampleVcfPos.push_back(vcfpos);
-        }
+       // vector<uint> SampleVcfPos;
+        //uint vcfpos;
+        //for (int i=0; i<(int)indicator_idv.size(); i++) {
+            //vcfpos = (uint)sampleID2vcfInd.Integer(InputSampleID[i]);
+           // SampleVcfPos.push_back(vcfpos);
+        //}
         indicator_snp.clear();
         snpInfo.clear();
         ns_test=0;
@@ -288,7 +292,7 @@ void PARAM::ReadFiles (void)
         ifstream infile2(file_vcfs.c_str(), ifstream::in);
         while (getline(infile2, file_vcf)) {
             cout << " First time loading data from: " << file_vcf << endl;
-            if (ReadFile_vcf(file_vcf, setSnps, W, WtW, WtWi, Wtx, WtWiWtx, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, SampleVcfPos, file_sample) == false )
+            //if (ReadFile_vcf(file_vcf, setSnps, W, WtW, WtWi, Wtx, WtWiWtx, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, SampleVcfPos, file_sample) == false )
             {error=true;}
             file_num++;
         }
@@ -756,20 +760,21 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bed";
 		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test, CompBuffSizeVec)==false) {error=true;}
+        //revised
 	}
 	
     else if(!file_vcf.empty()){
-        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
-        {error=true;}
+        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, GTfield, CompBuffSizeVec, SampleVcfPos)==false )
+        {error=true;} // revised
     }
     
     else if(!file_vcfs.empty()){
-        if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false )
+        if ( ReadFile_vcfs (file_vcfs, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, InputSampleID, sampleID2vcfInd, file_sample)==false ) // to be revised
         {error=true;}
     }
     
     else{
-        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test)==false) {error=true;}
+        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, UtX, K, calc_K, ni_test, ns_test)==false) {error=true;} //to be revised
     }
     
     return;
@@ -913,9 +918,37 @@ void PARAM::CheckCvt ()
 	return;
 }
 
+//reorder phenotypes
+void PARAM::ReorderPheno(gsl_vector *y)
+{
+    if (VcfSampleID.size() < ni_test) {
+        cerr << "VCF sample size < ni_test: " << ni_test << endl;
+        exit(-1);
+    }
+    
+    double pheno;
+    string id;
+    size_t c_ind=0;
+    gsl_vector *ytemp=gsl_vector_alloc (ni_test);
+    
+    for (size_t i=0; i < VcfSampleID.size(); i++) {
+        id = VcfSampleID[i];
+        if (PhenoID2Ind.count(id) > 0 ) {
+            if (indicator_idv[c_ind]) {
+                pheno = gsl_vector_get(y, PhenoID2Ind[id]);
+                gsl_vector_set(ytemp, c_ind, pheno);
+            }
+            c_ind++;
+        }
+    }
+    cout << "reorder y, final c_ind = " << c_ind << endl;
+    gsl_vector_memcpy(y, ytemp);
+    gsl_vector_free(ytemp);
+}
+
 
 //post-process phentoypes, covariates
-void PARAM::ProcessCvtPhen ()
+void PARAM::ProcessCvtPhen()
 {	
 	//convert indicator_pheno to indicator_idv
 	int k=1;
@@ -939,11 +972,16 @@ void PARAM::ProcessCvtPhen ()
 	}
 	
 	//obtain ni_test
-	ni_test=0; 
+	ni_test=0;
+    PhenoID2Ind.clear();
 	for (size_t i=0; i<(indicator_idv).size(); ++i) {
-		if (indicator_idv[i]) ni_test++;
-	}
-    cout << "ni_test = " << ni_test << "\n";
+        if (indicator_idv[i]){
+            PhenoID2Ind[InputSampleID[i]]= ni_test;
+            ni_test++;
+        }
+        else PhenoID2Ind[InputSampleID[i]] = ULONG_MAX;
+    }
+    cout << "Create PhenoID2Ind map; ni_test = " << ni_test << "\n";
 	
 	if (ni_test==0) {
 		error=true;

@@ -31,6 +31,7 @@
 #include "MemoryAllocators.h"
 #include <iostream>     // std::cout, std::endl
 #include <iomanip>
+#include <limits>
 
 using namespace std;
 typedef unsigned char uchar;
@@ -123,6 +124,10 @@ public:
     size_t UnCompBufferSize;
     vector <size_t> CompBuffSizeVec;
     StringIntHash sampleID2vcfInd;
+    map<string, size_t>  PhenoID2Ind;
+    vector<size_t> SampleVcfPos;
+    vector<string> VcfSampleID; // size=total sample #
+    vector<string> InputSampleID; //size = ni_total
     
 	bool mode_silence;
 	int a_mode;				//analysis mode, 1/2/3/4 for Frequentist tests
@@ -222,7 +227,7 @@ public:
 	double time_Proposal;  //time spend on constructing the proposal distribution (i.e. the initial lmm or lm analysis)
 
 	// Data
-    vector<String> InputSampleID;
+    
 	vector<vector<double> > pheno;			//a vector record all phenotypes, NA replaced with -9
 	vector<vector<double> > cvt;			//a vector record all covariates, NA replaced with -9	
 	vector<vector<bool> > indicator_pheno;			//a matrix record when a phenotype is missing for an individual; 0 missing, 1 available
@@ -260,6 +265,8 @@ public:
 	void CheckCvt ();
 	void CopyCvt (gsl_matrix *W);
 	void ProcessCvtPhen();
+    void ReorderPheno(gsl_vector *y);
+    
 	void CopyCvtPhen (gsl_matrix *W, gsl_vector *y, size_t flag);
 	void CopyCvtPhen (gsl_matrix *W, gsl_matrix *Y, size_t flag);
 	void CalcKin (gsl_matrix *matrix_kin);

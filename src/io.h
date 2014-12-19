@@ -47,7 +47,7 @@ bool ReadFile_snps (const string &file_snps, set<string> &setSnps);
 bool ReadFile_log (const string &file_log, double &pheno_mean);
 
 bool ReadFile_bim (const string &file_bim, vector<SNPINFO> &snpInfo);
-bool ReadFile_fam (const string &file_fam, vector<vector<bool> > &indicator_pheno, vector<vector<double> > &pheno, map<string, int> &mapID2num, const vector<size_t> &p_column);
+bool ReadFile_fam (const string &file_fam, vector<vector<bool> > &indicator_pheno, vector<vector<double> > &pheno, map<string, int> &PhenoID2Ind, const vector<size_t> &p_column, vector<string> & InputSampleID);
 
 bool ReadFile_cvt (const string &file_cvt, vector<bool> &indicator_cvt, vector<vector<double> > &cvt, size_t &n_cvt);
 bool ReadFile_anno (const string &file_bim, map<string, string> &mapRS2chr, map<string, long int> &mapRS2bp, map<string, double> &mapRS2cM);
@@ -74,18 +74,20 @@ bool CountFileLines (const string &file_input, size_t &n_lines);
 
 bool ReadFile_gene (const string &file_gene, vector<double> &vec_read, vector<SNPINFO> &snpInfo, size_t &ng_total);
 
-bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample, string &GTfield); // first time
+bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, string &GTfield, const map<string, size_t> &PhenoID2Ind, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos); // first time
 
-bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample); // second time
+bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos); // second time
 
+//void GetVcfPos(const vector<string> &VcfSampleID, const map<string, size_t> &PhenoID2Ind, vector <size_t> &SampleVcfPos);
 
 
 bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd, const string &file_sample);
 
-bool ReadFile_vcf_pheno (const string &file_vcf_pheno, vector<vector<bool> > &indicator_pheno, vector<vector<double> > &pheno, const vector<size_t> &p_column, vector<String> &InputSampleID);
+bool ReadFile_vcf_pheno (const string &file_vcf_pheno, vector<vector<bool> > &indicator_pheno, vector<vector<double> > &pheno, const vector<size_t> &p_column, vector<string> &InputSampleID);
 
+//for reading multiple vcfs
 bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, const gsl_matrix *WtW, const gsl_matrix *WtWi, gsl_vector *Wtx, gsl_vector *WtWiWtx, const vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, const vector<uint> &SampleVcfPos, const string &file_sample);
-bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<String> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample);
+bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<string> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample);
 #endif
 
 
