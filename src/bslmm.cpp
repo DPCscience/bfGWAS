@@ -64,6 +64,9 @@ using namespace std;
 
 void BSLMM::CopyFromParam (PARAM &cPar) 
 {
+    n_type = n_type;
+    mFunc = cPar.mFunc;
+    
     UnCompBufferSize = cPar.UnCompBufferSize;
     CompBuffSizeVec = cPar.CompBuffSizeVec;
     win = cPar.win;
@@ -1195,34 +1198,78 @@ double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp)
     return logpost;
 }
 
+void BSLMM::CalcVPi(class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
+    
+    if (cHyp.n_gamma != rank.size()) {
+        cerr << "Error: cHyp.n_gamma not equal to the size of rank"
+    }
+    
+    size_t order_i;
+    vector<double> theta, weight_temp;
+    for (size_t j=0; j < n_type; j++) {
+        theta.push_back(exp(cHyp.log_theta[j]));
+    }
+    gsl_vector_set_zero(pi_vec);
+    gsl_vector_set_zero(sigma_vec);
+    double pi_temp, sigma_temp;
+    
+    for (size_t i=0; i < cHyp.n_gamma; i++) {
+        
+        order_i = mapRank2Order[rank[i]];
+        weight_temp = snp_pos[order_i].weight;
+        pi_temp = 0.0;
+        sigma_temp = 0.0;
+        
+        for (size_t j=0; j < n_type; j++) {
+            pi_temp += theta[j] * weight_temp[j];
+            sigma_temp += cHyp.subar[j] * weight_temp[j];
+        }
+        
+        gsl_vector_set(pi_vec, i, pi_temp);
+        gsl_vector_set(sigma_vec, i, sigma_temp);
+                       
+    }
 
-double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const size_t s_size, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp)
+}
+
+double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const size_t s_size, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec)
 {
-    double sigma_a2=cHyp.h/( (1-cHyp.h)*exp(cHyp.logp)*(double)ns_test * trace_G);
+    //double sigma_a2=cHyp.h/( (1-cHyp.h)*exp(cHyp.logp)*(double)ns_test * trace_G);
+    
     double logpost=0.0;
     double d, P_yy=yty, logdet_O=0.0;
     
     gsl_matrix_const_view Xgamma_sub=gsl_matrix_const_submatrix (Xgamma, 0, 0, Xgamma->size1, s_size);
     gsl_matrix_const_view XtX_sub=gsl_matrix_const_submatrix (XtX, 0, 0, s_size, s_size);
     gsl_vector_const_view Xty_sub=gsl_vector_const_subvector (Xty, 0, s_size);
+    gsl_vector_const_view pi_sub = gsl_vector_const_subvector(pi_vec, 0, s_size);
+    gsl_vector_const_view sigma_sub = gsl_vector_const_subvector(sigma_vec, 0, s_size);
     
     gsl_matrix *Omega=gsl_matrix_alloc (s_size, s_size);
+    gsl_matrix *Omega_temp=gsl_matrix_alloc (s_size, s_size);
+    gsl_matrix *V_beta=gsl_matrix_alloc (s_size, s_size);
+    //gsl_matrix *V_beta_inv=gsl_matrix_alloc (s_size, s_size);
     gsl_matrix *M_temp=gsl_matrix_alloc (s_size, s_size);
     gsl_vector *beta_hat=gsl_vector_alloc (s_size);
+    gsl_vector *beta_hat_temp=gsl_vector_alloc (s_size);
     gsl_vector *Xty_temp=gsl_vector_alloc (s_size);
     
     gsl_vector_memcpy (Xty_temp, &Xty_sub.vector);
     
     //calculate Omega
-    gsl_matrix_memcpy (Omega, &XtX_sub.matrix);
-    gsl_matrix_scale (Omega, sigma_a2);
+    //gsl_matrix_memcpy(Omega, &XtX_sub.matrix)
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &XtX_sub.matrix, V_beta, 0.0, Omega);
+    gsl_matrix_set_identity (V_beta);
+    gsl_vector_view V_beta_diag = gsl_matrix_diagonal(V_beta);
+    gsl_vector_mul(&V_beta_diag.vector, &sigma_sub.vector); //inv(V_beta)
     gsl_matrix_set_identity (M_temp);
     gsl_matrix_add (Omega, M_temp);
     
     //calculate beta_hat
-    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat);	//solve Omega * beta_hat = Xty for beta_hat
+    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat_temp);	//solve Omega * beta_hat = Xty for beta_hat
+    // Omega was inverted here
     // logdet_0 = det(Omega)
-    gsl_vector_scale (beta_hat, sigma_a2);
+    gsl_blas_dgemv(CblasNoTrans, 1.0, V_beta, beta_hat_temp, 0.0, beta_hat);
     gsl_blas_ddot (Xty_temp, beta_hat, &d);
     P_yy-=d;
     
@@ -1237,9 +1284,10 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
         gsl_vector_set(beta, i, d);
     }
     gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
-    gsl_blas_dtrsv(CblasUpper, CblasNoTrans, CblasNonUnit, Omega, &beta_sub.vector);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, Omega, V_beta, 0.0, Omega_temp);
+    gsl_blas_dtrsv(CblasUpper, CblasNoTrans, CblasNonUnit, Omega_temp, &beta_sub.vector);
     
-    gsl_vector_scale(&beta_sub.vector, sqrt(sigma_a2/tau));
+    gsl_vector_scale(&beta_sub.vector, sqrt(tau));
     gsl_vector_add(&beta_sub.vector, beta_hat);
     gsl_blas_dgemv (CblasNoTrans, 1.0, &Xgamma_sub.matrix, &beta_sub.vector, 0.0, Xb);
     
@@ -1255,6 +1303,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     if (a_mode==11) {logpost-=0.5*(double)ni_test*log(P_yy);}
     else {logpost-=0.5*P_yy;}
     
+    //stopped here
     logpost+=((double)cHyp.n_gamma-1.0)*cHyp.logp+((double)ns_test-(double)cHyp.n_gamma)*log(1.0-exp(cHyp.logp));
     
     gsl_matrix_free (Omega);
@@ -2038,6 +2087,50 @@ double BSLMM::ProposePi (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_ne
 	}
 	*/
 	cHyp_new.logp=logp_new;
+	
+	return log_ratio;
+}
+
+double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+{
+	vector<double> logp_old = cHyp_old.log_theta, logp_new=cHyp_old.log_theta;
+    
+	double log_ratio = 0.0;
+    
+	double d_logp = min(0.1, (logp_max-logp_min)*logp_scale);
+	
+	for (size_t i=0; i<repeat; ++i) {
+        
+        for (size_t j=0; j<n_type; j++) {
+   
+            logp_new[j] = logp_old[j] + (gsl_rng_uniform(gsl_r)-0.5)*d_logp;
+            if (logp_new[j]<logp_min) {logp_new[j]=2*logp_min-logp_new;}
+            if (logp_new[j]>logp_max) {logp_new[j]=2*logp_max-logp_new;}
+            log_ratio+=logp_new[j]-logp_old[j];
+            logp_old[j]=logp_new[j];
+        }
+	}
+	cHyp_new.log_theta=logp_new;
+	
+	return log_ratio;
+}
+
+double BSLMM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+{
+	vector<double> logp_old = cHyp_old.subvar, logp_new=cHyp_old.subvar;
+    
+	double log_ratio = 0.0;
+    	
+	for (size_t i=0; i<repeat; ++i) {
+        
+        for (size_t j=0; j<n_type; j++) {
+            
+            logp_new[j] = logp_old[j] + gsl_ran_gaussian_tail(gsl_r, -logp_old[j], sigma_prop);
+            log_ratio += log(gsl_cdf_gaussian_Q(-logp_old[j], sigma_prop)) - log(gsl_cdf_gaussian_Q(-logp_new[j], sigma_prop));
+            logp_old[j]=logp_new[j];
+        }
+	}
+	cHyp_new.subvar=logp_new;
 	
 	return log_ratio;
 }

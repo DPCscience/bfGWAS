@@ -71,6 +71,10 @@ public:
         
     };
     
+    //multiple function related parameters
+    int n_type;
+    vector<size_t> mFunc;
+    
 	// IO related parameters
     size_t UnCompBufferSize;
     vector <size_t> CompBuffSizeVec;
@@ -147,7 +151,7 @@ public:
 	void WriteLog ();
 	void WriteLR ();
 	void WriteBV (const gsl_vector *bv);
-	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
+	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
 	void WriteParam (const gsl_vector *alpha);
 	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col);
 	
@@ -156,7 +160,7 @@ public:
     
 	double CalcPveLM (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const double sigma_a2);
     
-	void InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model_old, vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos);
+	void InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model_old, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
     
 	double CalcPosterior (const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *Utu, gsl_vector *alpha_prime, class HYPBSLMM &cHyp);
 	double CalcPosterior (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *UtXb, gsl_vector *Utu, gsl_vector *alpha_prime, gsl_vector *beta, class HYPBSLMM &cHyp);
@@ -197,15 +201,15 @@ public:
 
     void MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, gsl_vector *z_hat);
     
-    void CreateSnpPosVec(vector<snpPos> &snp_pos);
+    void CreateSnpPosVec(vector<SNPPOS> &snp_pos);
     
-    void InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos);
+    void InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
     
     void CreateGammaProposal(const double *p_gamma);
     
     void MHmove(const bool &accept, const int &flag_gamma, LModel &model_old, LModel &model_new, double &logPost_old, double &logPost_new);
     
-    void MHsave(const size_t &t, size_t &w, gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, LModel &model_old, vector<pair<double, double> > &beta_g, const double &mean_z, const vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos, double &logPost_old);
+    void MHsave(const size_t &t, size_t &w, gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, LModel &model_old, vector<pair<double, double> > &beta_g, const double &mean_z, const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos, double &logPost_old);
     
     double MHPropose(uchar **X_Genotype, const double *p_gamma, gsl_vector *z, const double &ztz, LModel &model_old, LModel &model_new, int &flag_gamma, double &logPost_new, double &logPost_old);
     
@@ -232,15 +236,18 @@ public:
 //	void calc_sigma (MCMC &cMcmc);
 //	bool comp_lr (pair<size_t, double> a, pair<size_t, double> b);
     
-    void InitialMCMC ( uchar **UtX, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos);
+    void InitialMCMC ( uchar **UtX, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
     void SetXgamma ( uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, const vector<size_t> &rank_new, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new);
     double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
     double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const size_t s_size, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp);
 
     double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat,  uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma);
-    void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
+    void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w);
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
+    
+    // added function for newmodel
+    void CalcVPi(class HYPBSLMM &cHyp, vector<double> &pi_vec, vector<double> &sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
 };
 

@@ -51,6 +51,8 @@ public:
 	double missingness;
 	double maf;
     
+    vector<bool> indicator_func;
+    vector<double> weight;
     void printMarker();
 };
 
@@ -68,15 +70,18 @@ struct genMarker
 };
 
 //JY
-struct snpPos{
+struct SNPPOS{
     size_t pos;
     string rs;
     string chr;
     long int bp;
+    vector<bool> indicator_func;
+    vector<double> weight;
     void printMarker();
 };
+
 //JY
-void printSNPInfo(vector<snpPos> &snp_pos, int numMarker);
+void printSNPInfo(vector<SNPPOS> &snp_pos, int numMarker);
 
 //results for lmm
 class SUMSTAT {
@@ -106,20 +111,26 @@ public:
 //hyper-parameters for bslmm
 class HYPBSLMM {
 public:
-	double h;
+	//double h;
+    //double rho;
+	//double logp;
+
+    vector<double> log_theta;
+    vector<double> subvar;
+    double sigma_b2;
 	double pve;
-	double rho;
 	double pge;
-	double logp;
 	
 	size_t n_gamma;
 };
 
 
-
-
 class PARAM {
-public:	
+public:
+    //multiple functionrelated parameters
+    int n_type;
+    vector<size_t> mFunc; // # of variants of each variant type
+    
 	// IO related parameters
     size_t UnCompBufferSize;
     vector <size_t> CompBuffSizeVec;
@@ -241,6 +252,7 @@ public:
 	vector<double> vec_bv;					//breeding values
 	vector<size_t> est_column;
 	
+    map<int, string> mapCode2Func; // map unique code to a unique function type
 	map<string, int> mapID2num;		//map small ID number to number, from 0 to n-1
 	map<string, string> mapRS2chr;		//map rs# to chromosome location
 	map<string, long int> mapRS2bp;		//map rs# to base position
