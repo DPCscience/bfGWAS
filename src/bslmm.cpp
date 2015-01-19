@@ -64,8 +64,10 @@ using namespace std;
 
 void BSLMM::CopyFromParam (PARAM &cPar) 
 {
-    n_type = n_type;
+    n_type = cPar.n_type;
     mFunc = cPar.mFunc;
+    e = cPar.e;
+    vscale = cPar.vscale;
     
     UnCompBufferSize = cPar.UnCompBufferSize;
     CompBuffSizeVec = cPar.CompBuffSizeVec;
@@ -287,7 +289,7 @@ void BSLMM::WriteBV (const gsl_vector *bv)
 }
 
 
-void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
+void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
 	string file_str;
 	file_str="./output/"+file_out;
@@ -700,7 +702,7 @@ bool comp_snp(const SNPPOS& lhs, const SNPPOS& rhs){
 //JY
 
 
-void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos)
+void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
 
  {
  vector<pair<size_t, double> > rank_loglr;
@@ -828,7 +830,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector
  return;
  }
 
-void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos)
+void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
 
 {
     vector<pair<size_t, double> > rank_loglr;
@@ -913,13 +915,13 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
     PrintVector(rank);
     
-    vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
-    size_t order;
-    for (size_t i=0; i<rank.size(); ++i) {
-        order = mapRank2Order[rank[i]];
-        iniRank.push_back(snp_pos[order].rs);
-    }
-    WriteIniRank(iniRank);  // write out initial sig snp ID
+   // vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
+   // size_t order;
+   // for (size_t i=0; i<rank.size(); ++i) {
+    //    order = mapRank2Order[rank[i]];
+      //  iniRank.push_back(snp_pos[order].rs);
+   // }
+    // WriteIniRank(iniRank);  // write out initial sig snp ID
     
     cHyp.logp=log((double)cHyp.n_gamma/(double)ns_test);
     cHyp.h=pve_null;
@@ -940,7 +942,6 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     gsl_matrix_free (UtXgamma);
     
     if (cHyp.rho>1.0) {cHyp.rho=1.0;}
-    
     if (cHyp.h<h_min) {cHyp.h=h_min;}
     if (cHyp.h>h_max) {cHyp.h=h_max;}
     if (cHyp.rho<rho_min) {cHyp.rho=rho_min;}
@@ -948,9 +949,16 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     if (cHyp.logp<logp_min) {cHyp.logp=logp_min;}
     if (cHyp.logp>logp_max) {cHyp.logp=logp_max;}
     
+    cHyp.log_theta.assign(n_type, cHyp.logp);
+    PrintVector(cHyp.log_theta);
+    
+    cHyp.subvar.assign(n_type, sigma_a2);
+    PrintVector(cHyp.subvar);
+    
     cout<<"initial value of h = "<<cHyp.h<<endl;
     cout<<"initial value of rho = "<<cHyp.rho<<endl;
     cout<<"initial value of pi = "<<exp(cHyp.logp)<<endl;
+    cout << "initial value of sub-variance = " << sigma_a2 << endl;
     cout<<"initial value of |gamma| = "<<cHyp.n_gamma<<endl;
     
     return;
@@ -1213,6 +1221,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *UtXgamma, const gsl_vector *Uty, 
 double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_vector *pi_vec, const gsl_vector *sigma_vec, const vector<size_t> &rank)
 {
     double logpost=0.0;
+    size_t order_i, s_size = rank.size();
     
     //for quantitative traits, calculate pve and pge
     //pve and pge for case/control data are calculted in CalcCC_PVEnZ
@@ -1241,8 +1250,8 @@ double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_v
     for (size_t i=0; i < n_type; i++) {
         sumTheta -= cHyp.log_theta[i];
     }
-    cout << "pi_rank = " << pi_rank << "; pi_nonrank = " << pi_nonrank << endl;
-    cout << "sumV = " << sumV << "; sumlogV = " << sumlogV << endl;
+    //cout << "pi_rank = " << pi_rank << "; pi_nonrank = " << pi_nonrank << endl;
+    //cout << "sumV = " << sumV << "; sumlogV = " << sumlogV << endl;
     
     // calculate posterior
     logpost += (1.0 - e) * sumlogV - e * sumV + pi_rank + pi_nonrank + sumTheta;
@@ -1252,40 +1261,42 @@ double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_v
     return logpost;
 }
 
-void BSLMM::CalcVPi(class HYPBSLMM &cHyp, const gsl_vector *pi_vec, const gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
+void BSLMM::CalcVPi(class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
     
     if (cHyp.n_gamma != rank.size()) {
-        cerr << "Error: cHyp.n_gamma not equal to the size of rank"
+        cerr << "Error: cHyp.n_gamma not equal to the size of rank\n";
     }
     
     size_t order_i;
-    vector<double> theta, weight_temp;
+    vector<double> theta;
     for (size_t j=0; j < n_type; j++) {
-        theta.push_back(exp(cHyp.log_theta[j]));
+        theta.push_back(exp(cHyp.log_theta[j])); //exponentiate log_theta
     }
-    gsl_vector_set_zero(pi_vec);
+    
+    
+    double pi_temp, sigma_temp, p = 1.0 / double(ns_test);
+    gsl_vector_set_all(pi_vec, p);
     gsl_vector_set_zero(sigma_vec);
-    double pi_temp, sigma_temp;
     
     for (size_t i=0; i < ns_test; i++) {
-        weight_temp = snp_pos[order_i].weight;
         pi_temp = 0.0;
         for (size_t j=0; j < n_type; j++) {
-            pi_temp += theta[j] * weight_temp[j];
+            if(snp_pos[order_i].indicator_func[j])
+                pi_temp += theta[j] * snp_pos[order_i].weight[j];
         }
-        gsl_vector_set(pi_vec, i, pi_temp);
+        if(pi_temp > 0.0) {gsl_vector_set(pi_vec, i, pi_temp);}
+        else {cerr << "got zero pi[i] = " << pi_temp << endl;}
     }
     
     for (size_t i=0; i < cHyp.n_gamma; i++) {
         order_i = mapRank2Order[rank[i]];
-        weight_temp = snp_pos[order_i].weight;
-        sigma_temp = 0.0;        
+        sigma_temp = 0.0;
         for (size_t j=0; j < n_type; j++) {
-            sigma_temp += cHyp.subvar[j] * weight_temp[j];
+           if(snp_pos[order_i].indicator_func[j])
+               sigma_temp += cHyp.subvar[j] * snp_pos[order_i].weight[j];
         }
         gsl_vector_set(sigma_vec, i, sigma_temp);
     }
-
 }
 
 double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank)
@@ -1372,8 +1383,8 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     for (size_t i=0; i < n_type; i++) {
         sumTheta -= cHyp.log_theta[i];
     }
-    cout << "pi_rank = " << pi_rank << "; pi_nonrank = " << pi_nonrank << endl;
-    cout << "sumV = " << sumV << "; sumlogV = " << sumlogV << endl;
+   // cout << "pi_rank = " << pi_rank << "; pi_nonrank = " << pi_nonrank << endl;
+   // cout << "sumV = " << sumV << "; sumlogV = " << sumlogV << endl;
 
     logpost += (1.0 - e) * sumlogV - e * sumV + pi_rank + pi_nonrank + sumTheta;
     //logpost+=((double)cHyp.n_gamma-1.0)*cHyp.logp+((double)ns_test-(double)cHyp.n_gamma)*log(1.0-exp(cHyp.logp));
@@ -1538,7 +1549,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
     return logp;
 }
 
-void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<snpPos> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
+void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
     string file_gamma, file_hyp;
     file_gamma="./output/"+file_out;
@@ -1649,9 +1660,13 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     
     class HYPBSLMM cHyp_old, cHyp_new;
     
+    cout << "# of unique function types = " << n_type << endl;
     //new model related
-    gsl_vector *pi_vec = gsl_vector_alloc (ns_test);
-    gsl_vector *sigma_vec = gsl_vector_alloc(s_max);
+    gsl_vector *pi_vec_old = gsl_vector_alloc (ns_test);
+    gsl_vector *sigma_vec_old = gsl_vector_alloc(s_max);
+    gsl_vector *pi_vec_new = gsl_vector_alloc (ns_test);
+    gsl_vector *sigma_vec_new = gsl_vector_alloc(s_max);
+    
     gsl_matrix *Result_theta = gsl_matrix_alloc(w_pace, n_type); // save theta samples
     gsl_matrix *Result_sigma = gsl_matrix_alloc(w_pace, n_type); // save sigma samples
     
@@ -1780,15 +1795,15 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "Start initializing MCMC ... \n";
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
     cHyp_initial=cHyp_old;
-    CalcVPi(cHyp_old, pi_vec, sigma_vec, rank_old, snp_pos); // Calculate pi_vec, sigma_vec
+    CalcVPi(cHyp_old, pi_vec_old, sigma_vec_old, rank_old, snp_pos); // Calculate pi_vec, sigma_vec
     
     if (cHyp_old.n_gamma==0) {
-        logPost_old=CalcPosterior (ztz, cHyp_old, pi_vec, sigma_vec, rank_old);
+        logPost_old=CalcPosterior (ztz, cHyp_old, pi_vec_old, sigma_vec_old, rank_old);
     }
     else {
         SetXgamma (Xgamma_old, X, rank_old);
         CalcXtX (Xgamma_old, z, rank_old.size(), XtX_old, Xtz_old);
-        logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec, sigma_vec, rank_old);
+        logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec_old, sigma_vec_old, rank_old);
     }
     
     cout << "First 10 responses: \n";
@@ -1828,13 +1843,14 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             gsl_blas_ddot(z,z,&ztz);
             
             //First proposal
+            CalcVPi(cHyp_old, pi_vec_old, sigma_vec_old, rank_old, snp_pos);
             if (cHyp_old.n_gamma==0) {
-                logPost_old=CalcPosterior (ztz, cHyp_old, pi_vec, sigma_vec, rank_old);
+                logPost_old=CalcPosterior (ztz, cHyp_old, pi_vec_old, sigma_vec_old, rank_old);
             } else {
                 gsl_matrix_view Xold_sub=gsl_matrix_submatrix(Xgamma_old, 0, 0, ni_test, rank_old.size());
                 gsl_vector_view Xtz_sub=gsl_vector_subvector(Xtz_old, 0, rank_old.size());
                 gsl_blas_dgemv (CblasTrans, 1.0, &Xold_sub.matrix, z, 0.0, &Xtz_sub.vector);
-                logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec, sigma_vec, rank_old);
+                logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec_old, sigma_vec_old, rank_old);
             }
         }
 
@@ -1847,28 +1863,25 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             //else {repeat=1;}
             
             logMHratio=0.0;
-           // logMHratio+=ProposeHnRho(cHyp_old, cHyp_new, repeat);
-           // logMHratio+=ProposePi(cHyp_old, cHyp_new, repeat);
-          //  cout << "propose h, rho, pi success, proposing gamma..." << endl;
+            logMHratio+=ProposeTheta(cHyp_old, cHyp_new, repeat);
+            logMHratio+=ProposeSubvar(cHyp_old, cHyp_new, repeat);
+            PrintVector(cHyp_old.log_theta);
+            PrintVector(cHyp_new.log_theta);
+            PrintVector(cHyp_old.subvar);
+            PrintVector(cHyp_new.subvar);
+           // cout << "propose Theta, Subvar success, proposing gamma..." << endl;
+           // cout << "logMHratio" << logMHratio << endl;
             
             logMHratio+=ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             if(flag_gamma==1) nadd++;
             else if(flag_gamma==2) ndel++;
             else if(flag_gamma==3) nswitch++;
             else nother++;
-          //  cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
-            
-            if (cHyp_old.n_gamma==0) {
-                logPost_old=CalcPosterior (ztz, cHyp_old, pi_vec, sigma_vec, rank_old);
-            }
-            else {
-                SetXgamma (Xgamma_old, X, rank_old);
-                CalcXtX (Xgamma_old, z, rank_old.size(), XtX_old, Xtz_old);
-                logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec, sigma_vec, rank_old);
-            }
-            
+            cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
+
+            CalcVPi(cHyp_new, pi_vec_new, sigma_vec_new, rank_new, snp_pos);
             if (cHyp_new.n_gamma==0) {
-                logPost_new=CalcPosterior (ztz, cHyp_new, pi_vec, sigma_vec, rank_new);
+                logPost_new=CalcPosterior (ztz, cHyp_new, pi_vec_new, sigma_vec_new, rank_new);
                 
             } else {
                 //this if makes sure that rank_old.size()==rank_remove.size() does not happen
@@ -1885,7 +1898,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                 }
                // cout << "start calc posterior... " << endl;
                 time_start=clock();
-                logPost_new=CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, pi_vec, sigma_vec, rank_new);
+                logPost_new=CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, pi_vec_new, sigma_vec_new, rank_new);
                 time_post+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
             }
            //  cout << "Calcposterior success." << endl;
@@ -1907,6 +1920,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                 logPost_old=logPost_new;
                 cHyp_old=cHyp_new;
                 gsl_vector_memcpy (Xb_old, Xb_new);
+                gsl_vector_memcpy(pi_vec_old, pi_vec_new);
+                gsl_vector_memcpy(sigma_vec_old, sigma_vec_new);
                 
                 rank_old.clear();
                 if (rank_new.size()!=0) {
@@ -2024,8 +2039,10 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_matrix_free(Result_theta);
     gsl_matrix_free(Result_sigma);
     
-    gsl_vector_free(pi_vec);
-    gsl_vector_free(sigma_vec);
+    gsl_vector_free(pi_vec_old);
+    gsl_vector_free(sigma_vec_old);
+    gsl_vector_free(pi_vec_new);
+    gsl_vector_free(sigma_vec_new);
     
     gsl_vector_free(z_hat);
     gsl_vector_free(z);
@@ -2206,8 +2223,8 @@ double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp
         for (size_t j=0; j<n_type; j++) {
    
             logp_new[j] = logp_old[j] + (gsl_rng_uniform(gsl_r)-0.5)*d_logp;
-            if (logp_new[j]<logp_min) {logp_new[j]=2*logp_min-logp_new;}
-            if (logp_new[j]>logp_max) {logp_new[j]=2*logp_max-logp_new;}
+            if (logp_new[j]<logp_min) {logp_new[j]=2*logp_min-logp_new[j];}
+            if (logp_new[j]>logp_max) {logp_new[j]=2*logp_max-logp_new[j];}
             log_ratio+=logp_new[j]-logp_old[j];
             logp_old[j]=logp_new[j];
         }
@@ -2227,8 +2244,8 @@ double BSLMM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHy
         
         for (size_t j=0; j<n_type; j++) {
             
-            logp_new[j] = logp_old[j] + gsl_ran_gaussian_tail(gsl_r, -logp_old[j], sigma_prop);
-            log_ratio += log(gsl_cdf_gaussian_Q(-logp_old[j], sigma_prop)) - log(gsl_cdf_gaussian_Q(-logp_new[j], sigma_prop));
+            logp_new[j] = logp_old[j] + gsl_ran_gaussian_tail(gsl_r, -logp_old[j], vscale);
+            log_ratio += log(gsl_cdf_gaussian_Q(-logp_old[j], vscale)) - log(gsl_cdf_gaussian_Q(-logp_new[j], vscale));
             logp_old[j]=logp_new[j];
         }
 	}
@@ -2975,7 +2992,7 @@ void BSLMM::MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, 
     return;
 }
 
-void BSLMM::CreateSnpPosVec(vector<snpPos> &snp_pos)
+void BSLMM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
 {
     size_t pos;
     string rs;
@@ -2990,7 +3007,7 @@ void BSLMM::CreateSnpPosVec(vector<snpPos> &snp_pos)
         chr = snpInfo[i].chr;
         bp = snpInfo[i].base_position;
         pos = tt;
-        snpPos snp_temp={pos, rs, chr, bp};
+        SNPPOS snp_temp={pos, rs, chr, bp};
         snp_pos.push_back(snp_temp);
         tt++;
     }
@@ -3002,7 +3019,7 @@ void BSLMM::CreateSnpPosVec(vector<snpPos> &snp_pos)
     return;
 }
 
-void BSLMM::InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos){
+void BSLMM::InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos){
     
     //with sorted vectors as input
     size_t pos;
@@ -3128,7 +3145,7 @@ void BSLMM::MHmove(const bool &accept, const int &flag_gamma, LModel &model_old,
     return;
 }
 
-void BSLMM::MHsave(const size_t &t, size_t &w, gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, LModel &model_old, vector<pair<double, double> > &beta_g, const double &mean_z, const vector<pair<size_t, double> > &pos_loglr, const vector<snpPos> &snp_pos, double &logPost_old)
+void BSLMM::MHsave(const size_t &t, size_t &w, gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, LModel &model_old, vector<pair<double, double> > &beta_g, const double &mean_z, const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos, double &logPost_old)
 {
     size_t w_col, pos;
     
@@ -3213,7 +3230,7 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
 	time_Proposal=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 
     // Jingjing add a vector of "snpPos" structs snp_pos
-    vector<snpPos> snp_pos;
+    vector<SNPPOS> snp_pos;
     CreateSnpPosVec(snp_pos);
    // printSNPInfo(snp_pos, 10); // print out a few markers' info
 	
@@ -3316,8 +3333,8 @@ void BSLMM::MCMC (uchar **X_Genotype, gsl_vector *z) {
             
             accept_percent = (double)n_accept/(double)(t*n_mh);
             if (accept_percent<0.000001) {
-                cerr << "acceptance percentage = " << accept_percent << " < 0.000001; ABORT MCMC...";
-                exit(1);
+                cerr << "acceptance percentage = " << accept_percent << " < 0.000001;";
+               // exit(1);
             }
             
            // cout << "start MHSave... \n" ;

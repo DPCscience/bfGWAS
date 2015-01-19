@@ -102,15 +102,14 @@ void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, cons
 {
     weight.clear();
     weight.assign(indicator_func.size(), 0.0);
-    if (weight_i != 0.0) {
-        for (size_t i=0; i < indicator_func.size(); i++) {
+    for (size_t i=0; i < indicator_func.size(); i++) {
             if (indicator_func[i]) weight[i] = weight_i;
         }
-    }
 }
 
 
-PARAM::PARAM(void):	
+PARAM::PARAM(void):
+vscale(0.0),
 mode_silence (false), a_mode (0), k_mode(1), d_pace (100000),
 file_out("result"), 
 miss_level(0.05), maf_level(0.01), hwe_level(0), r2_level(0.9999),
@@ -700,6 +699,7 @@ void PARAM::CheckData (void) {
 		if (h_scale==-1) {h_scale=min(1.0, 10.0/sqrt((double)ni_test) );}
 		if (rho_scale==-1) {rho_scale=min(1.0, 10.0/sqrt((double)ni_test) );}
 		if (logp_scale==-1) {logp_scale=min(1.0, 5.0/sqrt((double)ni_test) );}
+        if (vscale <= 0.0) { vscale = min(0.5, 10.0/sqrt((double)ni_test));}
 		
 		if (h_min==-1) {h_min=0.0;}
 		if (h_max==-1) {h_max=1.0;}

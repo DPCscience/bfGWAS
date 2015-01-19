@@ -117,13 +117,15 @@ public:
 //hyper-parameters for bslmm
 class HYPBSLMM {
 public:
+    double h;
+    double rho;
+    double logp;
     
     vector<double> log_theta; // log(theta) for each function type
     vector<double> subvar; // variance for each function type
     double sigma_b2; //
 	double pve;
 	double pge;
-	
 	size_t n_gamma;
 };
 
@@ -131,9 +133,10 @@ public:
 class PARAM {
 public:
     //multiple functionrelated parameters
-    int n_type;
+    size_t n_type;
     vector<size_t> mFunc; // # of variants of each variant type
     double e; //hyper parameter in the prior gamma distribution
+    double vscale;
     map<string, int> mapFunc2Code;
     
     

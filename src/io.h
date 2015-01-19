@@ -90,7 +90,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
 bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<string> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample);
 
 //for new model
-bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, const vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type);
+bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type);
 
 #endif
 

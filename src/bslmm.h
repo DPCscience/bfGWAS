@@ -72,9 +72,10 @@ public:
     };
     
     //multiple function related parameters
-    int n_type;
+    size_t n_type;
     vector<size_t> mFunc; // # of variants of each variant type
     double e; //hyper parameter in the prior gamma distribution
+    double vscale;
     map<string, int> mapFunc2Code;
 
     
@@ -251,6 +252,9 @@ public:
     
     // added function for newmodel
     void CalcVPi(class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
+    double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
+    
     
 };
 
