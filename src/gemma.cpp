@@ -424,6 +424,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.assign(argv[i]);
 			cPar.file_anno=str;
 		}
+        else if (strcmp(argv[i], "-fcode")==0) {
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+			++i;
+			str.clear();
+			str.assign(argv[i]);
+			cPar.file_func_code=str;
+		}
 		else if (strcmp(argv[i], "-k")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
@@ -809,6 +816,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.clear();
 			str.assign(argv[i]);
 			cPar.win=atol(str.c_str());
+		}
+        else if (strcmp(argv[i], "-e")==0) {
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.e=20;continue;}
+			++i;
+			str.clear();
+			str.assign(argv[i]);
+			cPar.e=atof(str.c_str());
 		}
 		else {cout<<"error! unrecognized option: "<<argv[i]<<endl; cPar.error=true; continue;}
 	}

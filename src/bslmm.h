@@ -73,7 +73,10 @@ public:
     
     //multiple function related parameters
     int n_type;
-    vector<size_t> mFunc;
+    vector<size_t> mFunc; // # of variants of each variant type
+    double e; //hyper parameter in the prior gamma distribution
+    map<string, int> mapFunc2Code;
+
     
 	// IO related parameters
     size_t UnCompBufferSize;
@@ -153,7 +156,7 @@ public:
 	void WriteBV (const gsl_vector *bv);
 	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
 	void WriteParam (const gsl_vector *alpha);
-	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col);
+	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const gsl_matrix *Result_theta, const gsl_matrix *Result_sigma, const size_t w_col);
 	
 	//Subfunctions inside MCMC
 	void CalcPgamma (double *p_gamma);
@@ -238,8 +241,8 @@ public:
     
     void InitialMCMC ( uchar **UtX, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
     void SetXgamma ( uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, const vector<size_t> &rank_new, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new);
-    double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
-    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const size_t s_size, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp);
+    double CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_vector *pi_vec, const gsl_vector *sigma_vec, const vector<size_t> &rank);
+    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank);
 
     double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat,  uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma);
     void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
@@ -247,7 +250,7 @@ public:
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
     
     // added function for newmodel
-    void CalcVPi(class HYPBSLMM &cHyp, vector<double> &pi_vec, vector<double> &sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void CalcVPi(class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
 };
 

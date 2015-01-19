@@ -53,6 +53,8 @@ public:
     
     vector<bool> indicator_func;
     vector<double> weight;
+    double weight_i;
+    
     void printMarker();
 };
 
@@ -77,11 +79,13 @@ struct SNPPOS{
     long int bp;
     vector<bool> indicator_func;
     vector<double> weight;
+    double weight_i;
     void printMarker();
 };
 
 //JY
 void printSNPInfo(vector<SNPPOS> &snp_pos, int numMarker);
+void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, const double weight_i);
 
 //results for lmm
 class SUMSTAT {
@@ -111,13 +115,10 @@ public:
 //hyper-parameters for bslmm
 class HYPBSLMM {
 public:
-	//double h;
-    //double rho;
-	//double logp;
-
-    vector<double> log_theta;
-    vector<double> subvar;
-    double sigma_b2;
+    
+    vector<double> log_theta; // log(theta) for each function type
+    vector<double> subvar; // variance for each function type
+    double sigma_b2; //
 	double pve;
 	double pge;
 	
@@ -130,6 +131,9 @@ public:
     //multiple functionrelated parameters
     int n_type;
     vector<size_t> mFunc; // # of variants of each variant type
+    double e; //hyper parameter in the prior gamma distribution
+    map<string, int> mapFunc2Code;
+    
     
 	// IO related parameters
     size_t UnCompBufferSize;
@@ -146,6 +150,7 @@ public:
 	vector<size_t> p_column;			//which phenotype column needs analysis
 	size_t d_pace;		//display pace
 	
+    string file_func_code; //coded all unique variant function types
     string file_sample;
     string file_vcfs;
     string file_vcf;
@@ -285,6 +290,7 @@ public:
 	void WriteMatrix (const gsl_matrix *matrix_U, const string suffix);
 	void WriteVector (const gsl_vector *vector_D, const string suffix);
 	void CopyRead (gsl_vector *log_N);
+    
 };
 
 

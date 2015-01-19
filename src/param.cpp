@@ -73,12 +73,12 @@ void genMarker::printMarker(){
     return;
 }
 
-void snpPos::printMarker(){
-    
+void SNPPOS::printMarker(){
     std::cout << "position : " << pos << "; ";
     std::cout << "ID : " << rs <<"; ";
     std::cout << "chr : " << chr <<"; ";
-    std::cout << "bp : " << bp <<"; \n";
+    std::cout << "bp : " << bp <<"; ";
+    std::cout << "weight_i : " << weight_i <<"; \n";
 }
 
 void SNPINFO::printMarker(){
@@ -91,10 +91,21 @@ void SNPINFO::printMarker(){
     std::cout << "missingness = " << missingness<< "; maf = " << maf << "\n";
 }
 
-void printSNPInfo(vector<snpPos> &snp_pos, int numMarker)
+void printSNPInfo(vector<SNPPOS> &snp_pos, int numMarker)
 {
     for (int i=0; i<numMarker; i++) {
         snp_pos[i].printMarker();
+    }
+}
+
+void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, const double weight_i)
+{
+    weight.clear();
+    for (size_t i=0; i < indicator_func.size(); i++) {
+        if (indicator_func[i]) {
+            weight.push_back(weight_i);
+        }
+        else weight.push_back(0.0);
     }
 }
 
