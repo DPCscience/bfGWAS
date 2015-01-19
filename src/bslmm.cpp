@@ -1713,6 +1713,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     size_t tt=0;
     vector<bool> indicator_func;
     vector<double> weight;
+    double weight_i;
     
     for (size_t i=0; i < ns_total; ++i){
         if(indicator_snp[i] == 0) {continue;}
@@ -1725,7 +1726,9 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         bp = snpInfo[i].base_position;
         indicator_func = snpInfo[i].indicator_func;
         weight = snpInfo[i].weight;
-        SNPPOS snp_temp={pos, rs, chr, bp, indicator_func, weight};
+        
+        weight_i = snpInfo[i].weight_i;
+        SNPPOS snp_temp={pos, rs, chr, bp, indicator_func, weight, weight_i};
         snp_pos.push_back(snp_temp);
         
         tt++;

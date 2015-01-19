@@ -223,6 +223,123 @@ bool ReadFile_anno (const string &file_anno, map<string, string> &mapRS2chr, map
 	return true;
 }
 
+//Read function annotation file
+//  (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, string &GTfield, const map<string, size_t> &PhenoID2Ind, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos)
+
+bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, const vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type)
+{
+    string line;
+    char *pch, *nch, *p;
+    n_type = 0;
+
+    //load in unique function codes
+    string func_type;
+    int func_code;
+    
+    ifstream infile_code (file_func_code.c_str(), ifstream::in);
+    if (!infile_code) {cout<<"error opening annotation file: "<<file_func_code<<endl; return false;}
+    while (!safeGetline(infile_code, line).eof()) {
+        
+        if (line[0] == '#') {
+            continue;
+        }
+        else {
+            pch = (char *)line.cstr();
+            nch = strchr(pch, '\t');
+            func_type.assign(pch, nch-pch);
+            func_code = strtol(nch, NULL);
+            cout << func_type << ":" << func_code << endl;
+            mapFunc2Code[func_type] = func_code;
+            n_type++;
+        }
+    }
+    cout << "n_type = " << n_type << endl;
+    infile_code.close();
+    infile_code.clear();
+    
+    ifstream infile (file_anno.c_str(), ifstream::in);
+    if (!infile) {cout<<"error opening annotation file: "<<file_anno<<endl; return false;}
+    
+    // read function annotation file
+    string rs;
+    long int b_pos;
+    string chr;
+    int snp_nfunc;
+    size_t snp_i = 0;
+    
+    while (!safeGetline(infile, line).eof()) {
+        if (line[0] == '#') {
+            continue;
+        }
+        else {
+          if (!indicator_snp[snp_i]) {
+              pch=(char *)line.cstr();
+              nch = strchr(pch, '\t');
+              rs.assign(pch, nch-pch);
+              if (snpInfo[snp_i].rs.compare(rs) != 0) {
+                  cerr << "annotation file ID dose not match vcf file ID...\n";
+                  return false;
+              }
+              snpInfo[snp_i].indicator_func.assign(n_type, 0);
+              CalcWeight(snpInfo[snp_i].indicator_func, snpInfo[snp_i].weight, 0.0);
+              snp_i++;
+              continue;
+          }
+          else{
+            pch=(char *)line.cstr();
+            nch = strchr(pch, '\t');
+            rs.assign(pch, nch-pch);
+            if (snpInfo[snp_i].rs.compare(rs) != 0) {
+                cerr << "annotation file ID dose not match vcf file ID...\n";
+                return false;
+            }
+            
+            pch = (nch == NULL) ? NULL : nch+1;
+            nch = strchr(pch, '\t');
+           // chr.assign(pch, nch-pch);
+          //  if (pch == NULL || chr.compare("NA") == 0) {
+           //     chr = "-9";
+           // }
+            
+            pch = (nch == NULL) ? NULL : nch+1;
+            nch = strchr(pch, '\t');
+           // b_pos = strtol(pch, NULL);
+           // if (pch == NULL) {
+           //     b_pos = -9;
+           // }
+            
+            pch = (nch == NULL) ? NULL : nch+1;
+            snp_nfunc = 0;
+            snpInfo[snp_i].indicator_func.assign(n_type, 0);
+            while (pch != NULL) {
+                nch = strchr(pch, ',');
+                func_type.assign(pch, pch-nch);
+                func_code = mapFunc2Code[func_type];
+                if(!snpInfo[snp_i].indicator_func[func_code])
+                {
+                    snpInfo[snp_i].indicator_func[func_code] = 1;
+                    snp_nfunc++;
+                }
+                pch = (nch == NULL) ? NULL : nch+1;
+            }
+            
+            if (snp_nfunc > 0) snpInfo[snp_i].weight_i = 1.0 / double(snp_nfunc);
+            else snpInfo[snp_i].weight_i = 0.0;
+            CalcWeight(snpInfo[snp_i].indicator_func, snpInfo[snp_i].weight, snpInfo[snp_i].weight_i);
+            
+            snp_i++;
+          }
+        }
+    }
+    cout << "total snp number = " << snp_i << endl;
+    
+    infile.close();
+    infile.clear();	
+    
+    return true;
+}
+
+
 //read one column of phenotype
 bool ReadFile_column (const string &file_pheno, vector<bool> &indicator_idv, vector<double> &pheno, const int &p_column)
 {
@@ -465,7 +582,7 @@ bool ReadFile_bim (const string &file_bim, vector<SNPINFO> &snpInfo)
 		ch_ptr=strtok (NULL, " \t");
 		major=ch_ptr;
 		
-		SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, -9, -9, -9};
+		SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, -9, -9, -9, NULL, NULL, 0.0};
 		snpInfo.push_back(sInfo);
 	}
 	
@@ -691,7 +808,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             }
             
             else if ((tab_count == 6) && (pch[0] == 'F')){
-                SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
+                SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, NULL, NULL, 0.0};
                 snpInfo.push_back(sInfo); //save marker information
                 indicator_snp.push_back(0);
                 continue;
@@ -781,7 +898,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             cerr << "record sample number " << c_idv << " dose not equal to ni_total " << ni_total << "\n";
             exit(-1);
         }
-        SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
+        SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, NULL, NULL, 0.0};
         snpInfo.push_back(sInfo); //save marker information
         
         maf/=2.0*(double)(ni_test-n_miss);
@@ -1083,7 +1200,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
         
         maf/=2.0*(double)(ni_test-n_miss);
         
-        SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
+        SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, NULL, NULL, 0.0};
         snpInfo.push_back(sInfo);
         
         if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
@@ -1181,7 +1298,7 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, const g
 		major=ch_ptr;
 		
 		if (setSnps.size()!=0 && setSnps.count(rs)==0) {
-			SNPINFO sInfo={"-9", rs, -9, -9, minor, major, -9, -9, -9};
+			SNPINFO sInfo={"-9", rs, -9, -9, minor, major, -9, -9, -9, NULL, NULL, 0.0};
 			snpInfo.push_back(sInfo);
 			indicator_snp.push_back(0);
 			continue;
@@ -1218,7 +1335,7 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, const g
 		}
 		maf/=2.0*(double)(ni_test-n_miss);	
 		
-		SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf};
+		SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, NULL, NULL, 0.0};
 		snpInfo.push_back(sInfo);
 		
 		if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
@@ -2662,7 +2779,7 @@ bool ReadFile_gene (const string &file_gene, vector<double> &vec_read, vector<SN
 		
 		if (t!=n_idv) {cout<<"error! number of columns doesn't match in row: "<<ng_total<<endl; return false;}
 		
-		SNPINFO sInfo={"-9", rs, -9, -9, "-9", "-9", -9, -9, -9};
+		SNPINFO sInfo={"-9", rs, -9, -9, "-9", "-9", -9, -9, -9, NULL, NULL, 0.0};
 		snpInfo.push_back(sInfo);
 		
 		ng_total++;

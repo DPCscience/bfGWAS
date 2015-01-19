@@ -88,6 +88,10 @@ bool ReadFile_vcf_pheno (const string &file_vcf_pheno, vector<vector<bool> > &in
 //for reading multiple vcfs
 bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, const gsl_matrix *WtW, const gsl_matrix *WtWi, gsl_vector *Wtx, gsl_vector *WtWiWtx, const vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, const vector<uint> &SampleVcfPos, const string &file_sample);
 bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, vector<string> &InputSampleID, StringIntHash &sampleID2vcfInd, const string &file_sample);
+
+//for new model
+bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, const vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type);
+
 #endif
 
 

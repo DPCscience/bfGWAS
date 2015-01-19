@@ -101,11 +101,11 @@ void printSNPInfo(vector<SNPPOS> &snp_pos, int numMarker)
 void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, const double weight_i)
 {
     weight.clear();
-    for (size_t i=0; i < indicator_func.size(); i++) {
-        if (indicator_func[i]) {
-            weight.push_back(weight_i);
+    weight.assign(indicator_func.size(), 0.0);
+    if (weight_i != 0.0) {
+        for (size_t i=0; i < indicator_func.size(); i++) {
+            if (indicator_func[i]) weight[i] = weight_i;
         }
-        else weight.push_back(0.0);
     }
 }
 
@@ -137,7 +137,7 @@ time_total(0.0), time_G(0.0), time_eigen(0.0), time_UtX(0.0), time_UtZ(0.0), tim
 
 
 //read files
-//obtain ns_total, ng_total, ns_test, ni_test
+//obtain ns_total, ng_total, ns_test, ni_test, n_type
 void PARAM::ReadFiles (void) 
 {
 	string file_str;
@@ -154,6 +154,7 @@ void PARAM::ReadFiles (void)
         
 		if (ReadFile_est (file_epm, est_column, mapRS2est)==false) {error=true;}
 		
+        //read bim, fam file for bed genotype data type
 		if (!file_bfile.empty()) {
            // cout << "start reading .bim file \n";
 			file_str=file_bfile+".bim";
@@ -164,6 +165,7 @@ void PARAM::ReadFiles (void)
 			if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, p_column, InputSampleID)==false) {error=true;}
 		}
 		
+        //read phenotype for geno/vcf data type
 		if (!file_geno.empty() || !file_vcf.empty()) {
 			if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, p_column)==false) {error=true;}		
 			
@@ -252,6 +254,10 @@ void PARAM::ReadFiles (void)
         snpInfo.clear();
         if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
             {error=true;}
+        
+        if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
+            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type)==false) {error=true;}
+        }
         
         gsl_matrix_free(W);
         
