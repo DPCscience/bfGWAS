@@ -950,10 +950,10 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     if (cHyp.logp>logp_max) {cHyp.logp=logp_max;}
     
     cHyp.log_theta.assign(n_type, cHyp.logp);
-    PrintVector(cHyp.log_theta);
+   // PrintVector(cHyp.log_theta);
     
     cHyp.subvar.assign(n_type, sigma_a2);
-    PrintVector(cHyp.subvar);
+    //PrintVector(cHyp.subvar);
     
     cout<<"initial value of h = "<<cHyp.h<<endl;
     cout<<"initial value of rho = "<<cHyp.rho<<endl;
@@ -1743,6 +1743,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         weight = snpInfo[i].weight;
         
         weight_i = snpInfo[i].weight_i;
+        // cout << weight_i << ", ";
         SNPPOS snp_temp={pos, rs, chr, bp, indicator_func, weight, weight_i};
         snp_pos.push_back(snp_temp);
         
@@ -1805,7 +1806,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         CalcXtX (Xgamma_old, z, rank_old.size(), XtX_old, Xtz_old);
         logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec_old, sigma_vec_old, rank_old);
     }
-    
+    /*
     cout << "First 10 responses: \n";
     PrintVector(z, 10);
     cout << "First 10 Xtz: \n";
@@ -1814,6 +1815,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     PrintMatrix(Xgamma_old, 10, 10);
     cout << "First 10 XtX : \n";
     PrintMatrix(XtX_old, 10, 10);
+     */
     
     //calculate centered z_hat, and pve
     if (a_mode==13) {
@@ -1865,10 +1867,10 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             logMHratio=0.0;
             logMHratio+=ProposeTheta(cHyp_old, cHyp_new, repeat);
             logMHratio+=ProposeSubvar(cHyp_old, cHyp_new, repeat);
-            PrintVector(cHyp_old.log_theta);
-            PrintVector(cHyp_new.log_theta);
-            PrintVector(cHyp_old.subvar);
-            PrintVector(cHyp_new.subvar);
+           // PrintVector(cHyp_old.log_theta);
+            //PrintVector(cHyp_new.log_theta);
+            //PrintVector(cHyp_old.subvar);
+            //PrintVector(cHyp_new.subvar);
            // cout << "propose Theta, Subvar success, proposing gamma..." << endl;
            // cout << "logMHratio" << logMHratio << endl;
             
@@ -1877,7 +1879,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             else if(flag_gamma==2) ndel++;
             else if(flag_gamma==3) nswitch++;
             else nother++;
-            cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
+            //cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
 
             CalcVPi(cHyp_new, pi_vec_new, sigma_vec_new, rank_new, snp_pos);
             if (cHyp_new.n_gamma==0) {
@@ -1969,8 +1971,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         
         accept_percent = (double)n_accept/(double)(t*n_mh);
         if (accept_percent<0.000001) {
-            cerr << "acceptance percentage = " << accept_percent << " < 0.000001; ABORT MCMC...";
-            exit(1);
+            cerr << "acceptance percentage = " << accept_percent << " < 0.000001;";
+           // exit(1);
         }
         
         //Save data

@@ -1351,7 +1351,7 @@ void GEMMA::BatchRun (PARAM &cPar)
             //read genotypes X (not UtX)
             clock_t time_readfile = clock();
  
-            cout << "allocate uchar* vector with length : " << cPar.ns_test << endl;
+            //cout << "allocate uchar* vector with length : " << cPar.ns_test << endl;
             uchar ** X_Genotype = new uchar*[cPar.ns_test];
             cPar.ReadGenotypes (X_Genotype, G, false); //load genotypes
             
@@ -1359,7 +1359,7 @@ void GEMMA::BatchRun (PARAM &cPar)
             
            // PrintVector(cPar.CompBuffSizeVec);
             //cout << "UnCompBufferSize = " << cPar.UnCompBufferSize << endl;
-            print(X_Genotype, 10, 10, cPar.CompBuffSizeVec, cPar.UnCompBufferSize);
+           // print(X_Genotype, 10, 10, cPar.CompBuffSizeVec, cPar.UnCompBufferSize);
 
             gsl_matrix_free(G);
             gsl_matrix_free(W);
