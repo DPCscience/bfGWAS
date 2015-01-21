@@ -242,7 +242,7 @@ public:
     
     void InitialMCMC ( uchar **UtX, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
     void SetXgamma ( uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, const vector<size_t> &rank_new, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new);
-    double CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_vector *pi_vec, const gsl_vector *sigma_vec, const vector<size_t> &rank);
+    double CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_vector *pi_vec, const vector<size_t> &rank);
     double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank);
 
     double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat,  uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma);
@@ -251,12 +251,17 @@ public:
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
     
     // added function for newmodel
-    void CalcVPi(class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void CalcPivec(class HYPBSLMM &cHyp, gsl_vector *pi_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void CalcSvec(class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
     double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
-    double CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank);
+    double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j);
+    double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j);
+    double CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank);
     double CalcPsubvar (const class HYPBSLMM &cHyp);
     double CalcPtheta (const class HYPBSLMM &cHyp);
+    double CalcPsubvar (const class HYPBSLMM &cHyp, size_t j);
+    double CalcPtheta (const class HYPBSLMM &cHyp, size_t j);
     double CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank);
     
     
