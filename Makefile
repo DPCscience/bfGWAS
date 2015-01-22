@@ -31,7 +31,7 @@ SRC_DIR  = ./src
 
 CPP = g++
 
-CPPFLAGS = -ggdb -Wall -O3 -I./libStatGen/include/ -I./zlib/ -D__ZLIB_AVAILABLE__ -D_FILE_OFFSET_BITS=64 -D__STDC_LIMIT_MACROS #-pg
+CPPFLAGS = -ggdb -Wall -O3 -I./libStatGen/include/ -I./zlib/ -D__ZLIB_AVAILABLE__ -D_FILE_OFFSET_BITS=64 -D__STDC_LIMIT_MACROS -pg
 
 ifdef FORCE_DYNAMIC
 LIBS = -lgsl -lgslcblas -lblas -pthread -lz -lm ./libStatGen/libStatGen.a
@@ -39,7 +39,7 @@ else
 LIBS = -lgsl -lgslcblas -pthread -lz -lm ./libStatGen/libStatGen.a
 endif
 
-OUTPUT = $(BIN_DIR)/gemma_newmodel
+OUTPUT = $(BIN_DIR)/gemma_newmodel_pg
 
 ifdef FORCE_FLOAT
 OUTPUT = $(BIN_DIR)/gemmaf

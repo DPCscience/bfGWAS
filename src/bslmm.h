@@ -251,7 +251,7 @@ public:
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
     
     // added function for newmodel
-    void CalcPivec(class HYPBSLMM &cHyp, gsl_vector *pi_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void CalcSvec(class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
     double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
@@ -275,6 +275,7 @@ void PrintVector(uchar *x, size_t length);
 void PrintVector(gsl_vector * x, size_t s);
 void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol);
 
+void expVector(vector<double> &expvec, vector<double> &logvec);
 
 #endif
 
