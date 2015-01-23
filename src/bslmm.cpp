@@ -1244,18 +1244,17 @@ void expVector(vector<double> &expvec, vector<double> &logvec){
     }
 }
 
-void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
+void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos){
 
     double pi_temp, p = 1.0 / double(ns_test);
     gsl_vector_set_all(pi_vec, p);
-    size_t order_i;
+    // Pivec in the same order as snp_pos
     
     for (size_t i=0; i < ns_test; i++) {
-        order_i = mapRank2Order[rank[i]];
         pi_temp = 0.0;
         for (size_t j=0; j < n_type; j++) {
-            if(snp_pos[order_i].indicator_func[j])
-                pi_temp += theta[j] * snp_pos[order_i].weight[j];
+            if(snp_pos[i].indicator_func[j])
+                pi_temp += theta[j] * snp_pos[i].weight[j];
         }
         if(pi_temp > 0.0) {gsl_vector_set(pi_vec, i, pi_temp);}
         else {cerr << "got zero pi[i] = " << pi_temp << endl;}
@@ -1337,6 +1336,13 @@ double BSLMM::CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank
     return (pi_rank + pi_nonrank);
 }
 
+void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec)
+{
+    for (size_t i=0; i < X->size1; i++) {
+        gsl_vector_view xvec = gsl_matrix_row(X, i);
+        gsl_vector_scale(&xvec.vector, gsl_vector_get(sigma_vec, i));
+    }
+}
 
 
 double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *pi_vec, gsl_vector *sigma_vec, const vector<size_t> &rank)
@@ -1353,27 +1359,22 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     gsl_vector_const_view sigma_sub = gsl_vector_const_subvector(sigma_vec, 0, s_size);
     
     gsl_matrix *Omega=gsl_matrix_alloc (s_size, s_size);
-    gsl_matrix *Omega_temp=gsl_matrix_alloc (s_size, s_size);
-    gsl_matrix *V_beta=gsl_matrix_alloc (s_size, s_size);
     gsl_matrix *M_temp=gsl_matrix_alloc (s_size, s_size);
     gsl_vector *beta_hat=gsl_vector_alloc (s_size);
-    gsl_vector *beta_hat_temp=gsl_vector_alloc (s_size);
     gsl_vector *Xty_temp=gsl_vector_alloc (s_size);
         
     //calculate Omega
-    gsl_matrix_set_identity (V_beta);
-    gsl_vector_view V_beta_diag = gsl_matrix_diagonal(V_beta);
-    gsl_vector_mul(&V_beta_diag.vector, &sigma_sub.vector); //inv(V_beta)
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &XtX_sub.matrix, V_beta, 0.0, Omega);
+    gsl_matrix_memcpy(Omega, &XtX_sub.matrix);
+    CalcXVbeta(Omega, &sigma_sub.vector);
     gsl_matrix_set_identity (M_temp);
     gsl_matrix_add (Omega, M_temp);
     
     //calculate beta_hat
     gsl_vector_memcpy (Xty_temp, &Xty_sub.vector);
-    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat_temp);	//solve Omega * beta_hat = Xty for beta_hat
+    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat);	//solve Omega * beta_hat = Xty for beta_hat
     // Omega was inverted here
     // logdet_0 = det(Omega)
-    gsl_blas_dgemv(CblasNoTrans, 1.0, V_beta, beta_hat_temp, 0.0, beta_hat);
+    gsl_vector_mul(beta_hat, &sigma_sub.vector);
     gsl_blas_ddot (Xty_temp, beta_hat, &d);
     P_yy-=d;
     
@@ -1388,8 +1389,8 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
         gsl_vector_set(beta, i, d);
     }
     gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, Omega, V_beta, 0.0, Omega_temp);
-    gsl_blas_dtrsv(CblasUpper, CblasNoTrans, CblasNonUnit, Omega_temp, &beta_sub.vector);
+    CalcXVbeta(Omega, &sigma_sub.vector);
+    gsl_blas_dtrsv(CblasUpper, CblasNoTrans, CblasNonUnit, Omega, &beta_sub.vector);
     
     gsl_vector_scale(&beta_sub.vector, sqrt(tau));
     gsl_vector_add(&beta_sub.vector, beta_hat);
@@ -1411,11 +1412,8 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     logpost += CalcLikegamma(pi_vec, rank);
     
     gsl_matrix_free (Omega);
-    gsl_matrix_free (Omega_temp);
-    gsl_matrix_free (V_beta);
     gsl_matrix_free (M_temp);
     gsl_vector_free (beta_hat);
-    gsl_vector_free (beta_hat_temp);
     gsl_vector_free (Xty_temp);
 
     return logpost;
@@ -1442,30 +1440,25 @@ double BSLMM::CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, cons
     gsl_vector_const_view Xty_sub=gsl_vector_const_subvector (Xty, 0, s_size);
     gsl_vector_const_view sigma_sub = gsl_vector_const_subvector(sigma_vec, 0, s_size);
     
-    gsl_matrix *Omega=gsl_matrix_alloc (s_size, s_size);
-    gsl_matrix *Omega_temp=gsl_matrix_alloc (s_size, s_size);
-    gsl_matrix *V_beta=gsl_matrix_alloc (s_size, s_size);
-    gsl_matrix *M_temp=gsl_matrix_alloc (s_size, s_size);
-    gsl_vector *Xty_temp=gsl_vector_alloc (s_size);
-    gsl_vector *beta_hat=gsl_vector_alloc (s_size);
-    gsl_vector *beta_hat_temp=gsl_vector_alloc (s_size);
-    
-    //calculate Omega
-    gsl_matrix_set_identity (V_beta);
-    gsl_vector_view V_beta_diag = gsl_matrix_diagonal(V_beta);
-    gsl_vector_memcpy(&V_beta_diag.vector, &sigma_sub.vector); //inv(V_beta)
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &XtX_sub.matrix, V_beta, 0.0, Omega);
-    gsl_matrix_set_identity (M_temp);
-    gsl_matrix_add (Omega, M_temp);
-    
-    //calculate beta_hat
-    gsl_vector_memcpy (Xty_temp, &Xty_sub.vector);
-    logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat_temp);	//solve Omega * beta_hat = Xty for beta_hat
-    // Omega was inverted here
-    // logdet_0 = det(Omega)
-    gsl_blas_dgemv(CblasNoTrans, 1.0, V_beta, beta_hat_temp, 0.0, beta_hat);
-    gsl_blas_ddot (Xty_temp, beta_hat, &d);
-    P_yy-=d;
+      gsl_matrix *Omega=gsl_matrix_alloc (s_size, s_size);
+      gsl_matrix *M_temp=gsl_matrix_alloc (s_size, s_size);
+      gsl_vector *beta_hat=gsl_vector_alloc (s_size);
+      gsl_vector *Xty_temp=gsl_vector_alloc (s_size);
+      
+      //calculate Omega
+      gsl_matrix_memcpy(Omega, &XtX_sub.matrix);
+      CalcXVbeta(Omega, &sigma_sub.vector);
+      gsl_matrix_set_identity (M_temp);
+      gsl_matrix_add (Omega, M_temp);
+      
+      //calculate beta_hat
+      gsl_vector_memcpy (Xty_temp, &Xty_sub.vector);
+      logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat);	//solve Omega * beta_hat = Xty for beta_hat
+      // Omega was inverted here
+      // logdet_0 = det(Omega)
+      gsl_vector_mul(beta_hat, &sigma_sub.vector);
+      gsl_blas_ddot (Xty_temp, beta_hat, &d);
+      P_yy-=d;
     
     loglike=-0.5*logdet_O;
     if (a_mode==11) {loglike-=0.5*(double)ni_test*log(P_yy);}
@@ -1473,11 +1466,8 @@ double BSLMM::CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, cons
     
     
     gsl_matrix_free (Omega);
-    gsl_matrix_free (Omega_temp);
-    gsl_matrix_free (V_beta);
     gsl_matrix_free (M_temp);
     gsl_vector_free (beta_hat);
-    gsl_vector_free (beta_hat_temp);
     gsl_vector_free (Xty_temp);
   }
     
@@ -1888,7 +1878,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cHyp_initial=cHyp_old;
     cout << "Calculate pi and sigma vectors... \n";
     expVector(theta_vec, cHyp_old.log_theta);
-    CalcPivec(theta_vec, pi_vec_old, rank_old, snp_pos); // Calculate pi_vec, sigma_vec
+    CalcPivec(theta_vec, pi_vec_old, snp_pos); // Calculate pi_vec, sigma_vec
     CalcSvec(cHyp_old, sigma_vec_old, rank_old, snp_pos);
     
     if (cHyp_old.n_gamma==0) {
@@ -1947,7 +1937,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             
             //First proposal
             expVector(theta_vec, cHyp_old.log_theta);
-            CalcPivec(theta_vec, pi_vec_old, rank_old, snp_pos); // Calculate pi_vec, sigma_vec
+            CalcPivec(theta_vec, pi_vec_old, snp_pos); // Calculate pi_vec, sigma_vec
             CalcSvec(cHyp_old, sigma_vec_old, rank_old, snp_pos);
             if (cHyp_old.n_gamma==0) {
                 logPost_old=CalcPosterior (ztz, cHyp_old, sigma_vec_old, rank_old);
@@ -1974,7 +1964,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             logMHratio_theta += ProposeTheta(cHyp_old, cHyp_new, repeat, j);
             //cout << "propose logMHratio_theta = " << (logMHratio_theta) << endl;
             theta_vec[j] = exp(cHyp_new.log_theta[j]);
-            CalcPivec(theta_vec, pi_vec_new, rank_new, snp_pos); // Calculate pi_vec
+            CalcPivec(theta_vec, pi_vec_new, snp_pos); // Calculate pi_vec
             loglike_gamma_new = CalcLikegamma(pi_vec_new, rank_new);
             logPost_theta_new = loglike_gamma_new + CalcPtheta(cHyp_new);
             logMHratio_theta += logPost_theta_new - logPost_theta_old;
@@ -2029,6 +2019,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         //MH steps
         //repeat = 1;
         //cout << "n_mh = " << n_mh << endl;
+        logPost_old=CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, pi_vec_old, sigma_vec_old, rank_old);
         for (size_t i=0; i<n_mh; ++i) {
             if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
             else {repeat=1;}
@@ -2128,7 +2119,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         accept_percent = (double)n_accept/(double)((t+1) * n_mh);
         accept_percent_theta = (double)naccept_theta / (double)((t+1) * n_type);
         accept_percent_subvar = (double)naccept_subvar / (double)((t+1) * n_type);
-        if (t % w_pace == 0) {
+        if (t % w_step == 0) {
             cout << "theta acceptance percentage = " << accept_percent_theta ;
             cout << "; subvar acceptance percentage = " << accept_percent_subvar ;
             cout << "; gamma acceptance percentage = " << accept_percent << endl ;
@@ -2344,7 +2335,7 @@ double BSLMM::ProposePi (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_ne
 	double logp_old=cHyp_old.logp, logp_new=cHyp_old.logp;
 	double log_ratio = 0.0;
     
-	double d_logp=min(0.1, (logp_max-logp_min)*logp_scale);
+	double d_logp=min(0.5, (logp_max-logp_min)*logp_scale);
 	
 	for (size_t i=0; i<repeat; ++i) {
         
@@ -2377,7 +2368,8 @@ double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp
 {
 	vector<double> logp_old = cHyp_old.log_theta, logp_new=cHyp_old.log_theta;
 	double log_ratio = 0.0;
-	double d_logp = min(0.1, (logp_max-logp_min)*logp_scale);
+    double d_logp = min(0.5, (logp_max-logp_min)*logp_scale);
+//	double d_logp = min(0.1, (logp_max-logp_min)*logp_scale);
 	
 	for (size_t i=0; i<repeat; ++i) {
         for (size_t j=0; j<n_type; j++) {

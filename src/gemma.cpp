@@ -758,7 +758,8 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			++i;
 			str.clear();
 			str.assign(argv[i]);
-			cPar.logp_scale=atof(str.c_str())*log(10.0);
+            cPar.logp_scale=atof(str.c_str());
+			//cPar.logp_scale=atof(str.c_str())*log(10.0);
 		}
         else if (strcmp(argv[i], "-vscale")==0) {
             if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
