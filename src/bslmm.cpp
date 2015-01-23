@@ -1954,7 +1954,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         rank_new = rank_old;
         expVector(theta_vec, cHyp_old.log_theta);
         // propose theta vector and run MH-alg
-        cout << "propose theta...\n";
+        // cout << "propose theta...\n";
         for (size_t j=0; j<n_type; j++) {
             logMHratio_theta = 0.0;
             logMHratio_theta += ProposeTheta(cHyp_old, cHyp_new, repeat, j);
@@ -1987,7 +1987,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         //PrintVector(cHyp_new.log_theta);
         
         // propose subvar vector and run MH-alg
-        cout << "propose subvar...\n";
+       // cout << "propose subvar...\n";
         for (size_t j=0; j<n_type; j++) {
             logMHratio_subvar = 0.0;
             logMHratio_subvar += ProposeSubvar(cHyp_old, cHyp_new, repeat, j);
@@ -2021,13 +2021,13 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             else {repeat=1;}
             
             logMHratio=0.0;
-            cout << "propose gamam...\n";
+           // cout << "propose gamam...\n";
             logMHratio+=ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             if(flag_gamma==1) nadd++;
             else if(flag_gamma==2) ndel++;
             else if(flag_gamma==3) nswitch++;
             else nother++;
-            //cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
+           // cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
 
             if (cHyp_new.n_gamma==0) {
                 logPost_new=CalcPosterior (ztz, cHyp_new, sigma_vec_old, rank_new);
@@ -2045,14 +2045,14 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                     SetXgamma (X, Xgamma_old, XtX_old, Xtz_old, z, rank_old, rank_new, Xgamma_new, XtX_new, Xtz_new);
                     time_set+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
                 }
-               // cout << "start calc posterior... " << endl;
+              //  cout << "start calc posterior... " << endl;
                 time_start=clock();
                 logPost_new=CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, pi_vec_old, sigma_vec_old, rank_new);
                 time_post+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
             }
            //  cout << "Calcposterior success." << endl;
             logMHratio += logPost_new-logPost_old;
-           // cout << "logMHratio = " << logMHratio << endl;
+           // cout << "MHratio = " << exp(logMHratio) << endl;
             
             if (logMHratio>0 || log(gsl_rng_uniform(gsl_r))<logMHratio) {accept=1; n_accept++;}
             else {accept=0;}
@@ -2115,7 +2115,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         accept_percent = (double)n_accept/(double)((t+1) * n_mh);
         accept_percent_theta = (double)naccept_theta / (double)((t+1) * n_type);
         accept_percent_subvar = (double)naccept_subvar / (double)((t+1) * n_type);
-        if (t % 10 == 0) {
+        if (t % w_pace == 0) {
             cout << "theta acceptance percentage = " << accept_percent_theta ;
             cout << "; subvar acceptance percentage = " << accept_percent_subvar ;
             cout << "; gamma acceptance percentage = " << accept_percent << endl ;
