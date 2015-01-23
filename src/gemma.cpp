@@ -59,7 +59,7 @@ using namespace std;
 
 
 GEMMA::GEMMA(void):	
-version("0.96_newmodel"), date("01/23/2015"), year("2015")
+version("0.96_newmodel 10:34am"), date("01/23/2015"), year("2015")
 {}
 
 void GEMMA::PrintHeader (void)
