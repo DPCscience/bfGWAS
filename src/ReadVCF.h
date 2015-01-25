@@ -12,9 +12,7 @@
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
 
-#include "/net/fantasia/home/yjingj/software/zlib-1.2.8/zlib.h"
-#include "/net/fantasia/home/yjingj/software/gzstream/gzstream.h"
-//#include "/net/fantasia/home/yjingj/software/miniz/miniz.c"
+#include "zlib.h"
 
 #include <iostream>     // std::cout, std::endl
 #include <iomanip>      // std::setw
