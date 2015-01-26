@@ -1238,6 +1238,7 @@ double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp, const gsl_v
     return logpost;
 }
 
+// exponentiate log_theta vector
 void expVector(vector<double> &expvec, vector<double> &logvec){
     expvec.clear();
     for (size_t i=0; i < logvec.size(); i++) {
@@ -1246,21 +1247,17 @@ void expVector(vector<double> &expvec, vector<double> &logvec){
 }
 
 void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos){
-
     double pi_temp, p = 1.0 / double(ns_test);
     gsl_vector_set_all(pi_vec, p);
     // Pivec in the same order as snp_pos
-    
     for (size_t i=0; i < ns_test; i++) {
         pi_temp = 0.0;
         for (size_t j=0; j < n_type; j++) {
             if(snp_pos[i].indicator_func[j])
                 pi_temp += theta[j] * snp_pos[i].weight[j];
         }
-        if(pi_temp > 0.0) {gsl_vector_set(pi_vec, i, pi_temp);}
-        else {cerr << "got zero pi[i] = " << pi_temp << endl;}
+        gsl_vector_set(pi_vec, i, pi_temp);
     }
-
 }
 
 void BSLMM::CalcSvec(class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
@@ -1268,11 +1265,9 @@ void BSLMM::CalcSvec(class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<s
     if (cHyp.n_gamma != rank.size()) {
         cerr << "Error: cHyp.n_gamma not equal to the size of rank\n";
     }
-    
     size_t order_i;
     double sigma_temp;
     gsl_vector_set_zero(sigma_vec);
-    
     for (size_t i=0; i < cHyp.n_gamma; i++) {
         order_i = mapRank2Order[rank[i]];
         sigma_temp = 0.0;
@@ -1306,8 +1301,8 @@ double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp)
         sum_logv += log(cHyp.subvar[i]);
         sum_vinv += 1.0 / cHyp.subvar[i];
     }
-    logp_var = -(e + 1.0) * sum_logv - sum_vinv / e ;
-    return logp_var;
+    logp_var = (e + 1.0) * sum_logv + sum_vinv / e ;
+    return (-logp_var);
 }
 
 // Calculate prior P(theta)
@@ -2065,6 +2060,26 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                 time_post+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
             }
            //  cout << "Calcposterior success." << endl;
+            
+            if (logPost_new > 0) {
+                cout << "logPost_new ="<< logPost_new  << "> 0 ... \n";
+                cout << "rank_new";
+                PrintVector(rank_new);
+                cout << "X : \n";
+                PrintMatrix(Xgamma_new, 10, rank_new.size());
+                cout << "XtX : \n";
+                PrintMatrix(XtX_new, rank_new.size(), rank_new.size());
+                cout << "beta: \n";
+                PrintVector(Xb_new, rank_new.size());
+                cout << "sigma_vec: \n";
+                PrintVector(sigma_vec_new, rank_new.size());
+                cout << "log_theta: \n";
+                PrintVector(cHyp_new.log_theta);
+                cout << "subvar: \n";
+                PrintVector(cHyp_new.subvar);
+                exit(-1);
+            }
+            
             logMHratio += logPost_new-logPost_old;
            // cout <<"logPost_old = " << logPost_old<< "; logPost_new = "<< logPost_new<< "; MHratio = " << exp(logMHratio) << endl;
             

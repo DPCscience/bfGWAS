@@ -101,10 +101,13 @@ void printSNPInfo(vector<SNPPOS> &snp_pos, int numMarker)
 void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, const double weight_i)
 {
     weight.clear();
-    weight.assign(indicator_func.size(), 0.0);
     for (size_t i=0; i < indicator_func.size(); i++) {
-            if (indicator_func[i]) weight[i] = weight_i;
+            if (indicator_func[i]) weight.push_back(weight_i);
+            else weight.push_back(0.0);
         }
+    if (weight.size() != indicator_func.size()) {
+        cout << "Error weight size.\n";
+    }
 }
 
 
