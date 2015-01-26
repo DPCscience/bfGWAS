@@ -74,7 +74,7 @@ public:
     //multiple function related parameters
     size_t n_type;
     vector<size_t> mFunc; // # of variants of each variant type
-    double e; //hyper parameter in the prior gamma distribution
+    double e, e_shape, e_rate; //hyper parameter in the prior gamma distribution
     double vscale;
     map<string, int> mapFunc2Code;
 
