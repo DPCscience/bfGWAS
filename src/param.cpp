@@ -227,6 +227,10 @@ void PARAM::ReadFiles (void)
 		file_str=file_bfile+".bed";
 		if (ReadFile_bed (file_str, setSnps, W, indicator_idv, indicator_snp, snpInfo, maf_level, miss_level, hwe_level, r2_level, ns_test)==false) {error=true;}
 		
+        if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
+            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type)==false) {error=true;}
+        }
+        
 		gsl_matrix_free(W);
 		
 		ns_total=indicator_snp.size();
