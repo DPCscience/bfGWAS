@@ -421,7 +421,7 @@ void topdm(gsl_matrix *Omega){
             if (evali < EPS)
                 {
                     gsl_matrix_set(D, i, i, EPS); neig++;
-                    //cout << "eigen value = EPS = " << EPS << endl;
+                    cout << "eigen value = EPS = " << EPS << endl;
                 }
             else {gsl_matrix_set(D, i, i, evali); }
             
@@ -438,7 +438,7 @@ void topdm(gsl_matrix *Omega){
     gsl_matrix_free(evec_temp);
     gsl_vector_free(eval_temp);
     
-    //if(neig > 0 ) cout << "topdm success with number of negative eigen = " << neig << endl;
+    if(neig > 0 ) cout << "topdm success with number of negative eigen = " << neig << endl;
     }
     return;
 }
@@ -451,51 +451,6 @@ void CholeskyInverse(gsl_matrix *XtX){
     return;
 }
 
-double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty)
-{
-	double logdet_O=0.0;
-	//cout << "start cholesky solve" << endl;
-//#ifdef WITH_LAPACK
-//	lapack_cholesky_decomp(Omega);
-//	for (size_t i=0; i<Omega->size1; ++i) {
-//		logdet_O+=log(gsl_matrix_get (Omega, i, i));
-//	}
-//	logdet_O*=2.0;
-//	lapack_cholesky_solve(Omega, Xty, OiXty);
-//#else
-	//int status = gsl_linalg_cholesky_decomp(Omega);
-	//if(status == GSL_EDOM) {
-	//	cout << "## non-positive definite matrix" << endl;
-    //		exit(0);
-    //	}
-    
-    //cout << "decompose Omega start" << endl;
-    //cout << "Omega size = " << Omega->size1 << endl;
-    //try {
-      //  gsl_linalg_cholesky_decomp(Omega);
-    //} catch (int chol_status) {
-      //  if(chol_status == GSL_EDOM)
-        //    {
-                topdm(Omega);
-                gsl_linalg_cholesky_decomp(Omega);
-          //  }
-    //}
-    //cout << "cholesky decompose Omega success" << endl;
-	
-	for (size_t i=0; i<Omega->size1; ++i) {
-		logdet_O+=log(gsl_matrix_get (Omega, i, i));
-	}
-	logdet_O*=2.0;	
-	
-	gsl_vector_memcpy (OiXty, Xty);
-	gsl_blas_dtrsv(CblasLower, CblasNoTrans, CblasNonUnit, Omega, OiXty); 
-	gsl_blas_dtrsv(CblasUpper, CblasNoTrans, CblasNonUnit, Omega, OiXty);
-	//cout << "inv(Omega) * Xtz sucess" << endl;
-	//	gsl_linalg_cholesky_solve(XtX, Xty, iXty);
-//#endif
-	
-	return logdet_O;
-}
 
 
 //Eigensolve start
@@ -578,6 +533,31 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
 	return;
 }
 //JY write eigen solve
+
+
+double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty)
+{
+    size_t s_size = Xty->size;
+    double lambda = 0.0;
+    for (size_t i=0; i<s_size; ++i) {
+        lambda += gsl_matrix_get(Omega, i, i);
+    }
+    lambda /= (double)s_size;
+    lambda *= 0.00000001;
+    EigenSolve(Omega, Xty, OiXty, lambda);
+    
+	double logdet_O=0.0;
+    topdm(Omega);
+    gsl_linalg_cholesky_decomp(Omega);
+    //cout << "cholesky decompose Omega success" << endl;
+	
+	for (size_t i=0; i<Omega->size1; ++i) {
+		logdet_O+=log(gsl_matrix_get (Omega, i, i));
+	}
+	logdet_O*=2.0;
+    
+	return logdet_O;
+}
 
 void Ginv(gsl_matrix *XtX_gtemp){
     

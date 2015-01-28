@@ -954,8 +954,10 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
    // PrintVector(cHyp.log_theta);
     
     cHyp.subvar.assign(n_type, sigma_a2);
-    e_shape = e;
-    e_rate = (e_shape - 1.0) * sigma_a2;
+    e_shape =  e;
+    e_rate = e_shape / sigma_a2; // Gamma with mean sigma_a2,
+    cout << "IG with shape = " << e_shape << "; rate = " << e_rate;
+    cout << "; mean = " << sigma_a2 << "; variance = " << (sigma_a2 * sigma_a2 / (e_shape )) << endl;
     //PrintVector(cHyp.subvar);
     
     cout<<"initial value of h = "<<cHyp.h<<endl;
@@ -1296,8 +1298,8 @@ double BSLMM::CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const
         if(snp_pos[order_i].indicator_func[j])
                 sigma_temp += cHyp.subvar[j] * snp_pos[order_i].weight[j];
     }
-    if (sigma_temp < 0 ) {
-        cerr << "Error: sigma = " << sigma_temp << endl;
+    if (sigma_temp <= 0 ) {
+        cerr << "Error: sigma = " << sigma_temp << "<= 0" << endl;
         exit(-1);
     }
     return sigma_temp;
@@ -1307,8 +1309,8 @@ double BSLMM::CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const
 double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp, size_t j)
 {
     double logp_var;
-    logp_var = (e_shape + 1.0) * log(cHyp.subvar[j]) + e_rate * (cHyp.subvar[j] );
-    return -logp_var;
+    logp_var = (e_shape - 1.0) * log(cHyp.subvar[j]) - e_rate * (cHyp.subvar[j]);
+    return logp_var;
 }
 
 // Calculate prior P(theta_j)
@@ -1317,16 +1319,16 @@ double BSLMM::CalcPtheta (const class HYPBSLMM &cHyp, size_t j)
     return (-cHyp.log_theta[j]);
 }
 
-// Calculate prior P(subvar)
+// Calculate prior P(1/subvar) , gamma(shape, rate)
 double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp)
 {
     double logp_var = 0.0, sum_logv = 0.0, sum_vinv = 0.0;
     for (size_t i=0; i<n_type; i++) {
         sum_logv += log(cHyp.subvar[i]);
-        sum_vinv += 1.0 / cHyp.subvar[i];
+        sum_vinv += e_rate * cHyp.subvar[i];
     }
-    logp_var = (e_shape + 1.0) * sum_logv + e_rate * sum_vinv  ;
-    return (-logp_var);
+    logp_var = (e_shape - 1.0) * sum_logv - sum_vinv ;
+    return (logp_var);
 }
 
 // Calculate prior P(theta)
@@ -1394,11 +1396,17 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     logdet_O=CholeskySolve(Omega, Xty_temp, beta_hat);	//solve Omega * beta_hat = Xty for beta_hat
     // Omega was inverted here
     // logdet_0 = det(Omega)
+    //cout << "inv(Omega) * Xty: "; PrintVector(beta_hat);
     gsl_vector_mul(beta_hat, &sigma_sub.vector);
-   // cout << "beta_hat: "; PrintVector(beta_hat);
+    //cout << "beta_hat: "; PrintVector(beta_hat);
     
     gsl_blas_ddot (Xty_temp, beta_hat, &d);
     P_yy-=d;
+    if (P_yy <= 0) {
+        cerr << "Error: P_yy = " << P_yy << endl;
+        cout << "beta_hat: "; PrintVector(beta_hat);
+        exit(-1);
+    }
     
     //sample tau
     double tau=1.0;
@@ -1415,6 +1423,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     for (size_t i=0; i<s_size; i++) {
         beta_i = gsl_vector_get(&beta_sub.vector, i);
         sigma_i = gsl_vector_get(&sigma_sub.vector, i);
+        //cout << "beta_i = " << beta_i << "; sigma_i = " << sigma_i << "; tau = " << tau<< endl;
         gsl_vector_set(&beta_sub.vector, i, beta_i * sqrt(sigma_i/tau));
     }
     //cout << "Sampled beta with mean 0: "; PrintVector(&beta_sub.vector);
@@ -1430,12 +1439,17 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     }
     
     logpost=-0.5*logdet_O;
+    //cout << "-0.5 * logdet_0 = " << logpost;
+    
     if (a_mode==11) {logpost-=0.5*(double)ni_test*log(P_yy);}
     else {logpost-=0.5*P_yy;}
     
+   // cout << "; log_P(Y | ..) = " << logpost ;
+    double loglikegamma = CalcLikegamma(pi_vec, rank);
     //Calc gamma likelihood P(gamma | theta) for posterior
-    logpost += CalcLikegamma(pi_vec, rank);
-    
+    logpost += loglikegamma;
+   // cout << " + loglikegamma = " << loglikegamma << "; logpost = " << logpost << endl;
+
     gsl_matrix_free (Omega);
     gsl_matrix_free (M_temp);
     gsl_vector_free (beta_hat);
@@ -2016,7 +2030,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         // cout << "propose subvar...\n";
         // cout << "rank_old size = " << rank_old.size() << endl;
         // CalcSvec(cHyp_old, sigma_vec_old, rank_old, snp_pos);
-        //cout << "sigma_vec_old : "; PrintVector(sigma_vec_old, rank_old.size());
+        // cout << "subvar: "; PrintVector(cHyp_old.subvar);
+        // cout << "sigma_vec_old : "; PrintVector(sigma_vec_old, rank_old.size());
         gsl_vector_view sigma_oldsub=gsl_vector_subvector(sigma_vec_old, 0, rank_old.size());
         gsl_vector_view sigma_newsub=gsl_vector_subvector(sigma_vec_new, 0, rank_old.size());
 
@@ -2183,11 +2198,13 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         accept_percent = (double)n_accept/(double)((t+1) * n_mh);
         accept_percent_theta = (double)naccept_theta / (double)((t+1) * n_type);
         accept_percent_subvar = (double)naccept_subvar / (double)((t+1) * n_type);
-        // if (t % 100 == 0 && t > w_step) {
-        if (t % w_pace == 0 && t > w_step) {
+         if (t % 100 == 0 && t > w_step) {
+        //if (t % w_pace == 0 && t > w_step) {
             cout << "theta acceptance percentage = " << accept_percent_theta ;
             cout << "; subvar acceptance percentage = " << accept_percent_subvar ;
             cout << "; gamma acceptance percentage = " << accept_percent << endl ;
+             cout << "subvar: "; PrintVector(cHyp_old.subvar);
+             cout << "sigma_vec_old : "; PrintVector(sigma_vec_old, rank_old.size());
         }
         
         //Save data
