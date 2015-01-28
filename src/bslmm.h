@@ -77,6 +77,7 @@ public:
     double e, e_shape, e_rate; //hyper parameter in the prior gamma distribution
     double vscale;
     map<string, int> mapFunc2Code;
+    int iniType;
 
     
 	// IO related parameters
@@ -270,13 +271,13 @@ public:
     
 };
 
-void PrintVector(gsl_vector * x);
-void PrintVector(vector <double> &x);
-void PrintVector(vector <size_t> &x);
-void PrintVector(double *x);
-void PrintVector(uchar *x, size_t length);
-void PrintVector(gsl_vector * x, size_t s);
-void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol);
+void PrintVector(const gsl_vector * x);
+void PrintVector(const vector <double> &x);
+void PrintVector(const vector <size_t> &x);
+void PrintVector(const double *x);
+void PrintVector(const uchar *x, const size_t length);
+void PrintVector(const gsl_vector * x, const size_t s);
+void PrintMatrix(const gsl_matrix * X, const size_t nrow, const size_t ncol);
 
 void expVector(vector<double> &expvec, vector<double> &logvec);
 void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec);

@@ -421,7 +421,7 @@ void topdm(gsl_matrix *Omega){
             if (evali < EPS)
                 {
                     gsl_matrix_set(D, i, i, EPS); neig++;
-                    cout << "eigen value = EPS = " << EPS << endl;
+                   // cout << "eigen value = EPS = " << EPS << endl;
                 }
             else {gsl_matrix_set(D, i, i, evali); }
             

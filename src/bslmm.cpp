@@ -212,49 +212,49 @@ void BSLMM::WriteVector(const gsl_vector * X, const string &filename){
 }//write gsl_vector X with filename = ***.txt
 
 
-void PrintVector(gsl_vector * x){
+void PrintVector(const gsl_vector * x){
     for(size_t i=0; i < x->size; ++i){
         cout << gsl_vector_get(x, i) << ", ";
     }
     cout << endl; 
 }
 
-void PrintVector(gsl_vector * x, size_t s){
+void PrintVector(const gsl_vector * x, const size_t s){
     for(size_t i=0; i < s; ++i){
         cout << gsl_vector_get(x, i) << ", ";
     }
     cout << endl;
 }
 
-void PrintMatrix(gsl_matrix * X, size_t nrow, size_t ncol){
+void PrintMatrix(const gsl_matrix * X, const size_t nrow, const size_t ncol){
     for (size_t i=0; i<nrow; i++) {
-        gsl_vector_view row = gsl_matrix_subrow(X, i, 0, ncol);
+        gsl_vector_const_view row = gsl_matrix_const_subrow(X, i, 0, ncol);
         PrintVector(&row.vector);
     }
 }
 
-void PrintVector(vector <double> &x){
+void PrintVector(const vector <double> &x){
     for(size_t i=0; i<x.size(); ++i){
         cout << x[i] << ", ";
     }
     cout << endl; 
 }
 
-void PrintVector(vector <size_t> &x){
+void PrintVector(const vector <size_t> &x){
     for(size_t i=0; i<x.size(); ++i){
         cout << x[i] << ", ";
     }
     cout << endl;
 }
 
-void PrintVector(double *x){
+void PrintVector(const double *x){
     for(size_t i=0; i<41; ++i){
         cout << x[i] << ", ";
     }
     cout << endl; 
 }
 
-void PrintVector(uchar *x, size_t length){
+void PrintVector(const  uchar *x, const size_t length){
     for(size_t i=0; i<length; ++i){
         cout << (int)x[i] << ", ";
     }
@@ -702,11 +702,12 @@ bool comp_snp(const SNPPOS& lhs, const SNPPOS& rhs){
 }
 //JY
 
-
+//InitialMCMC with LModel input
 void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
 
  {
- vector<pair<size_t, double> > rank_loglr;
+
+vector<pair<size_t, double> > rank_loglr;
  size_t posr, radd;
  
  double q_genome=gsl_cdf_chisq_Qinv(0.05/(double)ns_test, 1);
@@ -775,9 +776,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector
  model.rank.push_back(radd);
  rank_loglr.erase(rank_loglr.begin());
  }
-     stable_sort (model.rank.begin(), model.rank.end(), comp_vec); //sort the initial rank.
-     PrintVector(model.rank);
-     
+
  gsl_vector_free(Xtxvec);
  gsl_matrix_free(Xr);
  gsl_matrix_free(XtXr);
@@ -786,14 +785,17 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector
  gsl_vector_free(yres);
      
      
- vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
+     stable_sort (model.rank.begin(), model.rank.end(), comp_vec); //sort the initial rank.
+     PrintVector(model.rank);
+     
+/* vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
  size_t order;
  for (size_t i=0; i<model.rank.size(); ++i) {
  order = mapRank2Order[model.rank[i]];
      
  iniRank.push_back(snp_pos[order].rs);
  }
- WriteIniRank(iniRank);  // write out initial sig snp ID
+ WriteIniRank(iniRank); */ // write out initial sig snp ID
  
  model.cHyp.logp=log((double)model.cHyp.n_gamma/(double)ns_test);
  model.cHyp.h=pve_null;
@@ -831,12 +833,10 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model, vector
  return;
  }
 
+//InitialMCMC currently used
 void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
 
 {
-    vector<pair<size_t, double> > rank_loglr;
-    size_t posr, radd;
-    
     double q_genome=gsl_cdf_chisq_Qinv(0.05/(double)ns_test, 1);
     cHyp.n_gamma=0;
     for (size_t i=0; i<pos_loglr.size(); ++i) {
@@ -847,6 +847,17 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     if (cHyp.n_gamma<s_min) {cHyp.n_gamma=s_min;}
     cout << "number of snps = " << cHyp.n_gamma << endl;
     
+    if(iniType == 1) {
+        rank.clear();
+        for (size_t i=0; i<cHyp.n_gamma; ++i) {
+            rank.push_back(i);
+        }
+    } // Start with most significant variants from SVT
+    else if(iniType == 2){
+        
+    vector<pair<size_t, double> > rank_loglr;
+    size_t posr, radd;
+        
     for (size_t i=1; i<1000; ++i) {
         rank_loglr.push_back(make_pair(i, pos_loglr[i].second));
     }
@@ -857,7 +868,6 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     posr = mapRank2pos[0];
    // cout << "rank added: " << 0 << ", ";
 
-    
     gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
     gsl_matrix_set_zero(Xr);
     gsl_vector * xvec = gsl_vector_alloc(ni_test);
@@ -912,8 +922,9 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     gsl_vector_free(xvec);
     gsl_vector_free(yres);
     gsl_vector_free(Xtxvec);
-
+        
     stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
+    }
     PrintVector(rank);
     
    // vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
@@ -950,15 +961,15 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     if (cHyp.logp<logp_min) {cHyp.logp=logp_min;}
     if (cHyp.logp>logp_max) {cHyp.logp=logp_max;}
     
-    cHyp.log_theta.assign(n_type, cHyp.logp);
-   // PrintVector(cHyp.log_theta);
+    cHyp.log_theta.assign(n_type, cHyp.logp); // initial log_theta vector
+    cHyp.subvar.assign(n_type, sigma_a2); // initial subvar vector
+    //PrintVector(cHyp.subvar);
     
-    cHyp.subvar.assign(n_type, sigma_a2);
     e_shape =  e;
     e_rate = e_shape / sigma_a2; // Gamma with mean sigma_a2,
     cout << "IG with shape = " << e_shape << "; rate = " << e_rate;
-    cout << "; mean = " << sigma_a2 << "; variance = " << (sigma_a2 * sigma_a2 / (e_shape )) << endl;
-    //PrintVector(cHyp.subvar);
+    cout << "; mean = " << sigma_a2 << "; sd = " << (sigma_a2 / sqrt(e_shape)) << endl;
+    
     
     cout<<"initial value of h = "<<cHyp.h<<endl;
     cout<<"initial value of rho = "<<cHyp.rho<<endl;
@@ -1253,10 +1264,17 @@ void expVector(vector<double> &expvec, vector<double> &logvec){
 void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos){
     double pi_temp, p = 1.0 / double(ns_test);
     gsl_vector_set_all(pi_vec, p);
+   // cout << "theta vec: "; PrintVector(theta);
     // Pivec in the same order as snp_pos
     for (size_t i=0; i < ns_test; i++) {
         pi_temp = 0.0;
+       // if (i < 300) {
+         //   cout << "weight: ";
+          //  PrintVector(snp_pos[i].weight);
+        //}
+        
         for (size_t j=0; j < n_type; j++) {
+            
             if(snp_pos[i].indicator_func[j])
             {
                 if ( (snp_pos[i].weight[j] <= 0.0) || (snp_pos[i].weight[j] > 1.0) ) {
@@ -1273,6 +1291,9 @@ void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vec
             exit(-1);
         }
         else gsl_vector_set(pi_vec, i, pi_temp);
+       // if (i < 300) {
+         //   cout << "pi" << i << " = " << pi_temp << endl;
+       // }
     }
 }
 
@@ -1322,12 +1343,12 @@ double BSLMM::CalcPtheta (const class HYPBSLMM &cHyp, size_t j)
 // Calculate prior P(1/subvar) , gamma(shape, rate)
 double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp)
 {
-    double logp_var = 0.0, sum_logv = 0.0, sum_vinv = 0.0;
+    double logp_var = 0.0, sum_logv = 0.0, sum_v = 0.0;
     for (size_t i=0; i<n_type; i++) {
         sum_logv += log(cHyp.subvar[i]);
-        sum_vinv += e_rate * cHyp.subvar[i];
+        sum_v += e_rate * cHyp.subvar[i];
     }
-    logp_var = (e_shape - 1.0) * sum_logv - sum_vinv ;
+    logp_var = (e_shape - 1.0) * sum_logv - sum_v ;
     return (logp_var);
 }
 
@@ -1913,11 +1934,13 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     
     //initial parameters
     cout << "Start initializing MCMC ... \n";
+    iniType=1; // Start with top significant SNP by SVT
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
     cHyp_initial=cHyp_old;
-    cout << "Calculate pi and sigma vectors... \n";
+    cout << "Calculate pi vectors... \n";
     expVector(theta_vec, cHyp_old.log_theta);
     CalcPivec(theta_vec, pi_vec_old, snp_pos); // Calculate pi_vec, sigma_vec
+    cout << "Calculate sigma vectors... \n";
     CalcSvec(cHyp_old, sigma_vec_old, rank_old, snp_pos);
     
     if (cHyp_old.n_gamma==0) {
