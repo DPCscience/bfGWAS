@@ -78,8 +78,8 @@ public:
     double vscale;
     map<string, int> mapFunc2Code;
     int iniType;
-    vector <double> theta;
-    vector <double> subvar;
+    vector <double> theta; // global hyper parameter
+    vector <double> subvar; // global hyper parameter
 
     
 	// IO related parameters
@@ -161,6 +161,7 @@ public:
 	void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
 	void WriteParam (const gsl_vector *alpha);
 	void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const gsl_matrix *Result_theta, const gsl_matrix *Result_sigma, const size_t w_col);
+    void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col);
 	
 	//Subfunctions inside MCMC
 	void CalcPgamma (double *p_gamma);
@@ -270,6 +271,9 @@ public:
     double CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank);
     
     double CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const vector<SNPPOS> &snp_pos);
+    
+    void CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const vector<SNPPOS> &snp_pos);
+    void getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, const vector<size_t> &rank);
     
 };
 
