@@ -438,7 +438,7 @@ void topdm(gsl_matrix *Omega){
     gsl_matrix_free(evec_temp);
     gsl_vector_free(eval_temp);
     
-    if(neig > 0 ) cout << "topdm success with number of negative eigen = " << neig << endl;
+ // if(neig > 0 ) cout << "topdm success with number of negative eigen = " << neig << endl;
     }
     return;
 }

@@ -78,6 +78,8 @@ public:
     double vscale;
     map<string, int> mapFunc2Code;
     int iniType;
+    vector <double> theta;
+    vector <double> subvar;
 
     
 	// IO related parameters
@@ -165,7 +167,7 @@ public:
     
 	double CalcPveLM (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const double sigma_a2);
     
-	void InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model_old, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
+	//void InitialMCMC (uchar **X, const gsl_vector *Uty, LModel &model_old, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos);
     
 	double CalcPosterior (const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *Utu, gsl_vector *alpha_prime, class HYPBSLMM &cHyp);
 	double CalcPosterior (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *UtXb, gsl_vector *Utu, gsl_vector *alpha_prime, gsl_vector *beta, class HYPBSLMM &cHyp);
@@ -202,7 +204,7 @@ public:
     void NormRes(gsl_vector * z_res);
     
     //MCMC sub-functions
-    void MCMC (uchar **X_Genotype, gsl_vector *z);
+    //void MCMC (uchar **X_Genotype, gsl_vector *z);
 
     void MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, gsl_vector *z_hat);
     
