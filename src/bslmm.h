@@ -78,8 +78,8 @@ public:
     double vscale;
     map<string, int> mapFunc2Code;
     int iniType;
-    vector <double> theta; // global hyper parameter
-    vector <double> subvar; // global hyper parameter
+    //vector <double> theta; // global hyper parameter
+    //vector <double> subvar; // global hyper parameter
 
     
 	// IO related parameters

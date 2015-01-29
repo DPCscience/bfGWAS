@@ -123,6 +123,8 @@ public:
     
     vector<double> log_theta; // log(theta) for each function type
     vector<double> subvar; // variance for each function type
+    vector<double> rho_vec;
+    
     double sigma_b2; //
 	double pve;
 	double pge;

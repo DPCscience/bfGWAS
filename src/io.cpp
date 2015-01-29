@@ -322,17 +322,18 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
                 pch = (nch == NULL) ? NULL : nch+1;
             }
             
-            if ((snp_nfunc > 0) && (snp_nfunc <= n_type))
+            //if ((snp_nfunc > 0) && (snp_nfunc <= n_type))
+              if (snp_nfunc == 1)
               {
-                  snpInfo[snp_i].weight_i = 1.0 / (double)snp_nfunc;
-                  CalcWeight(snpInfo[snp_i].indicator_func, snpInfo[snp_i].weight, snpInfo[snp_i].weight_i);
+                  snpInfo[snp_i].weight_i = 1.0 ;// / (double)snp_nfunc;
+                  // CalcWeight(snpInfo[snp_i].indicator_func, snpInfo[snp_i].weight, snpInfo[snp_i].weight_i);
               }
             else if (snp_nfunc == 0) {
                 snpInfo[snp_i].weight_i = 0.0;
                 indicator_snp[snp_i] = 0;
                 cout << "function annotation is NULL \n ";
             }
-            else cout << "ERROR: snp_nfunc = " <<snp_nfunc<< "> n_type ... \n";
+            else {cerr << "ERROR: snp_nfunc = " <<snp_nfunc<< " ... \n"; exit(-1);}
             snp_i++;
           }
         }

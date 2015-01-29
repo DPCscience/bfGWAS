@@ -1018,10 +1018,10 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     if (cHyp.logp<logp_min) {cHyp.logp=logp_min;}
     if (cHyp.logp>logp_max) {cHyp.logp=logp_max;}
     
-    theta.assign( n_type, exp(cHyp.logp) ); // initial log_theta vector
-    cout << "log_theta: "; PrintVector(theta);
-    subvar.assign( n_type, sigma_a2 ); // initial subvar vector
-    cout << "subvar: "; PrintVector(subvar);
+    cHyp.log_theta.assign( n_type, cHyp.logp ); // initial log_theta vector
+    cout << "Initial log_theta: "; PrintVector(cHyp.log_theta);
+    cHyp.subvar.assign( n_type, sigma_a2 ); // initial subvar vector
+    cout << "subvar: "; PrintVector(cHyp.subvar);
     
    // e_shape =  e;
    // e_rate = e_shape / sigma_a2; // Gamma with mean sigma_a2,
@@ -1888,9 +1888,9 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "# of unique function types = " << n_type << endl;
     
     //new model related
-    gsl_vector *pi_vec = gsl_vector_alloc (ns_test);
-    gsl_vector *sigma_vec = gsl_vector_alloc(ns_test);
-    gsl_vector_set_zero(sigma_vec);
+    //gsl_vector *pi_vec = gsl_vector_alloc (ns_test);
+   // gsl_vector *sigma_vec = gsl_vector_alloc(ns_test);
+   // gsl_vector_set_zero(sigma_vec);
     gsl_vector *sigma_subvec_old = gsl_vector_alloc(s_max);
     gsl_vector_set_zero(sigma_subvec_old);
     gsl_vector *sigma_subvec_new = gsl_vector_alloc(s_max);
@@ -1898,8 +1898,9 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     
     
     //same as old model
-    gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 4);
+    gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 7);
     gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
+    //gsl_matrix_set_zero (Result_gamma);
     
     gsl_vector *Xb_new=gsl_vector_alloc (ni_test);
     gsl_vector *Xb_old=gsl_vector_alloc (ni_test);
@@ -1927,7 +1928,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     //Initialize variables for MH
     double logPost_new, logPost_old;
     double logMHratio;
-    gsl_matrix_set_zero (Result_gamma);
+    vector<size_t> rank_new, rank_old;
+    
     if (a_mode==13) {
         pheno_mean=0.0;
     }
@@ -1935,16 +1937,18 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     for (size_t i=0; i<ns_test; i++) {
         beta_g.push_back(make_pair(0.0, 0.0));
     }
-    vector<size_t> rank_new, rank_old;
-    vector<pair<size_t, double> > pos_loglr;
     
+    //Setup log-likelihood ratio test statistics
     time_start=clock();
-    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, trace_G, CompBuffSizeVec, UnCompBufferSize); //const genotype
-    cout << "trace_G = trace(X'X) = " << trace_G << endl;
     
     // Jingjing add a vector of "snpPos" structs snp_pos
     vector<SNPPOS> snp_pos;
     CreateSnpPosVec(snp_pos); //ordered by chr/bp
+    
+    vector<double> Gvec(n_type, 0.0);
+    vector<pair<size_t, double> > pos_loglr;
+    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, trace_G, CompBuffSizeVec, UnCompBufferSize); //calculate trace_G or Gvec
+    cout << "trace_G = trace(X'X) = " << trace_G << endl;
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
     
     //Jingjing's edit, create maps between rank and order
@@ -1992,12 +1996,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
     cHyp_initial=cHyp_old;
     
-    
-    cout << "Calculate pi vectors... \n";
-    CalcPivec(theta, pi_vec, snp_pos); // Calculate pi_vec, sigma_vec
     cout << "Calculate sigma vectors... \n";
-    CalcSvec(subvar, sigma_vec, snp_pos);
-    getSubVec(sigma_subvec_old, sigma_vec, rank_old);
+    getSubVec(sigma_subvec_old, cHyp_old, rank_old);
     gsl_vector_memcpy(sigma_subvec_new, sigma_subvec_old);
     
     if (cHyp_old.n_gamma==0) {
