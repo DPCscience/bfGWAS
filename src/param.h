@@ -124,11 +124,13 @@ public:
     vector<double> log_theta; // log(theta) for each function type
     vector<double> subvar; // variance for each function type
     vector<double> rho_vec;
+    vector<size_t> m_gamma; // # of selected SNP of each function type
     
     double sigma_b2; //
 	double pve;
 	double pge;
 	size_t n_gamma;
+    
 };
 
 

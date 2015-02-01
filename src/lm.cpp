@@ -596,12 +596,13 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
         pos_loglr.push_back(make_pair(i,log_lr) );
         
         for (size_t j=0; j<n_type; j++) {
-            if (snp_pos[j].indicator_func[j]) {
+            if (snp_pos[i].indicator_func[j]) {
                 Gvec[j] += (xtx / (double)ni_test);
                 continue;
             }
         }
 	}
 	gsl_vector_free(xvec);
+    cout << "trace_G : " << Gvec[0] << ", " << Gvec[1] << endl;
 	return;
 }

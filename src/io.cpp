@@ -224,7 +224,7 @@ bool ReadFile_anno (const string &file_anno, map<string, string> &mapRS2chr, map
 }
 
 //Read function annotation file
-bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type)
+bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc)
 {
     string line;
     char *pch, *nch;
@@ -241,6 +241,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             pch = (char *)line.c_str();
             nch = strchr(pch, '\t');
             n_type = strtol(nch, NULL, 0);
+            mFunc.assign(n_type, 0);
             continue;
         }
         else {
@@ -323,9 +324,10 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             }
             
             //if ((snp_nfunc > 0) && (snp_nfunc <= n_type))
-              if (snp_nfunc == 1)
+            if (snp_nfunc == 1)
               {
                   snpInfo[snp_i].weight_i = 1.0 ;// / (double)snp_nfunc;
+                  mFunc[func_code]++;
                   // CalcWeight(snpInfo[snp_i].indicator_func, snpInfo[snp_i].weight, snpInfo[snp_i].weight_i);
               }
             else if (snp_nfunc == 0) {
@@ -338,7 +340,8 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
           }
         }
     }
-    cout << "n_type = " << n_type << endl;
+    cout << "n_type = " << n_type ;
+    cout << "; mFunc0 = " << mFunc[0] << "; mFunc1 = " << mFunc[1] << endl;
    // cout << "total snp number = " << snp_i << endl;
     
     infile.close();

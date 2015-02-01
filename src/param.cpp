@@ -122,8 +122,8 @@ win(20),nadd_accept(0), ndel_accept(0),
 nswitch_accept(0),
 nother_accept(0), nadd(0), ndel(0),
 nswitch(0), nother(0),
-h_min(-1), h_max(-1),	h_scale(-1),
-rho_min(0.0), rho_max(1.0),	rho_scale(-1),
+h_min(-1), h_max(1.0),	h_scale(-1),
+rho_min(1.0), rho_max(1.0),	rho_scale(-1),
 logp_min(0.0), logp_max(0.0), logp_scale(-1),
 s_min(0), s_max(300),
 w_step(100000),	s_step(1000000),
@@ -228,7 +228,7 @@ void PARAM::ReadFiles (void)
 		if (ReadFile_bed (file_str, setSnps, W, indicator_idv, indicator_snp, snpInfo, maf_level, miss_level, hwe_level, r2_level, ns_test)==false) {error=true;}
 		
         if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type)==false) {error=true;}
+            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
         }
         
 		gsl_matrix_free(W);
@@ -262,7 +262,7 @@ void PARAM::ReadFiles (void)
             {error=true;}
         
         if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type)==false) {error=true;}
+            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
         }
         
         gsl_matrix_free(W);
@@ -706,9 +706,10 @@ void PARAM::CheckData (void) {
 		if (h_scale==-1) {h_scale=min(1.0, 10.0/sqrt((double)ni_test) );}
 		if (rho_scale==-1) {rho_scale=min(1.0, 10.0/sqrt((double)ni_test) );}
 		if (logp_scale==-1) {logp_scale=min(1.0, 5.0/sqrt((double)ni_test) );}
+        cout << "h_scale = " << h_scale << "; rho_scale = " << rho_scale<< "; logtheta_scale = " << logp_scale << endl;
         if (vscale <= 0.0) { vscale = min(0.5, 10.0/sqrt((double)ni_test));}
 		
-		if (h_min==-1) {h_min=0.0;}
+		if (h_min==-1) {h_min=0.00000001;}
 		if (h_max==-1) {h_max=1.0;}
 		
 		if (s_max>ns_test) {s_max=ns_test; cout<<"s_max is re-set to the number of analyzed SNPs."<<endl;}
