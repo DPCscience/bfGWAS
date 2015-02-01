@@ -274,6 +274,7 @@ public:
     
     void CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const vector<SNPPOS> &snp_pos);
     void getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, const vector<size_t> &rank);
+    void getSubVec(gsl_vector *sigma_subvec, const HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
 };
 

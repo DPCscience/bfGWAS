@@ -76,4 +76,6 @@ public:
 };
 void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, double &trace_G, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize);
 
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, vector<double> &Gvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize);
+
 #endif

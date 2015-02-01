@@ -576,3 +576,32 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 	return;
 }
 
+
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, vector<double> &Gvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize)
+{
+    size_t n_type = snp_pos[0].indicator_func.size();
+    Gvec.assign(n_type, 0.0);
+    
+    gsl_vector *xvec = gsl_vector_alloc(ni_test);
+	double yty, xty, xtx, log_lr;
+	gsl_blas_ddot(y, y, &yty);
+    
+	for (size_t i=0; i<ns_test; ++i) {
+        
+        getGTgslVec(X, xvec, i, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize);
+        gsl_blas_ddot(xvec, xvec, &xtx);
+        gsl_blas_ddot(xvec, y, &xty);
+        
+        log_lr=0.5*((double)y->size)*(log(yty)-log(yty-xty*xty/xtx));
+        pos_loglr.push_back(make_pair(i,log_lr) );
+        
+        for (size_t j=0; j<n_type; j++) {
+            if (snp_pos[j].indicator_func[j]) {
+                Gvec[j] += (xtx / (double)ni_test);
+                continue;
+            }
+        }
+	}
+	gsl_vector_free(xvec);
+	return;
+}

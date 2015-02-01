@@ -1383,7 +1383,19 @@ void BSLMM::getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, co
     }
 }
 
-
+void BSLMM::getSubVec(gsl_vector *sigma_subvec, const HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+{
+    size_t order_i;
+    for (size_t i=0; i < rank.size(); i++) {
+        order_i = mapRank2Order[rank[i]];
+        for (size_t j=0; j<n_type; j++) {
+            if (snp_pos[j].indicator_func[j]) {
+                gsl_vector_set(sigma_subvec, i, cHyp_old.subvar[j]);
+                continue;
+            }
+        }
+    }
+}
 
 
 void BSLMM::CalcSvec(const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
@@ -1945,10 +1957,12 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     vector<SNPPOS> snp_pos;
     CreateSnpPosVec(snp_pos); //ordered by chr/bp
     
-    vector<double> Gvec(n_type, 0.0);
+    vector<double> Gvec;
     vector<pair<size_t, double> > pos_loglr;
-    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, trace_G, CompBuffSizeVec, UnCompBufferSize); //calculate trace_G or Gvec
-    cout << "trace_G = trace(X'X) = " << trace_G << endl;
+    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, Gvec, snp_pos, CompBuffSizeVec, UnCompBufferSize); //calculate trace_G or Gvec
+    cout << "trace_G : " << PrintVector(Gvec) << endl;
+    
+    stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp);
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
     
     //Jingjing's edit, create maps between rank and order
@@ -1997,7 +2011,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cHyp_initial=cHyp_old;
     
     cout << "Calculate sigma vectors... \n";
-    getSubVec(sigma_subvec_old, cHyp_old, rank_old);
+    getSubVec(sigma_subvec_old, cHyp_old, rank_old, snp_pos);
     gsl_vector_memcpy(sigma_subvec_new, sigma_subvec_old);
     
     if (cHyp_old.n_gamma==0) {
@@ -3308,7 +3322,7 @@ void BSLMM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
         tt++;
     }
     snpInfo.clear();
-    stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp);
+    
 }
 
 void BSLMM::InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos){
