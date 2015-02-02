@@ -438,7 +438,7 @@ void topdm(gsl_matrix *Omega){
     gsl_matrix_free(evec_temp);
     gsl_vector_free(eval_temp);
     
- // if(neig > 0 ) cout << "topdm success with number of negative eigen = " << neig << endl;
+  //if(neig > 0 ) cout << "topdm success with number of negative eigen = " << neig << endl;
     }
     return;
 }
@@ -498,7 +498,8 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta)
             XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
         }
     }
-    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
@@ -524,7 +525,8 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
                  XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
              }
      }
-    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
@@ -544,6 +546,7 @@ double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty
     }
     lambda /= (double)s_size;
     lambda *= 0.00000001;
+    //cout << "lambda = " << lambda << endl;
     EigenSolve(Omega, Xty, OiXty, lambda);
     
 	double logdet_O=0.0;

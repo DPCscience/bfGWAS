@@ -142,11 +142,13 @@ public:
     double e; //hyper parameter in the prior gamma distribution
     double vscale;
     map<string, int> mapFunc2Code;
+    int iniType;
     
     
 	// IO related parameters
     size_t UnCompBufferSize;
     vector <size_t> CompBuffSizeVec;
+    bool Compress_Flag;
     StringIntHash sampleID2vcfInd;
     map<string, size_t>  PhenoID2Ind;
     vector<size_t> SampleVcfPos;

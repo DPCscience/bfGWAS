@@ -59,7 +59,7 @@ using namespace std;
 
 
 GEMMA::GEMMA(void):	
-version("0.96_newmodel 10:15pm"), date("01/31/2015"), year("2015")
+version("0.96_newmodel 15:15pm"), date("02/2/2015"), year("2015")
 {}
 
 void GEMMA::PrintHeader (void)
@@ -825,6 +825,20 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.assign(argv[i]);
 			cPar.win=atol(str.c_str());
 		}
+        else if (strcmp(argv[i], "-initype")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.iniType=1;continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.iniType=atoi(str.c_str());
+        }
+        else if (strcmp(argv[i], "-comp")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.Compress_Flag=0;continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.Compress_Flag=atoi(str.c_str());
+        }
         else if (strcmp(argv[i], "-e")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.e=20;continue;}
 			++i;

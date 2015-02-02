@@ -1907,7 +1907,7 @@ bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_
 
 
 //Read VCF genotype file, the second time, recode genotype and calculate K
-bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos)
+bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos, bool Compress_Flag)
 {
     if (GTfield.empty()) {
         GTfield = "GT"; //defalt load GT Data
@@ -1929,16 +1929,17 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
     
     gsl_vector *genotype=gsl_vector_alloc (ni_test);
     uchar *geno_uchar = new uchar[ni_test];
-    size_t sourceBufferSize = (ni_test) * sizeof(uchar);
     
+    size_t sourceBufferSize = (ni_test) * sizeof(uchar);
     const size_t BufferSize = (size_t)(compressBound(sourceBufferSize));
     uchar * TempCompBuffer = (uchar*)malloc(BufferSize);
     uchar * TempBuffer = (uchar*)malloc(sourceBufferSize);
-    
     size_t compressedBufferSize = BufferSize;
     //cout << "Source Buffer Size = " << sourceBufferSize << "; Comp Buffer Bound = " << BufferSize  << endl;
-    
     CompBuffSizeVec.clear();
+    
+    
+   
     
     double geno, geno_mean, vtx;
     size_t n_miss, c_idv=0, c_snp=0, ctest_snp = 0, ctest_idv=0;
@@ -2052,26 +2053,33 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
             }
         gsl_vector_add_constant(genotype, -geno_mean); // center genotype gsl_vector here
             
-            compressedBufferSize = BufferSize;
-            result = compress(TempCompBuffer, &compressedBufferSize, geno_uchar, sourceBufferSize);
-            if (result != Z_OK) {
-                zerr(result);
-                exit(-1);
+            if (Compress_Flag) {
+                compressedBufferSize = BufferSize;
+                result = compress(TempCompBuffer, &compressedBufferSize, geno_uchar, sourceBufferSize);
+                if (result != Z_OK) {
+                    zerr(result);
+                    exit(-1);
+                }
+                else {
+                    UtX[ctest_snp] = (uchar*)malloc(compressedBufferSize);
+                    memcpy(UtX[ctest_snp], TempCompBuffer, compressedBufferSize);
+                    CompBuffSizeVec.push_back(compressedBufferSize);
+                    
+                    // UnCompBufferSize=sourceBufferSize;
+                    //  result = uncompress(TempBuffer, &UnCompBufferSize, UtX[c_snp],compressedBufferSize);
+                    //  if(c_snp < 10)  {
+                    //    zerr(result);
+                    //cout << "uncompressed buffer size = " << UnCompBufferSize << endl;
+                    //  PrintVector(TempBuffer, 10);
+                    // }
+                    // cout << "compressed Buffer size = " << compressedBufferSize << endl;
+                }
             }
             else {
-                UtX[ctest_snp] = (uchar*)malloc(compressedBufferSize);
-                memcpy(UtX[ctest_snp], TempCompBuffer, compressedBufferSize);
-                CompBuffSizeVec.push_back(compressedBufferSize);
-                
-                // UnCompBufferSize=sourceBufferSize;
-                //  result = uncompress(TempBuffer, &UnCompBufferSize, UtX[c_snp],compressedBufferSize);
-                //  if(c_snp < 10)  {
-                //    zerr(result);
-                //cout << "uncompressed buffer size = " << UnCompBufferSize << endl;
-                //  PrintVector(TempBuffer, 10);
-                // }
-                // cout << "compressed Buffer size = " << compressedBufferSize << endl;
+                UtX[ctest_snp] = (uchar*)malloc(sourceBufferSize);
+                memcpy(UtX[ctest_snp], geno_uchar, ni_test);
             }
+            
             
             //JY add
             gsl_blas_ddot(genotype, genotype, &vtx);
@@ -2084,7 +2092,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
             ctest_snp++;
         }
     }
-    cout << "ctest_snp = " << c_snp << "; ns_test = " << ns_test << endl;
+   // cout << "ctest_snp = " << c_snp << "; ns_test = " << ns_test << endl;
     
     if (calc_K==true) {
         gsl_matrix_scale (K, 1.0/(double)ns_test);
@@ -2444,8 +2452,8 @@ bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector
  } */
 
 
-//Read bimbam mean genotype file, the second time, recode "mean" genotype and calculate K
-bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **UtX, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test, vector <size_t> &CompBuffSizeVec)
+//Read BED genotype file, the second time, recode "mean" genotype and calculate K
+bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **UtX, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test, vector <size_t> &CompBuffSizeVec, bool Compress_Flag)
 {
 	ifstream infile (file_bed.c_str(), ios::binary);
 	if (!infile) {cout<<"error reading bed file:"<<file_bed<<endl; return false;}
@@ -2468,7 +2476,7 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 	
 	if (calc_K==true) {gsl_matrix_set_zero (K);}
 	
-    cout << "ni_test = " << ni_test << endl;
+    //cout << "ni_test = " << ni_test << endl;
 	gsl_vector *genotype = gsl_vector_alloc (ni_test);
     uchar *geno_uchar = new uchar[ni_test];
     size_t sourceBufferSize = (ni_test) * sizeof(uchar);
@@ -2479,7 +2487,7 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
     uchar * TempBuffer = (uchar*)malloc(sourceBufferSize);
 
     size_t compressedBufferSize = BufferSize;
-    cout << "Source Buffer Size = " << sourceBufferSize << "; Comp Buffer Bound = " << BufferSize  << endl;
+    //cout << "Source Buffer Size = " << sourceBufferSize << "; Comp Buffer Bound = " << BufferSize  << endl;
     
 	CompBuffSizeVec.clear();
     
@@ -2518,7 +2526,7 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 		if(c_idv != (size_t)ni_test) cout << "# of readed individuals not equal to ni_test \n";
         
 		geno_mean/=(double)(ni_test-n_miss);
-        if(geno_mean < 0.00000001) cout << "SNP_" << c_snp << "has geno_mean =" << geno_mean << endl;
+        //if(geno_mean < 0.00000001) cout << "SNP_" << c_snp << "has geno_mean =" << geno_mean << endl;
         
 		for (size_t i=0; i<genotype->size; ++i) {
 			geno=gsl_vector_get (genotype, i);
@@ -2528,30 +2536,38 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
             gsl_vector_set (genotype, i, (geno-geno_mean));
 		}
         
-        compressedBufferSize = BufferSize;
+        if (Compress_Flag) {
+            compressedBufferSize = BufferSize;
+            result = compress(TempCompBuffer, &compressedBufferSize, geno_uchar, sourceBufferSize);
+            if (result != Z_OK) {
+                zerr(result);
+                exit(-1);
+            }
+            else {
+                UtX[c_snp] = (uchar*)malloc(compressedBufferSize);
+                memcpy(UtX[c_snp], TempCompBuffer, compressedBufferSize);
+                CompBuffSizeVec.push_back(compressedBufferSize);
+                
+                // UnCompBufferSize=sourceBufferSize;
+                //  result = uncompress(TempBuffer, &UnCompBufferSize, UtX[c_snp],compressedBufferSize);
+                //  if(c_snp < 10)  {
+                //    zerr(result);
+                //cout << "uncompressed buffer size = " << UnCompBufferSize << endl;
+                //  PrintVector(TempBuffer, 10);
+                // }
+                // cout << "compressed Buffer size = " << compressedBufferSize << endl;
+            }
+        }
+        else{
+            UtX[c_snp] = (uchar*)malloc(sourceBufferSize);
+            memcpy(UtX[c_snp], geno_uchar, sourceBufferSize);
+        }
+        
       //  if(c_snp < 10) {
         //    cout << "source geno: \n";
           //  PrintVector(geno_uchar, 10);
        // }
-        result = compress(TempCompBuffer, &compressedBufferSize, geno_uchar, sourceBufferSize);
-        if (result != Z_OK) {
-            zerr(result);
-            exit(-1);
-        }
-        else {
-            UtX[c_snp] = (uchar*)malloc(compressedBufferSize);
-            memcpy(UtX[c_snp], TempCompBuffer, compressedBufferSize);
-            CompBuffSizeVec.push_back(compressedBufferSize);
-            
-           // UnCompBufferSize=sourceBufferSize;
-          //  result = uncompress(TempBuffer, &UnCompBufferSize, UtX[c_snp],compressedBufferSize);
-          //  if(c_snp < 10)  {
-            //    zerr(result);
-                //cout << "uncompressed buffer size = " << UnCompBufferSize << endl;
-              //  PrintVector(TempBuffer, 10);
-           // }
-           // cout << "compressed Buffer size = " << compressedBufferSize << endl;
-        }
+        
         
         //JY add
         gsl_blas_ddot(genotype, genotype, &vtx);
@@ -2563,8 +2579,8 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 		
 		c_snp++;
 	}
-    cout << "compressed Buffer size = " << compressedBufferSize << endl;
-    cout << "CompBuffSizeVec length = " << CompBuffSizeVec.size() << endl;
+    //cout << "compressed Buffer size = " << compressedBufferSize << endl;
+    //cout << "CompBuffSizeVec length = " << CompBuffSizeVec.size() << endl;
     
 	if(c_snp != (size_t)ns_test) cout <<"# of readed SNP not equal to ns_test \n";
 	

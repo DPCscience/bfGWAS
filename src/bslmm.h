@@ -78,13 +78,15 @@ public:
     double vscale;
     map<string, int> mapFunc2Code;
     int iniType;
-    //vector <double> theta; // global hyper parameter
-    //vector <double> subvar; // global hyper parameter
+    
+    vector <double> theta; // global hyper parameter
+    vector <double> subvar; // global hyper parameter
 
     
 	// IO related parameters
     size_t UnCompBufferSize;
     vector <size_t> CompBuffSizeVec;
+    bool Compress_Flag;
 	int a_mode;
 	size_t d_pace;
 	
@@ -107,6 +109,7 @@ public:
     size_t nadd_accept, ndel_accept, nswitch_accept, nother_accept;
     size_t nadd, ndel, nswitch, nother;
     int Switch_Flag;
+    
     
 	double h_min, h_max, h_scale;			//priors for h
 	double rho_min, rho_max, rho_scale;		//priors for rho
@@ -268,6 +271,7 @@ public:
     double CalcPtheta (const class HYPBSLMM &cHyp);
     double CalcPsubvar (const class HYPBSLMM &cHyp, size_t j);
     double CalcPtheta (const class HYPBSLMM &cHyp, size_t j);
+    double CalcPrho(const class HYPBSLMM &cHyp);
     double CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank);
     
     double CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const vector<SNPPOS> &snp_pos);
@@ -275,7 +279,7 @@ public:
     void CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const vector<SNPPOS> &snp_pos);
     void getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, const vector<size_t> &rank);
     
-    void getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos, const bool mflag);
     void setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec);
     double CalcLikegamma(const class HYPBSLMM &cHyp);
     double CalcPosterior (const double yty, class HYPBSLMM &cHyp);

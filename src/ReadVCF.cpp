@@ -147,24 +147,84 @@ uchar IntToUchar(const int intc){
 }
 
 // get genotype vector gor given column
-
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize){
     
     if (marker_i < ns_test ) {
+        
         double geno, geno_mean = 0.0;
-        size_t compressedBufferSize = CompBuffSizeVec[marker_i];
-        uchar * UnCompBuffer = (uchar*)malloc(UnCompBufferSize);
         
-        int result = uncompress(UnCompBuffer, &UnCompBufferSize, X[marker_i],compressedBufferSize);
+            size_t compressedBufferSize = CompBuffSizeVec[marker_i];
+            uchar * UnCompBuffer = (uchar*)malloc(UnCompBufferSize);
+            
+            int result = uncompress(UnCompBuffer, &UnCompBufferSize, X[marker_i],compressedBufferSize);
+            
+            if(result != Z_OK)
+            {
+                zerr(result);
+                exit(-1);
+            }
+            else{
+                for (size_t j=0; j<ni_test; j++) {
+                    geno = UcharToDouble(UnCompBuffer[j]);
+                    //cout << geno << ", ";
+                    if (geno < 0.0 || geno > 2.0) {
+                        cerr << "wrong genotype value = " << geno << endl;
+                        exit(-1);
+                    }
+                    gsl_vector_set(xvec, j, geno);
+                    geno_mean += geno;
+                }
+                geno_mean /= (double)ni_test;
+                geno_mean = -geno_mean;
+                gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+            }
+            free(UnCompBuffer);
+    }
+    else {
+        std::cerr << "Marker index out of range \n";
+        exit(-1);
+    }
+}
+
+
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag){
+    
+    if (marker_i < ns_test ) {
         
-        if(result != Z_OK)
-        {
-            zerr(result);
-            exit(-1);
+        double geno, geno_mean = 0.0;
+        
+        if (Compress_Flag) {
+            size_t compressedBufferSize = CompBuffSizeVec[marker_i];
+            uchar * UnCompBuffer = (uchar*)malloc(UnCompBufferSize);
+            
+            int result = uncompress(UnCompBuffer, &UnCompBufferSize, X[marker_i],compressedBufferSize);
+            
+            if(result != Z_OK)
+            {
+                zerr(result);
+                exit(-1);
+            }
+            else{
+                for (size_t j=0; j<ni_test; j++) {
+                    geno = UcharToDouble(UnCompBuffer[j]);
+                    //cout << geno << ", ";
+                    if (geno < 0.0 || geno > 2.0) {
+                        cerr << "wrong genotype value = " << geno << endl;
+                        exit(-1);
+                    }
+                    gsl_vector_set(xvec, j, geno);
+                    geno_mean += geno;
+                }
+                geno_mean /= (double)ni_test;
+                geno_mean = -geno_mean;
+                gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+            }
+            free(UnCompBuffer);
         }
+        
         else{
             for (size_t j=0; j<ni_test; j++) {
-                geno = UcharToDouble(UnCompBuffer[j]);
+                geno = UcharToDouble(X[marker_i][j]);
                 //cout << geno << ", ";
                 if (geno < 0.0 || geno > 2.0) {
                     cerr << "wrong genotype value = " << geno << endl;
@@ -175,9 +235,9 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             }
             geno_mean /= (double)ni_test;
             geno_mean = -geno_mean;
-            gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+            gsl_vector_add_constant(xvec, geno_mean);
         }
-        free(UnCompBuffer);
+        
     }
     else {
         std::cerr << "Marker index out of range \n";
