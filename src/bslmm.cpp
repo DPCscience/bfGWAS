@@ -1414,7 +1414,7 @@ void BSLMM::setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec)
 {
     for (size_t i=0; i < n_type; i++) {
         
-        cHyp.subvar[i] = cHyp.h * cHyp.rho_vec[i] / ((1.0 - cHyp.h) * Gvec[i] * theta[i]);
+        cHyp.subvar[i] = (double)ni_test * cHyp.h * cHyp.rho_vec[i] / ((1.0 - cHyp.h) * Gvec[i] * theta[i]);
         
         //cHyp.subvar[i] = (double)ni_test * cHyp.h * cHyp.rho_vec[i] / ((1.0 - cHyp.h) * Gvec[i] );
        
@@ -2236,12 +2236,13 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     theta_total[0] += exp(cHyp_old.log_theta[0]);
     theta_total[1] += exp(cHyp_old.log_theta[1]);
     theta = theta_total;
+    cout << "Initial theta: "; PrintVector(theta);
     
     cout << "Set trace vector and m_gamma... \n";
     set_mgamma(cHyp_old, rank_old, snp_pos);
     Gvec_old = Gvec; Gvec_new = Gvec;
     //setGvec(cHyp_old, rank_old, snp_pos, XtX_old, Gvec_old);
-    cout << "Trace_G given gamma : " << Gvec_old[0] << ", " << Gvec_old[1] << endl;
+    //cout << "Trace_G given gamma : " << Gvec_old[0] << ", " << Gvec_old[1] << endl;
     cout << "initial m_gamma: " << cHyp_old.m_gamma[0] << ", "<< cHyp_old.m_gamma[1]<< endl;
     
     cout << "Calculate sigma vectors... \n";
@@ -2256,14 +2257,14 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     if (cHyp_old.n_gamma==0) {
         loglikegamma = CalcLikegamma(cHyp_old);
         logPost_old = CalcPosterior (ztz, cHyp_old) + loglikegamma;
-        logPostHRho_old = logPost_old - loglikegamma + CalcPrho(cHyp_old) + CalcPtheta(cHyp_old) ;
+        logPostHRho_old = logPost_old - loglikegamma + CalcPrho(cHyp_old) + CalcPh(cHyp_old); // + CalcPtheta(cHyp_old) ;
         //logPostTheta_old = loglikegamma + CalcPtheta(cHyp_old);
     }
     else {
         //loglikebeta = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old);
         loglikegamma = CalcLikegamma(cHyp_old);
         logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag) + loglikegamma;
-        logPostHRho_old = logPost_old - loglikegamma + CalcPrho(cHyp_old) + CalcPtheta(cHyp_old);
+        logPostHRho_old = logPost_old - loglikegamma + CalcPrho(cHyp_old) + CalcPh(cHyp_old); // + CalcPtheta(cHyp_old);
         //logPostTheta_old = CalcLikegamma(cHyp_old) + CalcPtheta(cHyp_old);
     }
     if (!Error_Flag) {
@@ -2344,8 +2345,9 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         }
 
         // set repeat number
-        //if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
-        //else {repeat=1;}
+        //
+        if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
+        else {repeat=1;}
         
         //MH steps
         //propose theta
@@ -2371,6 +2373,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         theta_temp[1] = gsl_ran_beta(gsl_r, 1 + cHyp_old.m_gamma[1], 3 + mFunc[1] - cHyp_old.m_gamma[1]);
         cHyp_old.log_theta[0] = log(theta_temp[0]);
         cHyp_old.log_theta[1] = log(theta_temp[1]);
+        cHyp_new.log_theta = cHyp_old.log_theta;
+        
         theta_total[0] += theta_temp[0];
         theta_total[1] += theta_temp[1];
         theta[0] = theta_total[0] /  (double) (t + 2);
@@ -2382,7 +2386,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         //propose hrho / subvar
        // cout << "h old : "<<setprecision(6) << cHyp_old.h << "; rhovec old : "<< cHyp_old.rho_vec[0] << ", " << cHyp_old.rho_vec[1] << endl;
         //cout << "subvar_old: "<<setprecision(6) << cHyp_old.subvar[0] << ", "<< cHyp_old.subvar[1] << endl;
-        logPostHRho_old = CalcLikelihood(XtX_old, Xtz_old, ztz, cHyp_old, sigma_subvec_old, Error_Flag) + CalcPrho(cHyp_old); // + CalcPtheta(cHyp_old);
+        logPostHRho_old = CalcLikelihood(XtX_old, Xtz_old, ztz, cHyp_old, sigma_subvec_old, Error_Flag) + CalcPrho(cHyp_old) + CalcPh(cHyp_old); // + CalcPtheta(cHyp_old);
         //CalcLikelihood(XtX_old, Xtz_old, ztz, cHyp_old, sigma_subvec_old);
         logMHratio_HRho = ProposeHnRho(cHyp_old, cHyp_new, repeat);
        // logMHratio_HRho += ProposeTheta(cHyp_old, cHyp_new, repeat);
@@ -2391,7 +2395,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
        // cout << "subvar_new: "<<setprecision(6) << cHyp_new.subvar[0] << ", "<< cHyp_new.subvar[1] << endl;
         getSubVec(sigma_subvec_new, cHyp_new, rank_old, snp_pos);
         
-        logPostHRho_new = CalcLikelihood(XtX_old, Xtz_old, ztz, cHyp_new, sigma_subvec_new, Error_Flag) + CalcPrho(cHyp_new); // + CalcPtheta(cHyp_new);
+        logPostHRho_new = CalcLikelihood(XtX_old, Xtz_old, ztz, cHyp_new, sigma_subvec_new, Error_Flag) + CalcPrho(cHyp_new) + CalcPh(cHyp_new); // + CalcPtheta(cHyp_new);
         if (!Error_Flag) {
             logMHratio_HRho += logPostHRho_new - logPostHRho_old;
             if (logMHratio_HRho > 0 || log(gsl_rng_uniform(gsl_r))< logMHratio_HRho)
@@ -2425,13 +2429,14 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         //propose gamma
         
         //logPost_old = logPostHRho_old - CalcPtheta(cHyp_old) - CalcPrho(cHyp_old);
-        logPost_old = logPostHRho_old + CalcLikegamma(cHyp_old) - CalcPrho(cHyp_old) - CalcPtheta(cHyp_old);
+        logPost_old = logPostHRho_old + CalcLikegamma(cHyp_old) - CalcPrho(cHyp_old) - CalcPh(cHyp_old);// - CalcPtheta(cHyp_old);
         //cout << "old m_gamma: " << cHyp_old.m_gamma[0] << ", "<< cHyp_old.m_gamma[1]<< endl;
         
         for (size_t i=0; i<n_mh; ++i) {
 
            // cout << "propose gamam...\n";
            // cout << "old rank: "; PrintVector(rank_old);
+            repeat = 1;
             logMHratio = ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             stable_sort (rank_new.begin(), rank_new.end(), comp_vec);
             if(flag_gamma==1) nadd++;
@@ -2459,7 +2464,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             getSubVec(sigma_subvec_new, cHyp_new, rank_new, snp_pos);
            // cout << "new m_gamma: " << cHyp_new.m_gamma[0] << ", "<< cHyp_new.m_gamma[1]<< endl;
             if (cHyp_new.n_gamma==0) {
-                logPost_new=CalcPosterior (ztz, cHyp_new) + CalcPrho(cHyp_new);
+                logPost_new=CalcPosterior (ztz, cHyp_new) + CalcPrho(cHyp_new) + CalcPh(cHyp_new);
             } else {
                 logPost_new=CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, sigma_subvec_new, Error_Flag) + CalcLikegamma(cHyp_new);
             }
@@ -2548,10 +2553,11 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
              cout << "h = " <<setprecision(6)<< cHyp_old.h << "; rho: " << cHyp_old.rho_vec[0] << ", " << cHyp_old.rho_vec[1]<< endl;
              cout << "theta: "<<setprecision(6) << exp(cHyp_old.log_theta[0]) << ", " << exp(cHyp_old.log_theta[1])<< endl;
              cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
-             cout << "subvar: "<<setprecision(6) << cHyp_old.subvar[0] << ", " << cHyp_old.subvar[1] << endl;
+             cout << "subvar: "<<setprecision(9) << cHyp_old.subvar[0] << ", " << cHyp_old.subvar[1] << endl;
              cout << "sigma_subvec_old : " <<setprecision(6);
              PrintVector(sigma_subvec_old, 5);
-             cout << "beta_hat: "; PrintVector(beta_old, 5); cout << endl;
+             cout << "beta_hat: "; PrintVector(beta_old, 5);
+             cout << "theta_est: "; PrintVector(theta); cout << endl;
         }
         
         //Save data
@@ -2610,9 +2616,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "h = "<<setprecision(6) << cHyp_old.h << "; rho: " << cHyp_old.rho_vec[0] << ", " << cHyp_old.rho_vec[1]<< endl;
     cout << "theta: "<<setprecision(6) << exp(cHyp_old.log_theta[0]) << ", " << exp(cHyp_old.log_theta[1])<< endl;
     cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
-    cout << "subvar: "<<setprecision(6) << cHyp_old.subvar[0] << ", " << cHyp_old.subvar[1] << endl;
-    cout << "sigma_subvec_old : " <<setprecision(6); PrintVector(sigma_subvec_old, 5);
+    cout << "subvar: "<<setprecision(9) << cHyp_old.subvar[0] << ", " << cHyp_old.subvar[1] << endl;
+    cout << "sigma_subvec_old : " <<setprecision(9); PrintVector(sigma_subvec_old, 5);
     cout << "beta_hat: "; PrintVector(beta_old, 5); cout << endl;
+    cout << "theta_est: "; PrintVector(theta); cout << endl;
     
     cout<<"time on selecting Xgamma: "<<time_set<<endl;
     cout<<"time on calculating posterior: "<<time_post<<endl;
@@ -3237,6 +3244,8 @@ void BSLMM::SampleZ (const gsl_vector *y, const gsl_vector *z_hat, gsl_vector *z
 double BSLMM::ProposeHnRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
 {
     double h=cHyp_old.h, rho=cHyp_old.rho_vec[0];
+    h_max = 0.7; h_min = 0.00000001;
+    //double d_h = 0.01;
 	double d_h=min(0.01, (h_max-h_min)*h_scale);
     double rmax = 0.8, rmin = 0.2;
     double rho_h = min(0.01, (rmax - rmin) * rho_scale);
@@ -3266,6 +3275,15 @@ double BSLMM::CalcPrho(const class HYPBSLMM &cHyp)
         prho += (double)(mFunc[i] - 1) * log(cHyp.rho_vec[i]);
     }
     return prho;
+}
+
+double BSLMM::CalcPh(const class HYPBSLMM &cHyp)
+{
+    //assume dirichlet prior for rho_vec
+    double ph;
+    //ph = -log(cHyp.h);
+    ph = log(cHyp.h) + 5.0 * log(1.0 - cHyp.h);
+    return ph;
 }
 
 double BSLMM::ProposePi (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
@@ -3451,16 +3469,16 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
    // cout << "R2 = "<< R2 << endl;
     if(R2 <= 0.0) {
         cout << "R2 = " << setprecision(6) << R2 << " <= 0, ";
-        cout << "beta_hat estimate from calculating residuals: \n ";
-        PrintVector(beta_gamma_hat);
+        //cout << "beta_hat estimate from calculating residuals: \n ";
+        //PrintVector(beta_gamma_hat);
         //cout << "SSR = " << SSR << "; ztz = " << ztz << "\n";
         //cout << "Set z_res equal to z... " << endl;
         gsl_vector_memcpy(z_res, z);
         //NormRes(z_res);
         }
         
-    double res_mean = CenterVector(z_res);
-    if(res_mean > 0.0001) cout << "res_mean = " << res_mean  << " > 0.0001" << endl;
+   // double res_mean = CenterVector(z_res);
+   // if(res_mean > 0.0001) cout << "res_mean = " << res_mean  << " > 0.0001" << endl;
     
     gsl_vector_free(beta_gamma_hat);
     return;

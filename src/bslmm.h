@@ -275,6 +275,7 @@ public:
     double CalcPsubvar (const class HYPBSLMM &cHyp, size_t j);
     double CalcPtheta (const class HYPBSLMM &cHyp, size_t j);
     double CalcPrho(const class HYPBSLMM &cHyp);
+    double CalcPh(const class HYPBSLMM &cHyp);
     double CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank);
     
     double CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const vector<SNPPOS> &snp_pos);

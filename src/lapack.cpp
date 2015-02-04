@@ -543,15 +543,15 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
 double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty)
 {
     size_t s_size = Xty->size;
-    /*double lambda = 0.0;
+    double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.01;
+    lambda *= 0.1;
     //cout << "lambda = " << lambda << endl;
-    EigenSolve(Omega, Xty, OiXty, lambda);*/
-    EigenSolve(Omega, Xty, OiXty);
+    EigenSolve(Omega, Xty, OiXty, lambda);
+    //EigenSolve(Omega, Xty, OiXty);
     
 	double logdet_O=0.0;
     topdm(Omega);
