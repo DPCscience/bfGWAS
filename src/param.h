@@ -121,6 +121,7 @@ public:
     double rho;
     double logp;
     
+    vector<double> theta;
     vector<double> log_theta; // log(theta) for each function type
     vector<double> subvar; // variance for each function type
     vector<double> rho_vec;

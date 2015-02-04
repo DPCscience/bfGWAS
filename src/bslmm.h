@@ -266,7 +266,7 @@ public:
     double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *pi_vec_old, gsl_vector *pi_vec_new, const vector<SNPPOS> &snp_pos);
     double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *sigma_vec_new, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
-    double CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const class HYPBSLMM &cHyp, gsl_vector *sigma_vec);
+    double CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag);
     double CalcPsubvar (const class HYPBSLMM &cHyp);
     double CalcPtheta (const class HYPBSLMM &cHyp);
     double CalcPsubvar (const class HYPBSLMM &cHyp, size_t j);
@@ -285,7 +285,7 @@ public:
     void setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec);
     double CalcLikegamma(const class HYPBSLMM &cHyp);
     double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
-    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec);
+    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag);
     
 };
 

@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cmath>
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/SVD>
 
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
@@ -498,6 +499,7 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta)
             XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
         }
     }
+    
     beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
     //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
@@ -525,6 +527,7 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
                  XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
              }
      }
+   // Eigen::JacobiSVD.setThreshold(0.00001);
     beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
     //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
@@ -545,7 +548,7 @@ double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.00000001;
+    lambda *= 0.01;
     //cout << "lambda = " << lambda << endl;
     EigenSolve(Omega, Xty, OiXty, lambda);
     
