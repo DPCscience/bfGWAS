@@ -568,10 +568,10 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 
 	  log_lr=0.5*((double)y->size)*(log(yty)-log(yty-xty*xty/xtx));
 	  pos_loglr.push_back(make_pair(i,log_lr) );
-        
-        trace_G += (xtx / (double)ni_test);
+        trace_G += (xtx );
+        //trace_G += (xtx / (double)ni_test);
 	}
-    trace_G /= (double)ns_test;
+    //trace_G /= (double)ns_test;
 	gsl_vector_free(xvec);
 	return;
 }
@@ -597,7 +597,8 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
         
         for (size_t j=0; j<n_type; j++) {
             if (snp_pos[i].indicator_func[j]) {
-                Gvec[j] += (xtx / (double)ni_test);
+                //Gvec[j] += (xtx / (double)ni_test);
+                Gvec[j] += (xtx );
                 continue;
             }
         }

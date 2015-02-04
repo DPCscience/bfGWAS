@@ -79,7 +79,9 @@ public:
     map<string, int> mapFunc2Code;
     int iniType;
     
+    
     vector <double> theta; // global hyper parameter
+    vector <double> theta_total;
     vector <double> subvar; // global hyper parameter
 
     
@@ -256,6 +258,7 @@ public:
     void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w);
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
+    void MCMC_Test (uchar **X, const gsl_vector *y, bool original_method);
     
     // added function for newmodel
     void CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos);
@@ -281,6 +284,7 @@ public:
     
     void getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void setGvec(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos, const gsl_matrix * XtX, vector<double> &Gvec);
+    void set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
     void setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec);
     double CalcLikegamma(const class HYPBSLMM &cHyp);

@@ -1387,7 +1387,8 @@ void GEMMA::BatchRun (PARAM &cPar)
          
            // cout << "start bslmm.mcmc ...\n";
             time_start=clock();
-            cBslmm.MCMC(X_Genotype, y, 1);
+            cBslmm.MCMC_Test(X_Genotype, y, 1);
+            //cBslmm.MCMC(X_Genotype, y, 1);
             cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
             cBslmm.CopyToParam(cPar);
             
