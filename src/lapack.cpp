@@ -548,7 +548,7 @@ double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.01;
+    lambda *= 0.001;
     //cout << "lambda = " << lambda << endl;
     EigenSolve(Omega, Xty, OiXty, lambda);
     //EigenSolve(Omega, Xty, OiXty);

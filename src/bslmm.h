@@ -78,6 +78,7 @@ public:
     double vscale;
     map<string, int> mapFunc2Code;
     int iniType;
+    bool FIXHYP;
     
     
     vector <double> theta; // global hyper parameter
@@ -266,6 +267,7 @@ public:
     double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
     double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
 
+    double ProposeRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat);
     double ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *pi_vec_old, gsl_vector *pi_vec_new, const vector<SNPPOS> &snp_pos);
     double ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *sigma_vec_new, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
@@ -288,6 +290,7 @@ public:
     void set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     
     void setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec);
+    void setSubvar(class HYPBSLMM &cHyp);
     double CalcLikegamma(const class HYPBSLMM &cHyp);
     double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
     double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag);

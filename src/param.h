@@ -77,6 +77,7 @@ struct SNPPOS{
     string rs;
     string chr;
     long int bp;
+    double maf;
     
     vector<bool> indicator_func;
     vector<double> weight;
@@ -144,6 +145,7 @@ public:
     double vscale;
     map<string, int> mapFunc2Code;
     int iniType;
+    bool FIXHYP;
     
     
 	// IO related parameters
