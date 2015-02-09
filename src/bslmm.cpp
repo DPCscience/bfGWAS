@@ -315,11 +315,11 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
         
         for (size_t j=0; j < n_type; j++) {
             if (snp_pos[i].indicator_func[j]) {
-                outfile << j << "t";
+                outfile << j << "\t";
                 continue;
             }
             if (j == (n_type - 1) ) {
-                outfile << "NA" << "t";
+                outfile << "NA" << "\t";
             }
         }
 		

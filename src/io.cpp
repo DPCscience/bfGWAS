@@ -914,11 +914,12 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             cerr << "record sample number " << c_idv << " dose not equal to ni_total " << ni_total << "\n";
             exit(-1);
         }
+        maf/=2.0*(double)(ni_test-n_miss);
+        //cout << "maf = " << maf << "\n";
+        
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, indicator_func_temp, weight_temp, 0.0};
         snpInfo.push_back(sInfo); //save marker information
         
-        maf/=2.0*(double)(ni_test-n_miss);
-        //cout << "maf = " << maf << "\n";
         
         if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
         //cout << "pass missness criteron...\n";
