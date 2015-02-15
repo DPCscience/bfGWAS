@@ -318,7 +318,7 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
                 outfile << j << "\t";
                 continue;
             }
-            if (j == (n_type - 1) ) {
+            else if (j == (n_type - 1) ) {
                 outfile << "NA" << "\t";
             }
         }
