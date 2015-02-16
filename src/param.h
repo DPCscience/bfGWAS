@@ -146,6 +146,8 @@ public:
     map<string, int> mapFunc2Code;
     int iniType;
     bool FIXHYP;
+    string iniSNPfile;
+    string hypfile;
     
     
 	// IO related parameters

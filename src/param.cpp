@@ -261,6 +261,7 @@ void PARAM::ReadFiles (void)
         if (ReadFile_vcf(file_vcf, setSnps, W, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, r2_level, snpInfo, ns_test, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
             {error=true;}
         
+        cout << "start reading anno file ... \n";
         if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
             if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
         }

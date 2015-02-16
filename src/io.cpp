@@ -191,7 +191,7 @@ bool ReadFile_anno (const string &file_anno, map<string, string> &mapRS2chr, map
 	mapRS2chr.clear();
 	mapRS2bp.clear();
 	
-	ifstream infile (file_anno.c_str(), ifstream::in);
+	igzstream infile (file_anno.c_str(), igzstream::in);
 	if (!infile) {cout<<"error opening annotation file: "<<file_anno<<endl; return false;}
 	
 	string line;
@@ -233,7 +233,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     string func_type;
     int func_code;
     
-    ifstream infile_code (file_func_code.c_str(), ifstream::in);
+    igzstream infile_code (file_func_code.c_str(), igzstream::in);
     if (!infile_code) {cout<<"error opening annotation file: "<<file_func_code<<endl; return false;}
     while (!safeGetline(infile_code, line).eof()) {
         
@@ -256,7 +256,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     infile_code.close();
     infile_code.clear();
     
-    ifstream infile (file_anno.c_str(), ifstream::in);
+    igzstream infile (file_anno.c_str(), igzstream::in);
     if (!infile) {cout<<"error opening annotation file: "<<file_anno<<endl; return false;}
     
     // read function annotation file
@@ -267,7 +267,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     size_t snp_i = 0;
     
     while (!safeGetline(infile, line).eof()) {
-        if (line[0] == '#') {
+        if (line[0] == '#' || (line[0] == 'I' && line[1] == 'D')) {
             continue;
         }
         else {
@@ -960,7 +960,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     //cout << "genotype vector:\n";
     // PrintVector(genotype, 10);
     cout << "VCF tab_count = " << tab_count << endl;
-    cout << "ns_test = " << ns_test ;
+    cout << "ns_test = " << ns_test << endl;
     cout << "vcf read first time success ... \n";
     // cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
     

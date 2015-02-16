@@ -70,6 +70,8 @@ void BSLMM::CopyFromParam (PARAM &cPar)
     vscale = cPar.vscale;
     FIXHYP = cPar.FIXHYP;
     iniType = cPar.iniType;
+    iniSNPfile = cPar.iniSNPfile;
+    hypfile = cPar.hypfile;
     
     UnCompBufferSize = cPar.UnCompBufferSize;
     CompBuffSizeVec = cPar.CompBuffSizeVec;
@@ -902,7 +904,63 @@ vector<pair<size_t, double> > rank_loglr;
  
  return;
  } */
-     
+
+
+void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
+    
+    h = htemp;
+    
+    theta.assign(n_type, theta_temp);
+    log_theta.clear();
+    log_theta.push_back(log(theta[0]));
+    log_theta.push_back(log(theta[1]));
+    
+    subvar.assign(n_type, subvar_temp);
+    
+    
+    if (hypfile.c_str() == NULL) {
+        cout << "no hypefile ... ";
+        exit(1);
+    }
+    else{
+    ifstream infile(hypfile.c_str(), ifstream::in);
+    if(!infile) {cout << "Error opening file " << hypfile << endl; exit(-1);}
+    string line;
+    char *pch, *nch;
+    //cout << "load fixed hyper parameter values from : " << hypfile << endl;
+    
+    while (!safeGetline(infile, line).eof()) {
+        if ((line[0] == 'h') || (line[0] == '#')) {
+            continue;
+        }
+        else{
+            pch = (char *)line.c_str();
+            nch = strchr(pch, '\t');
+            h = strtod(pch, NULL);
+            pch = (nch == NULL) ? NULL : nch+1;
+            
+            nch = strchr(pch, '\t');
+            theta[0] = strtod(pch, NULL);
+            log_theta[0] = log(theta[0]);
+            pch = (nch == NULL) ? NULL : nch+1;
+            
+            nch = strchr(pch, '\t');
+            theta[1] = strtod(pch, NULL);
+            log_theta[1] = log(theta[1]);
+            pch = (nch == NULL) ? NULL : nch+1;
+            
+            nch = strchr(pch, '\t');
+            subvar[0] = strtod(pch, NULL);
+            pch = (nch == NULL) ? NULL : nch+1;
+            
+            subvar[1] = strtod(pch, NULL);
+        }
+    }
+    }
+    //cout << "h = "<<setprecision(5) << h << "; theta = " << theta[0] << ", " << theta[1] << "; subvar = " << subvar[0] << ", " << subvar[1] << endl;
+}
+
+
 //InitialMCMC currently used
 void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
 
@@ -913,12 +971,45 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         if (2.0*pos_loglr[i].second>q_genome) {cHyp.n_gamma++;}
     }
     cout << "number of snps before adjust = " << cHyp.n_gamma << endl;
-    if (cHyp.n_gamma<10) {cHyp.n_gamma=10;}
+    if (cHyp.n_gamma<30) {cHyp.n_gamma=30;}
     if (cHyp.n_gamma>s_max) {cHyp.n_gamma=s_max;}
     if (cHyp.n_gamma<s_min) {cHyp.n_gamma=s_min;}
     cout << "number of snps = " << cHyp.n_gamma << endl;
     
-    if(iniType == 1) {
+    if (!iniSNPfile.empty() && iniType == 0) {
+        
+        ifstream infile(iniSNPfile.c_str(), ifstream::in);
+        if(!infile) {cout << "Error opening file " << iniSNPfile << endl; exit(-1);}
+        string lineid;
+        rank.clear();
+        size_t orderj, rankj;
+        
+        cout << "Start loading initial snp IDs from " << iniSNPfile << "\n";
+        
+        while (!safeGetline(infile, lineid).eof()) {
+            
+            orderj = 0;
+            for (size_t i=0; i < snp_pos.size(); i++) {
+                if (snp_pos[i].rs.compare(lineid) == 0) {
+                    orderj=i;
+                    rankj = mapOrder2Rank[orderj];
+                    rank.push_back(rankj);
+                    //cout << lineid << " with rank = " << rankj;
+                    //snp_pos[orderj].printMarker();
+                    break;
+                }
+                if ( i == (snp_pos.size()-1) ) {
+                    cout << "Reach end of vector, failed finding snp " << lineid << endl;
+                }
+            }
+            
+        }
+        cout << endl;
+        infile.close();
+        infile.clear();
+        cHyp.n_gamma = rank.size();
+    }
+    else if(iniType == 1) {
         cout << "Start with top SVT SNPs.\n";
         rank.clear();
         for (size_t i=0; i<cHyp.n_gamma; ++i) {
@@ -999,14 +1090,6 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     }
     PrintVector(rank);
     
-   // vector<string> iniRank; //JY added vector iniRank to save all significant snp ID
-   // size_t order;
-   // for (size_t i=0; i<rank.size(); ++i) {
-    //    order = mapRank2Order[rank[i]];
-      //  iniRank.push_back(snp_pos[order].rs);
-   // }
-    // WriteIniRank(iniRank);  // write out initial sig snp ID
-    
     cHyp.logp=log((double)cHyp.n_gamma/(double)ns_test);
     cHyp.h=pve_null;
     
@@ -1018,7 +1101,6 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     double sigma_a2;
     if (trace_G!=0) {
         sigma_a2=cHyp.h*1.0/(trace_G*(1-cHyp.h)*exp(cHyp.logp));
-        //sigma_a2=cHyp.h*1.0/(trace_G*(1-cHyp.h)*exp(cHyp.logp)*(double)ns_test);
     } else {
         sigma_a2=cHyp.h*1.0/( (1-cHyp.h)*exp(cHyp.logp)*(double)ns_test);
     }
@@ -1034,12 +1116,9 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     if (cHyp.logp<logp_min) {cHyp.logp=logp_min;}
     if (cHyp.logp>logp_max) {cHyp.logp=logp_max;}
     
-    cHyp.theta.assign( n_type, exp(cHyp.logp) );
-    cHyp.log_theta.assign( n_type, cHyp.logp ); // initial log_theta vector
-    cout << "Initial log_theta: "; PrintVector(cHyp.log_theta);
-    cHyp.subvar.assign( n_type, sigma_a2 ); // initial subvar vector
-    cout << "subvar: "; PrintVector(cHyp.subvar);
-    cHyp.rho_vec.assign(n_type, 0.5);
+    setHyp(cHyp.h, ((double)cHyp.n_gamma/(double)ns_test), sigma_a2);
+    cHyp.theta = theta;
+    cHyp.subvar = subvar; // initial subvar vector
     
    // e_shape =  e;
    // e_rate = e_shape / sigma_a2; // Gamma with mean sigma_a2,
@@ -1047,10 +1126,10 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
    // cout << "; mean = " << sigma_a2 << "; sd = " << (sigma_a2 / sqrt(e_shape)) << endl;
     
     
-    cout<<"initial value of h = "<<cHyp.h<<endl;
+    cout<<"initial value of h = "<< h <<endl;
     cout<<"initial value of rho = "<<cHyp.rho<<endl;
-    cout<<"initial value of pi = "<<exp(cHyp.logp)<<endl;
-    cout << "initial value of sub-variance = " << sigma_a2 << endl;
+    cout<<"initial value of theta_vec = "<<theta[0] << ", " << theta[1] <<endl;
+    cout << "initial value of sub-variance_vec = " << subvar[0]<< ", " << subvar[1] << endl;
     cout<<"initial value of |gamma| = "<<cHyp.n_gamma<<endl;
     
     return;
@@ -1446,7 +1525,7 @@ void BSLMM::setSubvar(class HYPBSLMM &cHyp)
     }
 }
 
-//set sigma_subvec and mgamma vectoer.
+//set sigma_subvec vectoer.
 void BSLMM::getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     size_t order_i;
@@ -1456,6 +1535,21 @@ void BSLMM::getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vect
         for (size_t j=0; j<n_type; j++) {
             if (snp_pos[order_i].indicator_func[j]) {
                 gsl_vector_set(sigma_subvec, i, cHyp.subvar[j]);
+                continue;
+            }
+        }
+    }
+}
+
+void BSLMM::getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+{
+    size_t order_i;
+    
+    for (size_t i=0; i < rank.size(); i++) {
+        order_i = mapRank2Order[rank[i]];
+        for (size_t j=0; j<n_type; j++) {
+            if (snp_pos[order_i].indicator_func[j]) {
+                gsl_vector_set(sigma_subvec, i, subvar[j]);
                 continue;
             }
         }
@@ -1480,6 +1574,25 @@ void BSLMM::set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const v
         }
     }
 }
+
+/*
+void BSLMM::set_sumbeta2(vector<double> &sum_beta2, const vector<SNPPOS> &snp_pos, const gsl_vector *beta)
+{
+    size_t order_i;
+    
+    sum_beta2.assign(n_type, 0.0);
+    
+    for (size_t i=0; i < rank.size(); i++) {
+        order_i = mapRank2Order[rank[i]];
+        for (size_t j=0; j<n_type; j++) {
+            if (snp_pos[order_i].indicator_func[j]) {
+                sum_beta2[j] += gsl_vector_get(beta, i)^2;
+                continue;
+            }
+        }
+    }
+}
+ */
 
 void BSLMM::setGvec(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos, const gsl_matrix * XtX, vector<double> &Gvec)
 {
@@ -1584,12 +1697,22 @@ double BSLMM::CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank
     return (pi_rank + pi_nonrank);
 }
 
-double BSLMM::CalcLikegamma(const class HYPBSLMM &cHyp)
+/*double BSLMM::CalcLikegamma(const class HYPBSLMM &cHyp)
 {
     double loglikegamma = 0.0;
     
     for (size_t i=0; i < n_type; i++) {
         loglikegamma +=  cHyp.log_theta[i] * (double)cHyp.m_gamma[i] + (double)(mFunc[i] - cHyp.m_gamma[i]) * log(1.0 - exp(cHyp.log_theta[i]));
+    }
+    return loglikegamma;
+}*/
+
+double BSLMM::CalcLikegamma(const class HYPBSLMM &cHyp)
+{
+    double loglikegamma = 0.0;
+    
+    for (size_t i=0; i < n_type; i++) {
+        loglikegamma +=  log_theta[i] * (double)cHyp.m_gamma[i] + (double)(mFunc[i] - cHyp.m_gamma[i]) * log(1.0 - theta[i]);
     }
     return loglikegamma;
 }
@@ -2129,7 +2252,7 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
 void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     
     if (original_method) {
-        cout << "Run previous working version of MCMC...\n";
+        cout << "Run Block MCMC...\n";
     }
     clock_t time_start;
     double time_set=0, time_post=0;
@@ -2145,7 +2268,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector_set_zero(sigma_subvec_new);
     
     //same as old model
-    gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 11);
+    gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 4);
     gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
     
     gsl_vector *Xb_new=gsl_vector_alloc (ni_test);
@@ -2173,9 +2296,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     
     //Initialize variables for MH
     double logPost_new, logPost_old;
-    double logPostHRho_new, logPostHRho_old, loglikegamma;
-    double loglikebeta_old, loglikebeta_new;
-    double logMHratio, logMHratio_HRho;
+    double logMHratio;
     vector<size_t> rank_new, rank_old;
     vector<double> Gvec;
     class HYPBSLMM cHyp_old, cHyp_new;
@@ -2198,8 +2319,9 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     
     vector<pair<size_t, double> > pos_loglr;
     MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, Gvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //calculate trace_G or Gvec
-    trace_G = Gvec[0] + Gvec[1];
-    cout << "Total trace_G : " << Gvec[0] << ", " << Gvec[1] << endl;
+    trace_G = (Gvec[0] + Gvec[1]) / double(ni_test * ns_test);
+    cout << "trace_G = " << trace_G << endl;
+    cout << "Total trace_G vec : " << Gvec[0] << ", " << Gvec[1] << endl;
     
     stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp);
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
@@ -2249,49 +2371,30 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         SetXgamma (Xgamma_old, X, rank_old);
         CalcXtX (Xgamma_old, z, rank_old.size(), XtX_old, Xtz_old);
     }
-    if (FIXHYP) {
-        cHyp_old.h = 0.417251;
-    }
-    //theta_total.assign(n_type, 0.0);
-    //theta_total[0] += exp(cHyp_old.log_theta[0]);
-    //theta_total[1] += exp(cHyp_old.log_theta[1]);
-    //theta = theta_total;
-    //cout << "Initial theta: "; PrintVector(theta);
     
-    cout << "Set trace vector and m_gamma... \n";
+    //cout << "Set m_gamma... \n";
     set_mgamma(cHyp_old, rank_old, snp_pos);
     cout << "initial m_gamma: " << cHyp_old.m_gamma[0] << ", "<< cHyp_old.m_gamma[1]<< endl;
-    
-    cout << "Calculate sigma vectors... \n";
-    setSubvar(cHyp_old);
-    cout << "initial subvar: " << cHyp_old.subvar[0] << ", "<< cHyp_old.subvar[1] << endl;
-    getSubVec(sigma_subvec_old, cHyp_old, rank_old, snp_pos);
+    getSubVec(sigma_subvec_old, rank_old, snp_pos);
     
     cHyp_initial=cHyp_old;
     gsl_vector_memcpy(sigma_subvec_new, sigma_subvec_old);
     
     //Calculate first loglikelihood
     if (cHyp_old.n_gamma==0) {
-        loglikegamma = CalcLikegamma(cHyp_old);
-        loglikebeta_old = CalcPosterior (ztz, cHyp_old);
-        logPost_old = loglikebeta_old + loglikegamma;
-        logPostHRho_old = loglikebeta_old + CalcPrho(cHyp_old) + CalcPh(cHyp_old);
+        logPost_old = CalcPosterior (ztz, cHyp_old) + CalcLikegamma(cHyp_old);
     }
     else {
-        loglikegamma = CalcLikegamma(cHyp_old);
-        loglikebeta_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag);
-        logPost_old = loglikebeta_old + loglikegamma;
-        logPostHRho_old = loglikebeta_old + CalcPrho(cHyp_old) + CalcPh(cHyp_old);
+        logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag) + CalcLikegamma(cHyp_old);
     }
     if (!Error_Flag) {
-        cout <<  "logPost_old = " << logPost_old <<  "; logPostHRho_old = " << logPostHRho_old << endl;
+        cout <<  "logPost_old = " << logPost_old << endl;
     }
     else {
         cerr << "Failed at initialMCMC...\n";
         exit(-1);
     }
     
-    // cout << "; logPostTheta_old = " << logPostTheta_old << endl;
     /*
     cout << "First 10 responses: \n";
     PrintVector(z, 10);
@@ -2314,21 +2417,15 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     }
     
     //Start MCMC
-    int accept, accept_hrho; // accept_theta; naccept_theta=0,
-    size_t naccept_hrho=0;
+    int accept; // accept_theta; naccept_theta=0,
     size_t total_step=w_step+s_step;
     size_t w=0, w_col; // pos declared earlier (JY)
     size_t repeat=1;
     int flag_gamma=0;
-    double accept_percent, accept_hrho_percent; // accept_theta_percent;
+    double accept_percent; // accept_theta_percent;
     
     cHyp_new = cHyp_old;
     rank_new = rank_old;
-    // double d_logp = min(0.5, (logp_max-logp_min)*logp_scale);
-    // cout << "d_log = " << d_logp << "; logp_min = " << logp_min << "; logp_max" << logp_max << endl;
-    //cout << "logp_max = " << logp_max << "; logp_min = "<< logp_min ;
-    //cout << "; logp_stepsize = " << (logp_max-logp_min)*logp_scale<< endl;
-    //vector<double> theta_temp(n_type, 0.0);
 
     for (size_t t=0; t<total_step; ++t) {
         
@@ -2342,90 +2439,19 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             
             //First proposal need to be revised
             if (cHyp_old.n_gamma==0) {
-                loglikebeta_old = CalcPosterior (ztz, cHyp_old);
-                logPost_old= loglikebeta_old + CalcLikegamma(cHyp_old);
+                logPost_old= CalcPosterior (ztz, cHyp_old) + CalcLikegamma(cHyp_old);
             } else {
                 gsl_matrix_view Xold_sub=gsl_matrix_submatrix(Xgamma_old, 0, 0, ni_test, rank_old.size());
                 gsl_vector_view Xtz_sub=gsl_vector_subvector(Xtz_old, 0, rank_old.size());
                 gsl_blas_dgemv (CblasTrans, 1.0, &Xold_sub.matrix, z, 0.0, &Xtz_sub.vector);
-                loglikebeta_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag);
-                logPost_old = loglikebeta_old + CalcLikegamma(cHyp_old);
+                logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag) + CalcLikegamma(cHyp_old);
             }
         }
 
-        // Set repeat number
-        //
+        //////// Set repeat number
         //if (gsl_rng_uniform(gsl_r)<0.33) {repeat = 1+gsl_rng_uniform_int(gsl_r, 20);}
         //else {repeat=1;}
-        
-        //MCMC steps
-        
-        //Sample theta from beta distribution
-        //theta_temp[0] = gsl_ran_beta(gsl_r, 1 + cHyp_old.m_gamma[0], 3 + mFunc[0] - cHyp_old.m_gamma[0]);
-        //theta_temp[1] = gsl_ran_beta(gsl_r, 1 + cHyp_old.m_gamma[1], 3 + mFunc[1] - cHyp_old.m_gamma[1]);
-        cHyp_old.log_theta[0] = log(gsl_ran_beta(gsl_r, 1 + cHyp_old.m_gamma[0], 3 + mFunc[0] - cHyp_old.m_gamma[0]));
-        cHyp_old.log_theta[1] = log(gsl_ran_beta(gsl_r, 1 + cHyp_old.m_gamma[1], 3 + mFunc[1] - cHyp_old.m_gamma[1]));
-        cHyp_new.log_theta = cHyp_old.log_theta;
-       // theta_total[0] += theta_temp[0];
-       // theta_total[1] += theta_temp[1];
-       // theta[0] = theta_total[0] /  (double) (t + 2);
-       // theta[1] = theta_total[1] /  (double) (t + 2);
-        //cout << "theta_old: "<<setprecision(6) << (cHyp_old.theta[0]) << ", " << (cHyp_old.theta[1]) << endl;
-        
-        //Propose hrho / subvar
-       // cout << "h old : "<<setprecision(6) << cHyp_old.h << "; rhovec old : "<< cHyp_old.rho_vec[0] << ", " << cHyp_old.rho_vec[1] << endl;
-        //cout << "subvar_old: "<<setprecision(6) << cHyp_old.subvar[0] << ", "<< cHyp_old.subvar[1] << endl;
-        if (FIXHYP) {
-            logPostHRho_old = loglikebeta_old + CalcPrho(cHyp_old);
-        }
-        else logPostHRho_old = loglikebeta_old + CalcPrho(cHyp_old) + CalcPh(cHyp_old);
-
-        if (FIXHYP) {
-            logMHratio_HRho = ProposeRho(cHyp_old, cHyp_new, repeat);
-        }
-        else logMHratio_HRho = ProposeHnRho(cHyp_old, cHyp_new, repeat);
-        setSubvar(cHyp_new);
-        //cout << "new h: "<<setprecision(6) << cHyp_new.h << "; rhovec : "<< cHyp_new.rho_vec[0] << ", " << cHyp_new.rho_vec[1] << endl;
-       // cout << "subvar_new: "<<setprecision(6) << cHyp_new.subvar[0] << ", "<< cHyp_new.subvar[1] << endl;
-        getSubVec(sigma_subvec_new, cHyp_new, rank_old, snp_pos);
-        loglikebeta_new = CalcLikelihood(XtX_old, Xtz_old, ztz, cHyp_new, sigma_subvec_new, Error_Flag);
-        if (FIXHYP) {
-            logPostHRho_new = loglikebeta_new + CalcPrho(cHyp_new);
-        }
-        else logPostHRho_new = loglikebeta_new + CalcPrho(cHyp_new) + CalcPh(cHyp_new); // + CalcPtheta(cHyp_new);
-        if (!Error_Flag) {
-            logMHratio_HRho += logPostHRho_new - logPostHRho_old;
-            if (logMHratio_HRho > 0 || log(gsl_rng_uniform(gsl_r))< logMHratio_HRho)
-                {accept_hrho=1;}
-            else {accept_hrho = 0;}
-        }
-        else {accept_hrho = 0;}
-        
-        if (accept_hrho == 1) {
-            naccept_hrho++;
-            loglikebeta_old = loglikebeta_new;
-            if (FIXHYP) cHyp_old.h = cHyp_new.h;
-            cHyp_old.rho_vec = cHyp_new.rho_vec;
-            cHyp_old.subvar = cHyp_new.subvar;
-            gsl_vector_view sigma_oldsub=gsl_vector_subvector(sigma_subvec_old, 0, rank_old.size());
-            gsl_vector_view sigma_newsub=gsl_vector_subvector(sigma_subvec_new, 0, rank_old.size());
-            gsl_vector_memcpy(&sigma_oldsub.vector, &sigma_newsub.vector);
-           // cout << "accept h and rho, subvar\n";
-        }
-        else
-        {
-            if (FIXHYP) cHyp_new.h = cHyp_old.h;
-            cHyp_new.rho_vec = cHyp_old.rho_vec;
-            cHyp_new.subvar = cHyp_old.subvar;
-        }
-        
         //cout << "n_mh = " << n_mh << endl;
-       // cout << "rank_old: "; PrintVector(rank_old);
-        //propose gamma
-        
-        //logPost_old = logPostHRho_old - CalcPtheta(cHyp_old) - CalcPrho(cHyp_old);
-        logPost_old = loglikebeta_old + CalcLikegamma(cHyp_old);// - CalcPtheta(cHyp_old);
-        //cout << "old m_gamma: " << cHyp_old.m_gamma[0] << ", "<< cHyp_old.m_gamma[1]<< endl;
         
         for (size_t i=0; i<n_mh; ++i) {
 
@@ -2454,16 +2480,12 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                 }
             }
             set_mgamma(cHyp_new, rank_new, snp_pos);
-           // setGvec(cHyp_new, rank_new, snp_pos, XtX_new, Gvec_new);
-           // setSubvar(cHyp_new, Gvec_new);
-            getSubVec(sigma_subvec_new, cHyp_new, rank_new, snp_pos);
+            getSubVec(sigma_subvec_new, rank_new, snp_pos);
            // cout << "new m_gamma: " << cHyp_new.m_gamma[0] << ", "<< cHyp_new.m_gamma[1]<< endl;
             if (cHyp_new.n_gamma==0) {
-                loglikebeta_new = CalcPosterior (ztz, cHyp_new);
-                logPost_new = loglikebeta_new + CalcLikegamma(cHyp_new);
+                logPost_new = CalcPosterior (ztz, cHyp_new) + CalcLikegamma(cHyp_new);
             } else {
-                loglikebeta_new = CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, sigma_subvec_new, Error_Flag);
-                logPost_new = loglikebeta_new + CalcLikegamma(cHyp_new);
+                logPost_new = CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, sigma_subvec_new, Error_Flag) + CalcLikegamma(cHyp_new);
             }
             //  cout << "Calcposterior success." << endl;
             if (!Error_Flag) {
@@ -2486,12 +2508,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     else nother_accept++;
                 
                     logPost_old=logPost_new;
-                    loglikebeta_old = loglikebeta_new;
-                    //Gvec_old = Gvec_new;
                     cHyp_old.n_gamma = cHyp_new.n_gamma;
                     cHyp_old.m_gamma = cHyp_new.m_gamma;
-                    cHyp_old.pve = cHyp_new.pve;
-                    cHyp_old.pge = cHyp_new.pge;
+                    //cHyp_old.pve = cHyp_new.pve;
+                    //cHyp_old.pge = cHyp_new.pge;
                     gsl_vector_memcpy (Xb_old, Xb_new);
                     rank_old = rank_new;
                     gsl_vector_view sigma_oldsub=gsl_vector_subvector(sigma_subvec_old, 0, rank_old.size());
@@ -2516,7 +2536,6 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                 
                 cHyp_new.n_gamma = cHyp_old.n_gamma;
                 cHyp_new.m_gamma = cHyp_old.m_gamma;
-                //Gvec_new = Gvec_old;
                 rank_new = rank_old;
             }
             //cout << "copy data from new propose -> old " << endl;
@@ -2540,22 +2559,12 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         
          //if (t % 10 == 0 && t > w_step) {
          if (t % w_pace == 0 && t > w_step) {
-            // accept_theta_percent = (double)naccept_theta / (double)(t+1);
-             accept_hrho_percent = (double)naccept_hrho / (double)(t+1);
              accept_percent = (double)n_accept/(double)((t+1) * n_mh);
-             
-            // cout << "theta acceptance percentage = " << accept_theta_percent << endl ;
-            cout << "HRho acceptance percentage = " <<setprecision(6) << accept_hrho_percent << endl ;
             cout << "gamma acceptance percentage = " <<setprecision(6) << accept_percent << endl ;
-            
-             cout << "h = " <<setprecision(6)<< cHyp_old.h << "; rho: " << cHyp_old.rho_vec[0] << ", " << cHyp_old.rho_vec[1]<< endl;
-             cout << "theta: "<<setprecision(6) << exp(cHyp_old.log_theta[0]) << ", " << exp(cHyp_old.log_theta[1])<< endl;
              cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
-             cout << "subvar: "<<setprecision(9) << cHyp_old.subvar[0] << ", " << cHyp_old.subvar[1] << endl;
              cout << "sigma_subvec_old : " <<setprecision(6);
              PrintVector(sigma_subvec_old, 5);
              cout << "beta_hat: "; PrintVector(beta_old, 5);
-             cout << "theta_est: "; PrintVector(theta); cout << endl;
         }
         
         //Save data
@@ -2565,26 +2574,20 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                 w_col=w%w_pace;
                 if (w_col==0) {
                     if (w==0) {
-                        WriteResult (0, Result_hyp, Result_gamma, w_col);
+                       // WriteResult (0, Result_hyp, Result_gamma, w_col);
                     }
                     else {
-                        WriteResult (1, Result_hyp, Result_gamma, w_col);
+                       // WriteResult (1, Result_hyp, Result_gamma, w_col);
                         gsl_matrix_set_zero (Result_hyp);
                         gsl_matrix_set_zero (Result_gamma);
                     }
                 }
-                
                 gsl_matrix_set (Result_hyp, w_col, 0, cHyp_old.pve);
                 gsl_matrix_set (Result_hyp, w_col, 1, cHyp_old.pge);
                 gsl_matrix_set (Result_hyp, w_col, 2, cHyp_old.n_gamma);
                 gsl_matrix_set (Result_hyp, w_col, 3, logPost_old);
-                gsl_matrix_set (Result_hyp, w_col, 4, cHyp_old.h);
-                gsl_matrix_set (Result_hyp, w_col, 5, cHyp_old.rho_vec[0]);
-                gsl_matrix_set (Result_hyp, w_col, 6, cHyp_old.rho_vec[1]);
-                gsl_matrix_set (Result_hyp, w_col, 7, exp(cHyp_old.log_theta[0]));
-                gsl_matrix_set (Result_hyp, w_col, 8, exp(cHyp_old.log_theta[1]));
-                gsl_matrix_set (Result_hyp, w_col, 9, cHyp_old.subvar[0]);
-                gsl_matrix_set (Result_hyp, w_col, 10, cHyp_old.subvar[1]);
+                gsl_matrix_set (Result_hyp, w_col, 4, cHyp_old.m_gamma[0]);
+                gsl_matrix_set (Result_hyp, w_col, 5, cHyp_old.m_gamma[1]);
                 
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
                     // beta_g saved by position
@@ -2604,32 +2607,25 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             
         }
     }
+    
     cout<<endl;
-   // accept_theta_percent = (double)naccept_theta / (double)(total_step+1);
-    accept_hrho_percent = (double)naccept_hrho / (double)(total_step);
     accept_percent = (double)n_accept/(double)(total_step * n_mh);
-    //cout << "theta acceptance percentage = " << accept_theta_percent << endl ;
-    cout << "HRho acceptance percentage = " << accept_hrho_percent << endl ;
     cout << "gamma acceptance percentage = " << accept_percent << endl ;
-    cout << "h = "<<setprecision(6) << cHyp_old.h << "; rho: " << cHyp_old.rho_vec[0] << ", " << cHyp_old.rho_vec[1]<< endl;
-    cout << "theta: "<<setprecision(6) << exp(cHyp_old.log_theta[0]) << ", " << exp(cHyp_old.log_theta[1])<< endl;
     cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
-    cout << "subvar: "<<setprecision(9) << cHyp_old.subvar[0] << ", " << cHyp_old.subvar[1] << endl;
     cout << "sigma_subvec_old : " <<setprecision(9); PrintVector(sigma_subvec_old, 5);
     cout << "beta_hat: "; PrintVector(beta_old, 5); cout << endl;
-    cout << "theta_est: "; PrintVector(theta); cout << endl;
     
-    cout<<"time on selecting Xgamma: "<<time_set<<endl;
-    cout<<"time on calculating posterior: "<<time_post<<endl;
+    //cout<<"time on selecting Xgamma: "<<time_set<<endl;
+    //cout<<"time on calculating posterior: "<<time_post<<endl;
     
     w_col=w%w_pace;
    // WriteResult (1, Result_hyp, Result_gamma, w_col, snp_pos, pos_loglr);
-    WriteResult (1, Result_hyp, Result_gamma, w_col);
+    //WriteResult (1, Result_hyp, Result_gamma, w_col);
     
     gsl_vector *alpha=gsl_vector_alloc (ns_test);
     gsl_vector_set_zero (alpha);
     //WriteParam (beta_g, alpha, w);
-    WriteParam (beta_g, alpha, w, snp_pos, pos_loglr);
+    //WriteParam (beta_g, alpha, w, snp_pos, pos_loglr);
     gsl_vector_free(alpha);
     
     gsl_matrix_free(Result_hyp);
@@ -2664,7 +2660,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
 
 
 //acceptance percentage 15% MCMC version
-
+/*
  void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
  
  if (original_method) {
@@ -2800,7 +2796,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
  cout << "Calculate sigma vectors... \n";
  setSubvar(cHyp_old, Gvec);
  cout << "initial subvar: " << cHyp_old.subvar[0] << ", "<< cHyp_old.subvar[1] << endl;
- getSubVec(sigma_subvec_old, cHyp_old, rank_old, snp_pos);
+ getSubVec(sigma_subvec_old, rank_old, snp_pos);
  
  cHyp_initial=cHyp_old;
  gsl_vector_memcpy(sigma_subvec_new, sigma_subvec_old);
@@ -2828,7 +2824,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
  else {
  cerr << "Failed at initialMCMC...\n";
  exit(-1);
- }
+ }*/
  
  // cout << "; logPostTheta_old = " << logPostTheta_old << endl;
  /*
@@ -2841,7 +2837,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
  cout << "First 10 XtX : \n";
  PrintMatrix(XtX_old, 10, 10);
  */ 
-
+/*
 //calculate centered z_hat, and pve
 if (a_mode==13) {
     if (cHyp_old.n_gamma==0) {
@@ -2925,7 +2921,7 @@ for (size_t t=0; t<total_step; ++t) {
         }
         setGvec(cHyp_new, rank_new, snp_pos, XtX_new, Gvec_new);
         setSubvar(cHyp_new, Gvec);
-        getSubVec(sigma_subvec_new, cHyp_new, rank_new, snp_pos);
+        getSubVec(sigma_subvec_new, rank_new, snp_pos);
         // cout << "new m_gamma: " << cHyp_new.m_gamma[0] << ", "<< cHyp_new.m_gamma[1]<< endl;
         if (cHyp_new.n_gamma==0) {
             logPost_new=CalcPosterior (ztz, cHyp_new) + CalcLikegamma(cHyp_new) + CalcPrho(cHyp_new);
@@ -3075,7 +3071,7 @@ for (size_t t=0; t<total_step; ++t) {
         
     }
 }
-cout<<endl;
+cout<< " MCMC completed... " <<endl;
 // accept_theta_percent = (double)naccept_theta / (double)(total_step+1);
 //accept_hrho_percent = (double)naccept_hrho / (double)(total_step);
 accept_percent = (double)n_accept/(double)(total_step * n_mh);
@@ -3129,7 +3125,7 @@ delete [] p_gamma;
 beta_g.clear();
 
 return;
-} 
+} */
 
 
 //calculate pve and pge, and calculate z_hat for case-control data

@@ -356,7 +356,7 @@ void GEMMA::PrintHelp(size_t option)
 void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 {
 	string str;
-	
+
 	for(int i = 1; i < argc; i++) {		
 		if (strcmp(argv[i], "-bfile")==0 || strcmp(argv[i], "-b")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
@@ -388,6 +388,20 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
             str.clear();
             str.assign(argv[i]);
             cPar.file_vcfs=str;
+        }
+        else if (strcmp(argv[i], "-iniSNP")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.iniSNPfile=str;
+        }
+        else if (strcmp(argv[i], "-hfile")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.hypfile=str;
         }
         else if (strcmp(argv[i], "-GTfield")==0) {
             if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
@@ -846,13 +860,6 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
             str.assign(argv[i]);
             cPar.Compress_Flag=atoi(str.c_str());
         }
-        else if (strcmp(argv[i], "-e")==0) {
-			if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.e=20;continue;}
-			++i;
-			str.clear();
-			str.assign(argv[i]);
-			cPar.e=atof(str.c_str());
-		}
 		else {cout<<"error! unrecognized option: "<<argv[i]<<endl; cPar.error=true; continue;}
 	}
 	

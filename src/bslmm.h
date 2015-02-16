@@ -79,9 +79,12 @@ public:
     map<string, int> mapFunc2Code;
     int iniType;
     bool FIXHYP;
+    string iniSNPfile;
+    string hypfile;
     
-    
+    double h;
     vector <double> theta; // global hyper parameter
+    vector <double> log_theta;
     vector <double> theta_total;
     vector <double> subvar; // global hyper parameter
 
@@ -295,6 +298,10 @@ public:
     double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
     double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag);
     
+    //EM-BlockMCMC related
+    void setHyp(double htemp, double theta_temp, double subvar_temp);
+    void getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+
 };
 
 void PrintVector(const gsl_vector * x);

@@ -39,7 +39,7 @@ else
 LIBS = -lgsl -lgslcblas -pthread -lz -lm ./libStatGen/libStatGen.a
 endif
 
-OUTPUT = $(BIN_DIR)/gemma_block
+OUTPUT = $(BIN_DIR)/gemma_emblock
 
 ifdef FORCE_FLOAT
 OUTPUT = $(BIN_DIR)/gemmaf
