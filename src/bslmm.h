@@ -301,6 +301,8 @@ public:
     //EM-BlockMCMC related
     void setHyp(double htemp, double theta_temp, double subvar_temp);
     void getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma);
+    void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
 
 };
 

@@ -1563,108 +1563,108 @@ void GEMMA::WriteLog (int argc, char ** argv, PARAM &cPar)
 	
 	if (cPar.a_mode==1 || cPar.a_mode==2 || cPar.a_mode==3 || cPar.a_mode==4 || cPar.a_mode==5 || cPar.a_mode==11 || cPar.a_mode==12 || cPar.a_mode==13) {
         
-		outfile<<"## REMLE log-likelihood in the null model = "<<cPar.logl_remle_H0<<endl;
-		outfile<<"## MLE log-likelihood in the null model = "<<cPar.logl_mle_H0<<endl;
+		//outfile<<"## REMLE log-likelihood in the null model = "<<cPar.logl_remle_H0<<endl;
+		//outfile<<"## MLE log-likelihood in the null model = "<<cPar.logl_mle_H0<<endl;
 		if (cPar.n_ph==1) {
 			//outfile<<"## lambda REMLE estimate in the null (linear mixed) model = "<<cPar.l_remle_null<<endl;
 			//outfile<<"## lambda MLE estimate in the null (linear mixed) model = "<<cPar.l_mle_null<<endl;	
-			outfile<<"## pve estimate in the null model = "<<cPar.pve_null<<endl;
-			outfile<<"## se(pve) in the null model = "<<cPar.pve_se_null<<endl;	
-			outfile<<"## vg estimate in the null model = "<<cPar.vg_remle_null<<endl;
-			outfile<<"## ve estimate in the null model = "<<cPar.ve_remle_null<<endl;	
-			outfile<<"## beta estimate in the null model = ";
+			//outfile<<"## pve estimate in the null model = "<<cPar.pve_null<<endl;
+			//outfile<<"## se(pve) in the null model = "<<cPar.pve_se_null<<endl;
+			//outfile<<"## vg estimate in the null model = "<<cPar.vg_remle_null<<endl;
+			//outfile<<"## ve estimate in the null model = "<<cPar.ve_remle_null<<endl;
+			//outfile<<"## beta estimate in the null model = ";
 			for (size_t i=0; i<cPar.beta_remle_null.size(); i++) {
-				outfile<<"  "<<cPar.beta_remle_null[i];
+				//outfile<<"  "<<cPar.beta_remle_null[i];
 			}
-			outfile<<endl;
-			outfile<<"## se(beta) = ";
+			//outfile<<endl;
+			//outfile<<"## se(beta) = ";
 			for (size_t i=0; i<cPar.se_beta_remle_null.size(); i++) {
-				outfile<<"  "<<cPar.se_beta_remle_null[i];
+				//outfile<<"  "<<cPar.se_beta_remle_null[i];
 			}
-			outfile<<endl;
+			//outfile<<endl;
 			
 		} else {
 			size_t c;
-			outfile<<"## REMLE estimate for Vg in the null model: "<<endl;			
+			//outfile<<"## REMLE estimate for Vg in the null model: "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<=i; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<cPar.Vg_remle_null[c]<<"\t";
+					//outfile<<cPar.Vg_remle_null[c]<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## se(Vg): "<<endl;	
+			//outfile<<"## se(Vg): "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<=i; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<sqrt(cPar.VVg_remle_null[c])<<"\t";
+					//outfile<<sqrt(cPar.VVg_remle_null[c])<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## REMLE estimate for Ve in the null model: "<<endl;	
+			//outfile<<"## REMLE estimate for Ve in the null model: "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<=i; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<cPar.Ve_remle_null[c]<<"\t";
+					//outfile<<cPar.Ve_remle_null[c]<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## se(Ve): "<<endl;	
+			//outfile<<"## se(Ve): "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<=i; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<sqrt(cPar.VVe_remle_null[c])<<"\t";
+					//outfile<<sqrt(cPar.VVe_remle_null[c])<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
 			
-			outfile<<"## MLE estimate for Vg in the null model: "<<endl;
+			//outfile<<"## MLE estimate for Vg in the null model: "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<cPar.n_ph; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<cPar.Vg_mle_null[c]<<"\t";
+					//outfile<<cPar.Vg_mle_null[c]<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## se(Vg): "<<endl;	
+			//outfile<<"## se(Vg): "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<=i; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<sqrt(cPar.VVg_mle_null[c])<<"\t";
+					//outfile<<sqrt(cPar.VVg_mle_null[c])<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## MLE estimate for Ve in the null model: "<<endl;	
+			//outfile<<"## MLE estimate for Ve in the null model: "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<cPar.n_ph; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<cPar.Ve_mle_null[c]<<"\t";
+					//outfile<<cPar.Ve_mle_null[c]<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## se(Ve): "<<endl;	
+			//outfile<<"## se(Ve): "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<=i; j++) {
 					c=(2*cPar.n_ph-min(i,j)+1)*min(i,j)/2+max(i,j)-min(i,j);
-					outfile<<sqrt(cPar.VVe_mle_null[c])<<"\t";
+					//outfile<<sqrt(cPar.VVe_mle_null[c])<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## estimate for B (d by c) in the null model (columns correspond to the covariates provided in the file): "<<endl;
+			//outfile<<"## estimate for B (d by c) in the null model (columns correspond to the covariates provided in the file): "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<cPar.n_cvt; j++) {
 					c=i*cPar.n_cvt+j;
-					outfile<<cPar.beta_remle_null[c]<<"\t";
+					//outfile<<cPar.beta_remle_null[c]<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
-			outfile<<"## se(B): "<<endl;
+			//outfile<<"## se(B): "<<endl;
 			for (size_t i=0; i<cPar.n_ph; i++) {
 				for (size_t j=0; j<cPar.n_cvt; j++) {
 					c=i*cPar.n_cvt+j;
-					outfile<<cPar.se_beta_remle_null[c]<<"\t";
+					//outfile<<cPar.se_beta_remle_null[c]<<"\t";
 				}
-				outfile<<endl;
+				//outfile<<endl;
 			}
 		}
 	}
@@ -1705,8 +1705,8 @@ void GEMMA::WriteLog (int argc, char ** argv, PARAM &cPar)
 		outfile<<"##"<<endl;
 		outfile<<"## MCMC related:"<<endl;	
 		outfile<<"## initial value of h = "<<cPar.cHyp_initial.h<<endl;
-		outfile<<"## initial value of rho = "<<cPar.cHyp_initial.rho<<endl;
-		outfile<<"## initial value of pi = "<<exp(cPar.cHyp_initial.logp)<<endl;
+		//outfile<<"## initial value of rho = "<<cPar.cHyp_initial.rho<<endl;
+		//outfile<<"## initial value of pi = "<<exp(cPar.cHyp_initial.logp)<<endl;
 		outfile<<"## initial value of |gamma| = "<<cPar.cHyp_initial.n_gamma<<endl;
 		outfile<<"## random seed = "<<cPar.randseed<<endl;
 		outfile<<"## acceptance ratio = "<<(double)cPar.n_accept/(double)((cPar.w_step+cPar.s_step)*cPar.n_mh)<<endl;
@@ -1717,17 +1717,17 @@ void GEMMA::WriteLog (int argc, char ** argv, PARAM &cPar)
 	outfile<<"## total computation time = "<<cPar.time_total<<" min "<<endl;
 	outfile<<"## computation time break down: "<<endl;
 	if (cPar.a_mode==21 || cPar.a_mode==22 || cPar.a_mode==11 || cPar.a_mode==13) {
-		outfile<<"##      time on calculating relatedness matrix = "<<cPar.time_G<<" min "<<endl;
+		//outfile<<"##      time on calculating relatedness matrix = "<<cPar.time_G<<" min "<<endl;
 	}
 	if (cPar.a_mode==31) {
-		outfile<<"##      time on eigen-decomposition = "<<cPar.time_eigen<<" min "<<endl;
+		//outfile<<"##      time on eigen-decomposition = "<<cPar.time_eigen<<" min "<<endl;
 	}
 	if (cPar.a_mode==1 || cPar.a_mode==2 || cPar.a_mode==3 || cPar.a_mode==4 || cPar.a_mode==5 || cPar.a_mode==11 || cPar.a_mode==12 || cPar.a_mode==13) {
-		outfile<<"##      time on eigen-decomposition = "<<cPar.time_eigen<<" min "<<endl;
-		outfile<<"##      time on calculating UtX = "<<cPar.time_UtX<<" min "<<endl;		
+		//outfile<<"##      time on eigen-decomposition = "<<cPar.time_eigen<<" min "<<endl;
+		//outfile<<"##      time on calculating UtX = "<<cPar.time_UtX<<" min "<<endl;
 	}
 	if ((cPar.a_mode>=1 && cPar.a_mode<=4) || (cPar.a_mode>=51 && cPar.a_mode<=54) ) {
-		outfile<<"##      time on optimization = "<<cPar.time_opt<<" min "<<endl;
+		//outfile<<"##      time on optimization = "<<cPar.time_opt<<" min "<<endl;
 	}
 	if (cPar.a_mode==11 || cPar.a_mode==13) {
 		outfile<<"##      time on proposal = "<<cPar.time_Proposal<<" min "<<endl;
