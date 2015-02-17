@@ -27,6 +27,7 @@
 #include "gsl/gsl_blas.h"
 #include "gsl/gsl_math.h"
 #include "gsl/gsl_eigen.h"
+#include <gsl/gsl_rng.h>
 
 using namespace std;
 using namespace Eigen;
@@ -519,9 +520,22 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
      VectorXd Xty_eig(s_size);
      VectorXd beta_eig(s_size);
     
+    
+    gsl_rng * r;
+    const gsl_rng_type * T;
+    gsl_rng_env_setup();
+    T = gsl_rng_default;
+    r = gsl_rng_alloc (T);
+    //cout << "lambda" << lambda << endl;
+    gsl_rng_set(r, (unsigned)lambda);
+    
+    
      for(size_t i=0; i < s_size; ++i){
          Xty_eig(i) = gsl_vector_get(Xty, i);
-         XtX_eig(i, i) = gsl_matrix_get(XtX, i, i) + lambda;
+         //cout << "add " << lambda * gsl_rng_uniform(r) << endl;
+         
+         XtX_eig(i, i) = gsl_matrix_get(XtX, i, i) + lambda * gsl_rng_uniform(r);
+         
          for (size_t j=(i+1); j<s_size; ++j) {
                  XtX_eig(i, j) = gsl_matrix_get(XtX, i, j);
                  XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
@@ -535,6 +549,7 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
         gsl_vector_set(beta, i, beta_eig(i));
     }
     
+    gsl_rng_free(r);
 	return;
 }
 //JY write eigen solve
@@ -548,9 +563,10 @@ double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.01;
+    lambda *= 0.05;
     //cout << "lambda = " << lambda << endl;
     EigenSolve(Omega, Xty, OiXty, lambda);
+    //cout << "lambda = " << lambda << endl;
     //EigenSolve(Omega, Xty, OiXty);
     
 	double logdet_O=0.0;
