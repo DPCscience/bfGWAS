@@ -400,7 +400,7 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
 		}
             
         }
-        else {cerr << "pos dose not match snp_pos[i].pos...\n"; exit(1);}
+        else {cerr << "pos dose not match snp_pos[i].pos...\n"; exit(-1);}
         
 	}		
 	
@@ -1690,6 +1690,7 @@ void BSLMM::CalcSvec(const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const ve
     
     if (cHyp.n_gamma != rank.size()) {
         cerr << "Error: cHyp.n_gamma not equal to the size of rank\n";
+        exit(-1);
     }
     size_t order_i;
     double sigma_temp;
@@ -1938,9 +1939,9 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     
     if (P_yy <= 0) {
         Error_Flag = 1;
-        cerr << "Error in calcPosterior: P_yy = " << P_yy << endl;
+        cout << "Error in calcPosterior: P_yy = " << P_yy << endl;
         cout << "beta_hat: "; PrintVector(beta_hat);
-        cerr << "set beta_hat to 0\n";
+        cout << "set beta_hat to 0\n";
         gsl_vector_set_zero(beta_hat);
         P_yy = yty;
         //
@@ -2041,13 +2042,13 @@ double BSLMM::CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, cons
       P_yy-=d;
       if (P_yy <= 0) {
           Error_Flag = 1;
-          cerr << "Error in calclikelihood: P_yy = " << P_yy << endl;
+          cout << "Error in calclikelihood: P_yy = " << P_yy << endl;
           cout << "h = "<<setprecision(6) << cHyp.h << "; rho: " << cHyp.rho_vec[0] << ", " << cHyp.rho_vec[1];
           cout << "theta: "<<setprecision(6) << exp(cHyp.log_theta[0]) << ", " << exp(cHyp.log_theta[1]);
           cout << "; subvar: "<<setprecision(6) << cHyp.subvar[0] << ", " << cHyp.subvar[1];
           cout << "beta_hat: "; PrintVector(beta_hat);
           
-          cerr << "set beta_hat to 0\n";
+          cout << "set beta_hat to 0\n";
           gsl_vector_set_zero(beta_hat);
           P_yy = yty;
          // exit(-1);
