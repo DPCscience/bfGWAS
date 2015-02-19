@@ -128,6 +128,7 @@ public:
     vector<double> rho_vec;
     vector<size_t> m_gamma; // # of selected SNP of each function type
     
+    double rv;
     double sigma_b2; //
 	double pve;
 	double pge;

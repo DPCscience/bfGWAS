@@ -84,6 +84,8 @@ public:
     string hypfile;
     vector< pair<size_t, size_t> > SNPorder_vec; //<pos, rank>
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
+    double GV, RV;
+    
     
     double h;
     vector <double> theta; // global hyper parameter
@@ -307,6 +309,7 @@ public:
     void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma);
     void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
+    void WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_snp);
 
 };
 
