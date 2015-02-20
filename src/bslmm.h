@@ -84,14 +84,14 @@ public:
     string hypfile;
     vector< pair<size_t, size_t> > SNPorder_vec; //<pos, rank>
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
-    double GV, RV;
+    double GV, rv, tau, log2pirv;
     
     
     double h;
     vector <double> theta; // global hyper parameter
     vector <double> log_theta;
     vector <double> theta_total;
-    vector <double> subvar; // global hyper parameter
+    vector <double> subvar, inv_subvar, log_subvar, sumbeta2; // global hyper parameter
 
     
 	// IO related parameters

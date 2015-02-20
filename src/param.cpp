@@ -707,7 +707,7 @@ void PARAM::CheckData (void) {
 		if (h_scale==-1) {h_scale=min(1.0, 10.0/sqrt((double)ni_test) );}
 		if (rho_scale==-1) {rho_scale=min(1.0, 10.0/sqrt((double)ni_test) );}
 		if (logp_scale==-1) {logp_scale=min(1.0, 5.0/sqrt((double)ni_test) );}
-        cout << "h_scale = " << h_scale << "; rho_scale = " << rho_scale<< "; logtheta_scale = " << logp_scale << endl;
+        //cout << "h_scale = " << h_scale << "; rho_scale = " << rho_scale<< "; logtheta_scale = " << logp_scale << endl;
         if (vscale <= 0.0) { vscale = min(0.5, 10.0/sqrt((double)ni_test));}
 		
 		if (h_min==-1) {h_min=0.00000001;}
