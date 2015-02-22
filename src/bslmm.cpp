@@ -1956,14 +1956,15 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     
     //calculate beta_hat
     //cout << "inv(Omega) * Xty: ";
-    double lambda = 0.0;
+    /*double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.00001;
+    lambda *= 0.00001;*/
     //cout << "lambda = " << lambda << endl;
-    EigenSolve(Omega, &Xty_sub.vector, beta_hat, lambda);
+    EigenSolve(Omega, &Xty_sub.vector, beta_hat);
+    //EigenSolve(Omega, &Xty_sub.vector, beta_hat, lambda);
     gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
     gsl_vector_memcpy(&beta_sub.vector, beta_hat);
     
@@ -2265,9 +2266,9 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
 
 void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     
-    vector<double> em_gamma_avg(n_type, 0.0);
-    em_gamma_avg[0] = em_gamma[0] / (double)s_step;
-    em_gamma_avg[1] = em_gamma[1] / (double)s_step;
+    //vector<double> em_gamma_avg(n_type, 0.0);
+    //em_gamma_avg[0] = em_gamma[0] / (double)s_step;
+    //em_gamma_avg[1] = em_gamma[1] / (double)s_step;
     
     double em_logpost = 0.0, logpost_min = gsl_vector_get(LnPost, 0);
     for (size_t i=0; i < s_step; i++) {
@@ -2276,16 +2277,17 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     em_logpost /= double(s_step);
     em_logpost = log(em_logpost) + logpost_min;
     
-    //save E(lnpost, m0, m1, n0, n1)
+    //save E(GV, sumbeta2[0], sumbeta2[1], sum_m0, sum_m1, lnpost, m0, m1, n0, n1)
     string file_hyp;
     file_hyp = "./output/" + file_out;
     file_hyp += ".hyptemp";
     ofstream outfile_hyp;
     outfile_hyp.open (file_hyp.c_str(), ofstream::out);
     if (!outfile_hyp) {cout<<"error writing file: "<<file_hyp<<endl; return;}
-    outfile_hyp << scientific << setprecision(6) << GV << "\t" << sumbeta2[0] << "\t" << sumbeta2[1] << "\t";
+    
+    outfile_hyp << scientific << setprecision(6) << (GV / (double)s_step) << "\t" << rv << "\t" << sumbeta2[0] << "\t" << sumbeta2[1] << "\t";
     outfile_hyp << em_gamma[0] << "\t" << em_gamma[1]<< "\t";
-    outfile_hyp << em_logpost << "\t" << em_gamma_avg[0] << "\t" << em_gamma_avg[1]<< "\t" ;
+    outfile_hyp << em_logpost << "\t" << (em_gamma[0] / (double)s_step) << "\t" << (em_gamma[1] / (double)s_step) << "\t" ;
     outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << endl;
     outfile_hyp.clear();
     outfile_hyp.close();
@@ -2413,7 +2415,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector *sigma_subvec_new = gsl_vector_alloc(s_max);
     gsl_vector_set_zero(sigma_subvec_new);
     gsl_vector *LnPost = gsl_vector_alloc(s_step); //save logPost...
-    vector<double> em_gamma(n_type, 0.0);
+    vector<double> em_gamma(n_type, 0.0); //save sum of m0, m1
     GV = 0.0; sumbeta2.assign(n_type, 0.0);
     
     //same as old model
@@ -2441,7 +2443,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     double mean_z = CenterVector (z);
     gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
     
-    rv = ztz * 0.6; tau = 1.0 / rv; log2pirv = log(2.0 * M_PI * rv);
+    rv = ztz * 0.6 / (double)ni_test; tau = 1.0 / rv;
+    log2pirv = log(2.0 * M_PI * rv);
     cout << "ztz = " << ztz << "; Fix Residual Variance = " << rv << endl;
     cout << "PI = " << M_PI << "; tau = " << tau << "; log2pirv = " <<log2pirv << endl;
     
@@ -2683,6 +2686,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     //cHyp_old.pge = cHyp_new.pge;
                     gsl_vector_memcpy (Xb_old, Xb_new);
                     rank_old = rank_new;
+                if(rank_old.size()>0){
                     gsl_vector_view sigma_oldsub=gsl_vector_subvector(sigma_subvec_old, 0, rank_old.size());
                     gsl_vector_view sigma_newsub=gsl_vector_subvector(sigma_subvec_new, 0, rank_old.size());
                     gsl_vector_memcpy(&sigma_oldsub.vector, &sigma_newsub.vector);
@@ -2701,6 +2705,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     gsl_matrix_memcpy(&XtXold_sub.matrix, &XtXnew_sub.matrix);
                     gsl_vector_memcpy(&Xtzold_sub.vector, &Xtznew_sub.vector);
                     gsl_vector_memcpy(&betaold_sub.vector, &betanew_sub.vector);
+                }
             } else {
                 
                 cHyp_new.n_gamma = cHyp_old.n_gamma;
@@ -2725,10 +2730,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             gsl_vector_add_constant (z_hat, mean_z);
         }
         
-        
          //if (t % 10 == 0 && t > w_step) {
          if (t % w_pace == 0 && t > w_step) {
              accept_percent = (double)n_accept/(double)((t+1) * n_mh);
+             cout << "cHyp_old.n_gamma= " << cHyp_old.n_gamma << endl;
             cout << "gamma acceptance percentage = " <<setprecision(6) << accept_percent << endl ;
              cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
              cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
@@ -2742,7 +2747,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                 em_gamma[0] += (double)cHyp_old.m_gamma[0];
                 em_gamma[1] += (double)cHyp_old.m_gamma[1];
                 GV += cHyp_old.pve;
-            
+        
+            if (cHyp_old.n_gamma > 0){
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
                     // beta_g saved by position
                     pos=SNPrank_vec[rank_old[i]].first;
@@ -2756,6 +2762,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                         }
                     }
                 }
+              }
+            else{cout << "rank size = " << rank_old.size() << endl;}
             }
     }
     
@@ -4312,7 +4320,7 @@ void BSLMM::CalcCC_PVEnZ (gsl_vector *z_hat, class HYPBSLMM &cHyp)
 {
   gsl_vector_set_zero(z_hat);
   cHyp.pve=0.0;
-  cHyp.pge=1.0;		
+  //cHyp.pge=1.0;
   return;
 }
 
@@ -4324,8 +4332,8 @@ void BSLMM::CalcCC_PVEnZ (const gsl_vector *Xb, gsl_vector *z_hat, class HYPBSLM
 	
 	gsl_blas_ddot (Xb, Xb, &d);
 	cHyp.pve=d/(double)ni_test;
-	cHyp.pve/=cHyp.pve+1.0;
-	cHyp.pge=1.0;
+	//cHyp.pve/=cHyp.pve+1.0;
+	//cHyp.pge=1.0;
 	
 	gsl_vector_memcpy (z_hat, Xb);
 
