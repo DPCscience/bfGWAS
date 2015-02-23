@@ -53,6 +53,7 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
 void EigenInverse(gsl_matrix *XtX);
 void CholeskyInverse(gsl_matrix *XtX);
 void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta);
+double CalcLogdet(gsl_matrix *Omega);
 
 #endif
 

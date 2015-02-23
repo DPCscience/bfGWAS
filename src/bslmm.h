@@ -84,7 +84,7 @@ public:
     string hypfile;
     vector< pair<size_t, size_t> > SNPorder_vec; //<pos, rank>
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
-    double GV, rv, tau, log2pirv;
+    double GV, rv, tau, logrv;
     
     
     double h;
@@ -248,8 +248,8 @@ public:
     
     void SetXgamma (LModel &model_old, LModel &model_new, uchar **X, const gsl_vector *y);
     
-    void WriteMatrix(const gsl_matrix * X, const string &filename);
-    void WriteVector(const gsl_vector * X, const string &filename);
+    void WriteMatrix(const gsl_matrix * X, const string filename);
+    void WriteVector(const gsl_vector * X, const string filename);
     
 	//utility functions
 //	double vec_sum (gsl_vector *v);

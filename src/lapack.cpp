@@ -501,8 +501,8 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta)
         }
     }
     
-    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
-    //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    //beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
@@ -543,8 +543,8 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
              }
      }
    // Eigen::JacobiSVD.setThreshold(0.00001);
-    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
-    //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    //beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
@@ -555,18 +555,33 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
 }
 //JY write eigen solve
 
+double CalcLogdet(gsl_matrix *Omega)
+{
+    
+    double logdet_O=0.0;
+    topdm(Omega);
+    gsl_linalg_cholesky_decomp(Omega);
+    //cout << "cholesky decompose Omega success" << endl;
+    
+    for (size_t i=0; i<Omega->size1; ++i) {
+        logdet_O+=log(gsl_matrix_get (Omega, i, i));
+    }
+    logdet_O*=2.0;
+    
+    return logdet_O;
+}
 
 double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty)
 {
-    size_t s_size = Xty->size;
+    /*size_t s_size = Xty->size;
     double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.00001;
+    lambda *= 0.001;
     //cout << "lambda = " << lambda << endl;
-    EigenSolve(Omega, Xty, OiXty, lambda);
+    EigenSolve(Omega, Xty, OiXty, lambda); */
     //cout << "lambda = " << lambda << endl;
     //EigenSolve(Omega, Xty, OiXty);
     
@@ -579,6 +594,8 @@ double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty
 		logdet_O+=log(gsl_matrix_get (Omega, i, i));
 	}
 	logdet_O*=2.0;
+    
+    //gsl_linalg_cholesky_solve(Omega, Xty, OiXty);
     
 	return logdet_O;
 }

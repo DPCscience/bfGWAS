@@ -175,8 +175,8 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                     geno_mean += geno;
                 }
                 geno_mean /= (double)ni_test;
-                geno_mean = -geno_mean;
-                gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+                //geno_mean = -geno_mean;
+                gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
             }
             free(UnCompBuffer);
     }
@@ -216,8 +216,8 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                     geno_mean += geno;
                 }
                 geno_mean /= (double)ni_test;
-                geno_mean = -geno_mean;
-                gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+                //geno_mean = -geno_mean;
+                gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
             }
             free(UnCompBuffer);
         }
@@ -234,8 +234,8 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                 geno_mean += geno;
             }
             geno_mean /= (double)ni_test;
-            geno_mean = -geno_mean;
-            gsl_vector_add_constant(xvec, geno_mean);
+            //geno_mean = -geno_mean;
+            gsl_vector_add_constant(xvec, -geno_mean);
         }
         
     }
@@ -261,8 +261,8 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             geno_mean += geno;
         }
         geno_mean /= (double)ni_test;
-        geno_mean = -geno_mean;
-        gsl_vector_add_constant(xvec, geno_mean); // center genotypes here
+        //geno_mean = -geno_mean;
+        gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
     }
     else {
         std::cerr << "Error return genotype vector...\n";
