@@ -42,6 +42,13 @@ extern "C" void dgemm_(char *TRANSA, char *TRANSB, int *M, int *N, int *K, doubl
 extern "C" void dpotrf_(char *UPLO, int *N, double *A, int *LDA, int *INFO);
 extern "C" void dpotrs_(char *UPLO, int *N, int *NRHS, double *A, int *LDA, double *B, int *LDB, int *INFO);
 extern "C" void dsyev_(char* JOBZ, char* UPLO, int *N, double *A, int *LDA, double *W, double *WORK, int *LWORK, int *INFO);
+
+extern "C" void dsysv_( char* uplo, int* n, int* nrhs, double* a, int* lda,
+                      int* ipiv, double* b, int* ldb, double* work, int* lwork, int* info );
+
+extern "C" void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv,
+                      double* b, int* ldb, int* info );
+
 extern "C" void dsyevr_(char* JOBZ, char *RANGE, char* UPLO, int *N, double *A, int *LDA, double *VL, double *VU, int *IL, int *IU, double *ABSTOL, int *M, double *W, double *Z, int *LDZ, int *ISUPPZ, double *WORK, int *LWORK, int *IWORK, int *LIWORK, int *INFO);
 
 
@@ -73,6 +80,23 @@ void lapack_cholesky_decomp (gsl_matrix *A)
 	return;
 }
 
+
+//cholesky solve, A is decomposed,
+void lapack_cholesky_solve (gsl_matrix *A, const gsl_vector *b, gsl_vector *x)
+{
+    int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO;
+    char UPLO='L';
+    
+    if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in lapack_cholesky_solve."<<endl; return;}
+    
+    gsl_vector_memcpy (x, b);
+    dpotrs_(&UPLO, &N, &NRHS, A->data, &LDA, x->data, &LDB, &INFO);
+    if (INFO!=0) {cout<<"Cholesky solve unsuccessful in lapack_cholesky_solve."<<endl; return;}
+    
+    return;
+}
+
+
 //cholesky solve, A is decomposed, 
 void lapack_float_cholesky_solve (gsl_matrix_float *A, const gsl_vector_float *b, gsl_vector_float *x)
 {
@@ -88,20 +112,7 @@ void lapack_float_cholesky_solve (gsl_matrix_float *A, const gsl_vector_float *b
 	return;
 }
 
-//cholesky solve, A is decomposed, 
-void lapack_cholesky_solve (gsl_matrix *A, const gsl_vector *b, gsl_vector *x)
-{
-	int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO;
-	char UPLO='L';
-	
-	if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in lapack_cholesky_solve."<<endl; return;}
-	
-	gsl_vector_memcpy (x, b);
-	dpotrs_(&UPLO, &N, &NRHS, A->data, &LDA, x->data, &LDB, &INFO);
-	if (INFO!=0) {cout<<"Cholesky solve unsuccessful in lapack_cholesky_solve."<<endl; return;}	
-	
-	return;
-}
+
 
 
 void lapack_sgemm (char *TransA, char *TransB, float alpha, const gsl_matrix_float *A, const gsl_matrix_float *B, float beta, gsl_matrix_float *C)
@@ -502,7 +513,9 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta)
     }
     
     //beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
-    beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
+    //beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
+    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
@@ -543,8 +556,9 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
              }
      }
    // Eigen::JacobiSVD.setThreshold(0.00001);
-    //beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
-    beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
+   // beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+   // beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
+    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
@@ -553,6 +567,24 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
     //gsl_rng_free(r);
 	return;
 }
+
+void GSLSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta_hat, const double lambda)
+{
+    int s_size = Xty -> size;
+    gsl_matrix *XtXtemp = gsl_matrix_alloc(s_size, s_size);
+    gsl_matrix_memcpy(XtXtemp, XtX);
+    gsl_vector_view XtXtemp_diag = gsl_matrix_diagonal(XtXtemp);
+    gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);
+    
+    gsl_permutation * p = gsl_permutation_alloc(s_size);
+    //int s = s_size;
+    gsl_linalg_LU_decomp(XtXtemp, p, &s_size);
+    gsl_linalg_LU_solve(XtXtemp, p, Xty, beta_hat);
+    gsl_permutation_free(p);
+    gsl_matrix_free(XtXtemp);
+    
+}
+
 //JY write eigen solve
 
 double CalcLogdet(gsl_matrix *Omega)
@@ -570,6 +602,43 @@ double CalcLogdet(gsl_matrix *Omega)
     
     return logdet_O;
 }
+
+
+double LapackCholSolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty)
+{
+    double logdet_O=0.0;
+    topdm(Omega);
+    
+    //cholesky decomposition, A is distroyed
+    lapack_cholesky_decomp(Omega);
+    for (size_t i=0; i<Omega->size1; ++i) {
+        logdet_O+=log(gsl_matrix_get (Omega, i, i));
+    }
+    logdet_O*=2.0;
+    
+    return logdet_O;
+    
+    lapack_cholesky_solve(Omega, Xty, OiXty);
+    
+    return logdet_O;
+}
+
+double LapackLogDet(gsl_matrix *Omega)
+{
+    double logdet_O=0.0;
+    topdm(Omega);
+    
+    //cholesky decomposition, A is distroyed
+    lapack_cholesky_decomp(Omega);
+    for (size_t i=0; i<Omega->size1; ++i) {
+        logdet_O+=log(gsl_matrix_get (Omega, i, i));
+    }
+    logdet_O*=2.0;
+    
+    return logdet_O;
+
+}
+
 
 double CholeskySolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty)
 {
@@ -635,6 +704,61 @@ void Ginv(gsl_matrix *XtX_gtemp){
 	gsl_matrix_free(V);
 	gsl_vector_free(S);
     gsl_vector_free(svd_work);
+    
+    return;
+}
+/*
+ void lapack_cholesky_decomp (gsl_matrix *A)
+ {
+ int N=A->size1, LDA=A->size1, INFO;
+ char UPLO='L';
+ 
+ if (N!=(int)A->size2) {cout<<"Matrix needs to be symmetric and same dimension in lapack_cholesky_decomp."<<endl; return;}
+ 
+ dpotrf_(&UPLO, &N, A->data, &LDA, &INFO);
+ if (INFO!=0) {cout<<"Cholesky decomposition unsuccessful in lapack_cholesky_decomp."<<endl; return;}
+ 
+ return;
+ }
+ 
+ 
+ //cholesky solve, A is decomposed,
+ void lapack_cholesky_solve (gsl_matrix *A, const gsl_vector *b, gsl_vector *x)
+ {
+ int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO;
+ char UPLO='L';
+ 
+ if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in lapack_cholesky_solve."<<endl; return;}
+ 
+ gsl_vector_memcpy (x, b);
+ dpotrs_(&UPLO, &N, &NRHS, A->data, &LDA, x->data, &LDB, &INFO);
+ if (INFO!=0) {cout<<"Cholesky solve unsuccessful in lapack_cholesky_solve."<<endl; return;}
+ 
+ return;
+ }
+ */
+
+void LapackSolve(gsl_matrix *A, const gsl_vector *b, gsl_vector *x){
+    
+    int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO, LWORK=-1;
+    //char UPLO="Lower";
+    double* work;
+    double wkopt;
+    int ipiv[N];
+
+    if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in LapackSolve."<<endl; return;}
+    
+    gsl_vector_memcpy (x, b);
+    dgesv_( &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &INFO);
+    /*
+    dsysv_( "Lower", &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &wkopt, &LWORK, &INFO);
+    LWORK = (int)wkopt;
+    work=(double*)malloc(LWORK*sizeof(double) );
+    dsysv_( "Lower", &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, work, &LWORK, &INFO);
+    //dsysv( char* uplo, int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, double* work, int* lwork, int* info );
+     free((void*)work);
+    */
+    if (INFO!=0) {cout<<"Lapack solve unsuccessful in LapackSolve."<<endl; return;}
     
     return;
 }

@@ -74,8 +74,8 @@ public:
 	void AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y);
 	void WriteFiles ();
 };
-void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, double &trace_G, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, double &trace_G, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
 
-void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, vector<double> &Gvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, vector<double> &Gvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
 
 #endif

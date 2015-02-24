@@ -85,6 +85,7 @@ public:
     vector< pair<size_t, size_t> > SNPorder_vec; //<pos, rank>
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
     double GV, rv, tau, logrv;
+    vector<double> SNPsd;
     
     
     double h;
@@ -317,6 +318,7 @@ void PrintVector(const gsl_vector * x);
 void PrintVector(const vector <double> &x);
 void PrintVector(const vector <size_t> &x);
 void PrintVector(const double *x);
+void PrintVector(const vector <double> &x, const size_t s);
 void PrintVector(const uchar *x, const size_t length);
 void PrintVector(const gsl_vector * x, const size_t s);
 void PrintMatrix(const gsl_matrix * X, const size_t nrow, const size_t ncol);

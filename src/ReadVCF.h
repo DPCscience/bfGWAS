@@ -69,7 +69,8 @@ uchar DoubleToUchar(const double doseage);
 
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test);
 
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
+
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize);
 
 bool getGTgslMat(uchar ** X, gsl_vector *Xgsl, std::vector<size_t> marker_idx, const size_t ni_test, const size_t ns_test);

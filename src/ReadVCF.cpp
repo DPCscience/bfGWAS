@@ -187,7 +187,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 }
 
 
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag){
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag){
     
     if (marker_i < ns_test ) {
         
@@ -218,6 +218,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                 geno_mean /= (double)ni_test;
                 //geno_mean = -geno_mean;
                 gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
+                gsl_vector_scale(xvec, SNPsd[marker_i]); // standardize genotypes here
             }
             free(UnCompBuffer);
         }
@@ -236,6 +237,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             geno_mean /= (double)ni_test;
             //geno_mean = -geno_mean;
             gsl_vector_add_constant(xvec, -geno_mean);
+            gsl_vector_scale(xvec, SNPsd[marker_i]);
         }
         
     }

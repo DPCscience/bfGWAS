@@ -289,6 +289,13 @@ void PrintVector(const vector <double> &x){
     cout << endl; 
 }
 
+void PrintVector(const vector <double> &x, const size_t s){
+    for(size_t i=0; i<s; ++i){
+        cout <<setprecision(6) << x[i] << ", ";
+    }
+    cout << endl;
+}
+
 void PrintVector(const vector <size_t> &x){
     for(size_t i=0; i<x.size(); ++i){
         cout <<setprecision(6) << x[i] << ", ";
@@ -658,7 +665,7 @@ void BSLMM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
 	for (size_t i=0; i<rank.size(); ++i) {
 		pos=SNPrank_vec[rank[i]].first;
 		gsl_vector_view Xgamma_col=gsl_matrix_column (Xgamma, i);
-        getGTgslVec(X, &Xgamma_col.vector, pos, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+        getGTgslVec(X, &Xgamma_col.vector, pos, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
     }	
 	return;
 }
@@ -1060,10 +1067,10 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
             pch = (nch == NULL) ? NULL : nch+1;
             
             nch = strchr(pch, '\t');
-            subvar[0] = strtod(pch, NULL);
+            subvar[0] = tau * strtod(pch, NULL);
             pch = (nch == NULL) ? NULL : nch+1;
             
-            subvar[1] = strtod(pch, NULL);
+            subvar[1] = tau * strtod(pch, NULL);
         }
     }
     }
@@ -1145,7 +1152,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
     gsl_matrix_set_zero(Xr);
     gsl_vector * xvec = gsl_vector_alloc(ni_test);
-    getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //get geno column
+    getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //get geno column
     
     gsl_matrix * XtXr = gsl_matrix_alloc(cHyp.n_gamma, cHyp.n_gamma);
     gsl_matrix_set_zero(XtXr);
@@ -1177,7 +1184,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         CalcRes(Xr, Uty, XtXr, Xtyr, yres, i, yty);
         for (size_t j=0; j<rank_loglr.size(); ++j) {
             posr = mapRank2pos[rank_loglr[j].first];
-            getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); // get geno column
+            getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); // get geno column
             rank_loglr[j].second = CalcLR(yres, xvec);
         }
         stable_sort (rank_loglr.begin(), rank_loglr.end(), comp_lr); //sort the initial rank.
@@ -1185,7 +1192,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         radd = rank_loglr[0].first;
        // cout << "rank added: " << radd << ", ";
         posr = mapRank2pos[radd];
-        getGTgslVec(X, xvec, posr, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+        getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
         rank.push_back(radd);
         rank_loglr.erase(rank_loglr.begin());
     }
@@ -1952,7 +1959,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
    // cout << "Omega : "; PrintMatrix(Omega, 5, 5);
     CalcXVbeta(Omega, &sigma_sub.vector);
     gsl_vector_view Omega_diag = gsl_matrix_diagonal(Omega);
-    gsl_vector_add_constant(&Omega_diag.vector, 1.0);
+    gsl_vector_add_constant(&Omega_diag.vector, 1);
     gsl_matrix_memcpy(Omega_temp, Omega);
     
     //calculate beta_hat
@@ -1962,64 +1969,72 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.01;
-    //cout << "lambda = " << lambda << endl;
-    //EigenSolve(Omega, &Xty_sub.vector, beta_hat);
-    EigenSolve(Omega, &Xty_sub.vector, beta_hat, lambda);
-    logdet_O = CalcLogdet(Omega_temp);
+    lambda *= 0.00001;
+    gsl_vector_add_constant(&Omega_diag.vector, lambda);
     
+    /*gsl_permutation * p = gsl_permutation_alloc(s_size);
+    int s = s_size;
+    gsl_linalg_LU_decomp(Omega, p, &s);
+    gsl_linalg_LU_solve(Omega, p, &Xty_sub.vector, beta_hat);
+    gsl_permutation_free(p);*/
+    
+    //logdet_O = LapackCholSolve(Omega_temp, &Xty_sub.vector, beta_hat);
+    //cout << "lambda = " << lambda << endl;
+    //EigenSolve(Omega, &Xty_sub.vector, beta_hat, lambda);
+    //EigenSolve(Omega, &Xty_sub.vector, beta_hat);
+    LapackSolve(Omega, &Xty_sub.vector, beta_hat);
+    logdet_O=LapackLogDet(Omega_temp);
+    //logdet_O = CalcLogdet(Omega_temp);
+    
+    //cout << "beta_hat from solve : "; PrintVector(beta_hat);
     gsl_vector_mul(beta_hat, &sigma_sub.vector);
     //cout << "beta_hat: "; PrintVector(beta_hat);
     
     double bxy;
     gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
-    P_yy = tau * (yty - bxy);
+    gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
+    gsl_vector_memcpy(&beta_sub.vector, beta_hat);
+    gsl_blas_dgemv (CblasNoTrans, 1.0, &Xgamma_sub.matrix, &beta_sub.vector, 0.0, Xb);
+    gsl_blas_ddot (Xb, Xb, &d);
+    if (a_mode==11) {
+        cHyp.pve=d/(double)ni_test;
+        //cHyp.pve/=cHyp.pve+1.0/tau;
+        // cHyp.pge=1.0;
+    }
+    
+    logpost = -((double)cHyp.n_gamma * logrv + logdet_O) + tau * bxy;
+    logpost *= 0.5;
+    
+    P_yy = (yty - bxy);
     if (P_yy <= 0) {
-        Error_Flag = 1;
+       // Error_Flag = 1;
         //cerr << "Error in calcPosterior: P_yy = " << P_yy << endl;
-        cout << "Error in calcPosterior: P_yy = " << P_yy << endl;
-        //cout << "beta_hat: "; PrintVector(beta_hat);
+        cout << "P_yy = " << P_yy << endl;
+        //cout << "est beta_hat: "; PrintVector(beta_hat);
         //cout << "set beta_hat to 0\n";
         
-        /*WriteMatrix(&Xgamma_sub.matrix, "_X");
+        WriteMatrix(&Xgamma_sub.matrix, "_X");
         WriteMatrix(&XtX_sub.matrix, "_XtX");
         WriteMatrix(Omega, "_Omega");
         WriteVector(&sigma_sub.vector, "_sigma");
         WriteVector(&Xty_sub.vector, "_Xty");
         WriteVector(beta_hat, "_beta");
-        exit(-1);*/
+        //exit(-1);
         
-        gsl_vector_set_zero(beta_hat);
-        gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
-        gsl_vector_set_zero(&beta_sub.vector);
-        gsl_vector_set_zero(Xb);
+       // gsl_vector_set_zero(beta_hat);
+       // gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
+       // gsl_vector_set_zero(&beta_sub.vector);
+       // gsl_vector_set_zero(Xb);
         //for quantitative traits, calculate pve and pge
-        if (a_mode==11) {
-            cHyp.pve=0.0;
+       // if (a_mode==11) {
+        //    cHyp.pve=0.0;
             //cHyp.pve/=cHyp.pve+1.0/tau;
             // cHyp.pge=1.0;
-        }
+       // }
         
-     }
-     else {
-         Error_Flag = 0;
-         P_yy = -tau * (bxy);
-         
-         gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
-         gsl_vector_memcpy(&beta_sub.vector, beta_hat);
-         gsl_blas_dgemv (CblasNoTrans, 1.0, &Xgamma_sub.matrix, &beta_sub.vector, 0.0, Xb);
-         gsl_blas_ddot (Xb, Xb, &d);
-         //for quantitative traits, calculate pve and pge
-         if (a_mode==11) {
-             cHyp.pve=d/(double)ni_test;
-             //cHyp.pve/=cHyp.pve+1.0/tau;
-             // cHyp.pge=1.0;
-         }
-         
-         logpost = (double)(cHyp.n_gamma) * logrv;
-         logpost += (double)cHyp.m_gamma[0] * log_subvar[0] + (double)cHyp.m_gamma[1] * log_subvar[1] + logdet_O + P_yy;
-         logpost *= -0.5;
-         // cout <<"; logpost = " << logpost << endl;
+     //}
+    // else {
+    //     Error_Flag = 0;
      }
     
     gsl_matrix_free (Omega_temp);
@@ -2259,12 +2274,13 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     //em_gamma_avg[0] = em_gamma[0] / (double)s_step;
     //em_gamma_avg[1] = em_gamma[1] / (double)s_step;
     
-    double em_logpost = 0.0, logpost_min = gsl_vector_get(LnPost, 0);
+    double em_logpost = 0.0, logpost_max =  gsl_vector_max(LnPost);
+    cout << "logpost_max = " << logpost_max << endl;
     for (size_t i=0; i < s_step; i++) {
-        em_logpost += exp(gsl_vector_get(LnPost, i) - logpost_min);
+        em_logpost += exp(gsl_vector_get(LnPost, i) - logpost_max);
     }
     em_logpost /= double(s_step);
-    em_logpost = log(em_logpost) + logpost_min;
+    em_logpost = log(em_logpost) + logpost_max;
     
     //save E(GV, sumbeta2[0], sumbeta2[1], sum_m0, sum_m1, lnpost, m0, m1, n0, n1)
     string file_hyp;
@@ -2428,11 +2444,13 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     
     double ztz=0.0;
     gsl_vector_memcpy (z, y);
-    //for quantitative traits, y is centered already in gemma.cpp, but just in case
     double mean_z = CenterVector (z);
     gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
+    gsl_vector_scale(z, 1.0 / sqrt(ztz / (double)(ni_test-1))); // standardize phenotype z
+    //for quantitative traits, y is centered already in gemma.cpp, but just in case
+    gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
     
-    rv = ztz * 0.6 / (double)ni_test; tau = 1.0 / rv;
+    rv = 0.6; tau = 1.0 / rv;
     logrv = log(rv);
     cout << "ztz = " << ztz << "; Fix Residual Variance = " << rv << endl;
     cout << "PI = " << M_PI << "; tau = " << tau << "; logrv = " <<logrv << endl;
@@ -2461,9 +2479,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     // Jingjing add a vector of "snpPos" structs snp_pos
     vector<SNPPOS> snp_pos;
     CreateSnpPosVec(snp_pos); //ordered by chr/bp
+    cout << "1 / SNP_sd  = "; PrintVector(SNPsd, 10);
     
     vector<pair<size_t, double> > pos_loglr;
-    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, Gvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //calculate trace_G or Gvec
+    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, Gvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //calculate trace_G or Gvec
     trace_G = (Gvec[0] + Gvec[1]) / double(ni_test * ns_test);
     cout << "trace_G = " << trace_G << endl;
     cout << "Total trace_G vec : " << Gvec[0] << ", " << Gvec[1] << endl;
@@ -3619,10 +3638,23 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
         lambda += gsl_matrix_get(XtX, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.01;
+    lambda *= 0.00001;
    // cout << "labmda = " << lambda << endl;
     
-    EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);
+    gsl_matrix *XtXtemp = gsl_matrix_alloc(s_size, s_size);
+    gsl_matrix_memcpy(XtXtemp, &XtX_gsub.matrix);
+    gsl_vector_view XtXtemp_diag = gsl_matrix_diagonal(XtXtemp);
+    gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);
+    
+   /* gsl_permutation * p = gsl_permutation_alloc(s_size);
+    int s = s_size;
+    gsl_linalg_LU_decomp(XtXtemp, p, &s);
+    gsl_linalg_LU_solve(XtXtemp, p, &Xtz_gsub.vector, beta_gamma_hat);
+    gsl_permutation_free(p);
+    gsl_matrix_free(XtXtemp);*/
+    
+    LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
+    //EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);
     //EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat);
     gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
     gsl_vector_scale(z_res, -1.0);
@@ -3634,7 +3666,7 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     // R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
    // cout << "R2 = "<< R2 << endl;
     if(R2 <= 0.0) {
-        cout << "R2 = " << setprecision(6) << R2 << " <= 0, ";
+        cout << "R2 = " << setprecision(6) << R2 << " <= 0, "<< endl;
         //cout << "beta_hat estimate from calculating residuals: \n ";
         //PrintVector(beta_gamma_hat);
         //cout << "SSR = " << SSR << "; ztz = " << ztz << "\n";
@@ -3714,7 +3746,7 @@ gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, uchar **
         rank_j = mapOrder2Rank[orderj];
         if((orderj >= 0) && (orderj < (long int)ns_test) && (j != win) && (mapRank2in.count(rank_j) == 0)){
             posj = mapOrder2pos[orderj];
-            getGTgslVec(X, xvec, posj, ni_test, ns_test, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+            getGTgslVec(X, xvec, posj, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
             p_BF[j]=CalcLR(z_res, xvec); //calc loglr
             j_ind.push_back(1);
             countj += 1.0;
@@ -4142,7 +4174,7 @@ void BSLMM::LModel::SetXgamma (uchar **X, map<size_t, size_t> &mapRank2pos, size
     for (size_t i=0; i<rank.size(); ++i) {
         pos=mapRank2pos[rank[i]];
         gsl_vector_view Xgamma_col=gsl_matrix_column (Xgamma, i);
-        getGTgslVec(X, &Xgamma_col.vector, pos, Xgamma->size1, ns_test);
+       // getGTgslVec(X, &Xgamma_col.vector, pos, Xgamma->size1, ns_test);
     }
     return;
 }
@@ -4353,6 +4385,7 @@ void BSLMM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
     vector<double> weight;
     double weight_i;
     double maf;
+    SNPsd.clear();
     
     for (size_t i=0; i < ns_total; ++i){
         if(!indicator_snp[i]) {continue;}
@@ -4372,6 +4405,8 @@ void BSLMM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
         // cout << weight_i << ", ";
         SNPPOS snp_temp={pos, rs, chr, bp, maf, indicator_func, weight, weight_i};
         snp_pos.push_back(snp_temp);
+        
+        SNPsd.push_back(1.0 / sqrt(2.0 * maf * (1.0 - maf)));
         
         tt++;
     }
