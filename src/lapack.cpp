@@ -590,17 +590,20 @@ void GSLSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta_hat
 
 double CalcLogdet(gsl_matrix *Omega)
 {
-    
     double logdet_O=0.0;
-    topdm(Omega);
-    gsl_linalg_cholesky_decomp(Omega);
+    gsl_matrix *OmegaTemp = gsl_matrix_alloc(Omega->size1, Omega->size2);
+    gsl_matrix_memcpy(OmegaTemp, Omega);
+    
+    topdm(OmegaTemp);
+    gsl_linalg_cholesky_decomp(OmegaTemp);
     //cout << "cholesky decompose Omega success" << endl;
     
-    for (size_t i=0; i<Omega->size1; ++i) {
-        logdet_O+=log(gsl_matrix_get (Omega, i, i));
+    for (size_t i=0; i< OmegaTemp->size1; ++i) {
+        logdet_O+=log(gsl_matrix_get (OmegaTemp, i, i));
     }
     logdet_O*=2.0;
     
+    gsl_matrix_free(OmegaTemp);
     return logdet_O;
 }
 
@@ -624,18 +627,21 @@ double LapackCholSolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiX
     return logdet_O;
 }
 
-double LapackLogDet(gsl_matrix *Omega)
+double LapackLogDet(const gsl_matrix *Omega)
 {
     double logdet_O=0.0;
-    topdm(Omega);
+    gsl_matrix *OmegaTemp = gsl_matrix_alloc(Omega->size1, Omega->size2);
+    gsl_matrix_memcpy(OmegaTemp, Omega);
     
-    //cholesky decomposition, A is distroyed
-    lapack_cholesky_decomp(Omega);
-    for (size_t i=0; i<Omega->size1; ++i) {
-        logdet_O+=log(gsl_matrix_get (Omega, i, i));
+    topdm(OmegaTemp); //cholesky decomposition, A is distroyed
+    lapack_cholesky_decomp(OmegaTemp);
+    
+    for (size_t i=0; i< OmegaTemp->size1; ++i) {
+        logdet_O+=log(gsl_matrix_get (OmegaTemp, i, i));
     }
     logdet_O*=2.0;
     
+    gsl_matrix_free(OmegaTemp);
     return logdet_O;
 
 }

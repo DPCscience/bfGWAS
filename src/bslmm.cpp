@@ -2001,10 +2001,9 @@ void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec)
 double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag)
 {
     //conditioning on hyper parameters: subvar, log_theta
-    
     double logpost=0.0;
     double d;
-    double P_yy=0.0, logdet_O=0.0;
+    double logdet_O=0.0;
     size_t s_size = cHyp.n_gamma;
     
     gsl_matrix_const_view Xgamma_sub=gsl_matrix_const_submatrix (Xgamma, 0, 0, Xgamma->size1, s_size);
@@ -2013,7 +2012,6 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     gsl_vector_const_view sigma_sub = gsl_vector_const_subvector(sigma_vec, 0, s_size);
     
     gsl_matrix *Omega=gsl_matrix_alloc (s_size, s_size);
-    gsl_matrix *Omega_temp=gsl_matrix_alloc (s_size, s_size);
     gsl_vector *beta_hat=gsl_vector_alloc (s_size);
     
     //calculate Omega
@@ -2022,32 +2020,21 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     CalcXVbeta(Omega, &sigma_sub.vector);
     gsl_vector_view Omega_diag = gsl_matrix_diagonal(Omega);
     gsl_vector_add_constant(&Omega_diag.vector, 1);
-    gsl_matrix_memcpy(Omega_temp, Omega);
+    
+    //gsl_matrix *Omega_temp=gsl_matrix_alloc (s_size, s_size);
+    //gsl_matrix_memcpy(Omega_temp, Omega);
     
     //calculate beta_hat
     //cout << "inv(Omega) * Xty: ";
-    double lambda = 0.0;
-    for (size_t i=0; i<s_size; ++i) {
-        lambda += gsl_matrix_get(Omega, i, i);
-    }
-    lambda /= (double)s_size;
-    lambda *= 0.00001;
-    
-    
-    /*gsl_permutation * p = gsl_permutation_alloc(s_size);
-    int s = s_size;
-    gsl_linalg_LU_decomp(Omega, p, &s);
-    gsl_linalg_LU_solve(Omega, p, &Xty_sub.vector, beta_hat);
-    gsl_permutation_free(p);*/
-    
+
     //logdet_O = LapackCholSolve(Omega_temp, &Xty_sub.vector, beta_hat);
     //cout << "lambda = " << lambda << endl;
     //EigenSolve(Omega, &Xty_sub.vector, beta_hat, lambda);
     //EigenSolve(Omega, &Xty_sub.vector, beta_hat);
     if(LapackSolve(Omega, &Xty_sub.vector, beta_hat)!=0)
        EigenSolve(Omega, &Xty_sub.vector, beta_hat);
-    logdet_O=LapackLogDet(Omega_temp);
-    //logdet_O = CalcLogdet(Omega_temp);
+    logdet_O=LapackLogDet(Omega);
+    //logdet_O = CalcLogdet(Omega);
     
     //cout << "beta_hat from solve : "; PrintVector(beta_hat);
     gsl_vector_mul(beta_hat, &sigma_sub.vector);
@@ -2055,10 +2042,16 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     
     double bxy;
     gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
+    //double P_yy = (yty - bxy);
     
-    if (yty < bxy) {
-        
-        do{
+    double lambda = 0.0;
+    for (size_t i=0; i<s_size; ++i) {
+        lambda += gsl_matrix_get(Omega, i, i);
+    }
+    lambda /= (double)s_size;
+    lambda *= 0.01;
+
+    while (yty < bxy) {
             if (s_size < 10) {
                 // Error_Flag = 1;
                 //cerr << "Error in calcPosterior: P_yy = " << P_yy << endl;
@@ -2076,7 +2069,6 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
          if(LapackSolve(Omega, &Xty_sub.vector, beta_hat)!=0)
              EigenSolve(Omega, &Xty_sub.vector, beta_hat);
          gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
-        } while (yty < bxy) ;
     }
     
     gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
@@ -2089,13 +2081,10 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
         // cHyp.pge=1.0;
     }
     
-    logpost = -((double)cHyp.n_gamma * logrv + logdet_O) + tau * bxy;
+    logpost = -((double)s_size * logrv + logdet_O) + tau * bxy;
     logpost *= 0.5;
     
-    P_yy = (yty - bxy);
-    
-    
-    gsl_matrix_free (Omega_temp);
+    //gsl_matrix_free (Omega_temp);
     gsl_matrix_free (Omega);
     gsl_vector_free (beta_hat);
     
@@ -3700,32 +3689,40 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     gsl_vector_const_view Xtz_gsub = gsl_vector_const_subvector(Xtz, 0, s_size);
     
     gsl_vector *beta_gamma_hat = gsl_vector_alloc(s_size);
-    
     gsl_matrix *XtXtemp = gsl_matrix_alloc(s_size, s_size);
     gsl_matrix_memcpy(XtXtemp, &XtX_gsub.matrix);
+    
+    if(LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat) != 0)
+        EigenSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
+    
+    double SSR, R2 ;
+    gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
+    gsl_vector_scale(z_res, -1.0);
+    gsl_vector_add(z_res, z);
+    gsl_blas_ddot(z_res, z_res, &SSR);
+    R2 = 1.0 - (SSR / ztz);
     
     double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(XtX, i, i);
     }
     lambda /= (double)s_size;
-    lambda *= 0.00001;
-   // cout << "labmda = " << lambda << endl;
+    lambda *= 0.01;
+    // cout << "labmda = " << lambda << endl;
     gsl_vector_view XtXtemp_diag = gsl_matrix_diagonal(XtXtemp);
-    double SSR, R2 ;
-    do{
-    gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);
-    
-    if(LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat) != 0)
-        EigenSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
+    while (R2 < 0.0){
+        
+        gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);
+
+        if(LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat) != 0)
+            EigenSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
     //EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);
     
-    gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
-    gsl_vector_scale(z_res, -1.0);
-    gsl_vector_add(z_res, z);
-    
-    gsl_blas_ddot(z_res, z_res, &SSR);
-    R2 = 1.0 - (SSR / ztz);
+        gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
+        gsl_vector_scale(z_res, -1.0);
+        gsl_vector_add(z_res, z);
+        gsl_blas_ddot(z_res, z_res, &SSR);
+        R2 = 1.0 - (SSR / ztz);
     // R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
    // cout << "R2 = "<< R2 << endl;
    // if(R2 < 0.0) {
@@ -3737,7 +3734,7 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
       //  gsl_vector_memcpy(z_res, z);
         //NormRes(z_res);
        // }
-    }while (R2 < 0.0);
+    }
     
     gsl_matrix_free(XtXtemp);
     gsl_vector_free(beta_gamma_hat);
@@ -3986,16 +3983,15 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     size_t pos = SNPrank_vec[r_add].first;
     double xtx = XtX_diagvec[pos];
     
+    gsl_vector *beta_temp = gsl_vector_alloc(s_size);
+    gsl_vector *Xtx_temp = gsl_vector_alloc(s_size);
     gsl_vector *xvec_temp = gsl_vector_alloc(ni_test);
     getGTgslVec(X, xvec_temp, pos, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+    
     gsl_matrix_const_view Xgamma_sub=gsl_matrix_const_submatrix (Xtemp, 0, 0, Xtemp->size1, s_size);
     gsl_matrix_const_view XtX_sub=gsl_matrix_const_submatrix (XtX_temp, 0, 0, s_size, s_size);
     
-    gsl_vector *beta_temp = gsl_vector_alloc(s_size);
-    gsl_vector *Xtx_temp = gsl_vector_alloc(s_size);
-        
     gsl_blas_dgemv(CblasTrans, 1.0, &Xgamma_sub.matrix, xvec_temp, 0.0, Xtx_temp);
-    
 
     if (LapackSolve(&XtX_sub.matrix, Xtx_temp, beta_temp) !=0) {
         //WriteMatrix(&Xgamma_sub.matrix, "_X");
@@ -4011,15 +4007,16 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     //cout << "vreg = " << vreg << endl;
     
     double R2 = (vreg / xtx);
-    //cout << "R2 = " << R2 << endl;
+    
     if ( R2 >= 0.85 || R2 < 0) {
         colinear = 1;
-        /*if (R2 < 0) {
-            PrintMatrix(&XtX_sub.matrix, s_size, s_size);
-            PrintVector(Xtx_temp);
-            PrintVector(beta_temp);
-            exit(-1);
-        }*/
+        if (R2 < 0) {
+            cout << "R2 in ColinearTest = " << R2 << endl;
+            WriteMatrix(&XtX_sub.matrix, "_XtX_ct");
+            WriteVector(Xtx_temp, "Xtx_ct");
+            WriteVector(beta_temp, "bct");
+            //exit(-1);
+        }
     }
     
     gsl_vector_free(xvec_temp);
