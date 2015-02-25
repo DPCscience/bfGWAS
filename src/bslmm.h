@@ -85,7 +85,7 @@ public:
     vector< pair<size_t, size_t> > SNPorder_vec; //<pos, rank>
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
     double GV, rv, tau, logrv;
-    vector<double> SNPsd;
+    vector<double> SNPsd, XtX_diagvec;
     
     
     double h;
@@ -209,7 +209,7 @@ public:
 
     void CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_matrix *XtX_gamma, const gsl_vector *Xtz_gamma, gsl_vector *z_res, const size_t &s_size, const double &ztz);
     
-    double CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec);
+    double CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec, size_t posj);
     
     gsl_ran_discrete_t * MakeProposal(const size_t &o, double *p_BF, uchar **X, const gsl_vector *z_res, const map<size_t, int> &mapRank2in);
 
@@ -311,6 +311,8 @@ public:
     void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_snp);
+    bool ColinearTest(uchar ** X, gsl_matrix * Xtemp, gsl_matrix * XtX_temp, size_t r_add, size_t s_size);
+    bool ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix * XtX_temp, size_t r_add, size_t s_size);
 
 };
 

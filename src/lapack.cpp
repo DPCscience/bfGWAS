@@ -29,6 +29,8 @@
 #include "gsl/gsl_eigen.h"
 #include <gsl/gsl_rng.h>
 
+#include "bslmm.h"
+
 using namespace std;
 using namespace Eigen;
 
@@ -512,9 +514,9 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta)
         }
     }
     
-    //beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
     //beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
-    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
 
     
 	for(size_t i=0; i < s_size; ++i){
@@ -555,17 +557,16 @@ void EigenSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta, 
                  XtX_eig(j, i) = gsl_matrix_get(XtX, j, i);
              }
      }
-   // Eigen::JacobiSVD.setThreshold(0.00001);
-   // beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
+    //Eigen::JacobiSVD.setThreshold(0.00001);
+    beta_eig = XtX_eig.jacobiSvd(ComputeThinU | ComputeThinV).solve(Xty_eig);
    // beta_eig = XtX_eig.fullPivLu().solve(Xty_eig);
-    beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
+    //beta_eig = XtX_eig.fullPivHouseholderQr().solve(Xty_eig);
     
 	for(size_t i=0; i < s_size; ++i){
         gsl_vector_set(beta, i, beta_eig(i));
     }
     
     //gsl_rng_free(r);
-	return;
 }
 
 void GSLSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta_hat, const double lambda)
@@ -738,29 +739,43 @@ void Ginv(gsl_matrix *XtX_gtemp){
  }
  */
 
-void LapackSolve(gsl_matrix *A, const gsl_vector *b, gsl_vector *x){
+int LapackSolve(gsl_matrix *A, gsl_vector *b, gsl_vector *x){
     
-    int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO, LWORK=-1;
-    //char UPLO="Lower";
-    double* work;
-    double wkopt;
+    int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO;
     int ipiv[N];
-
-    if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in LapackSolve."<<endl; return;}
+    
+    if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in LapackSolve."<<endl; exit(-1);}
     
     gsl_vector_memcpy (x, b);
     dgesv_( &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &INFO);
-    /*
-    dsysv_( "Lower", &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &wkopt, &LWORK, &INFO);
-    LWORK = (int)wkopt;
-    work=(double*)malloc(LWORK*sizeof(double) );
-    dsysv_( "Lower", &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, work, &LWORK, &INFO);
-    //dsysv( char* uplo, int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, double* work, int* lwork, int* info );
-     free((void*)work);
-    */
-    if (INFO!=0) {cout<<"Lapack solve unsuccessful in LapackSolve."<<endl; return;}
+    //if (INFO!=0) {
+        //PrintVector(x);
+       // cout<<"INFO ="<< INFO << ": Lapack solve unsuccessful in LapackSolve."<<endl;
+    //}
     
-    return;
+    return INFO;
+}
+
+int LapackSolve(const gsl_matrix *XtX, const gsl_vector *b, gsl_vector *x){
+    
+    gsl_matrix *A = gsl_matrix_alloc(XtX->size1, XtX->size2);
+    gsl_matrix_memcpy(A, XtX);
+    
+    int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO;
+    int ipiv[N];
+    
+    if (N!=(int)A->size2 || N!=LDB) {cout<<"Matrix needs to be symmetric and same dimension in LapackSolve."<<endl; exit(-1);}
+    
+    gsl_vector_memcpy (x, b);
+    dgesv_( &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &INFO);
+    
+    //if (INFO!=0) {
+     //   PrintVector(x);
+     //   cout<<"INFO ="<< INFO << ": Lapack solve unsuccessful in LapackSolve."<<endl;
+    //}
+    
+    gsl_matrix_free(A);
+    return INFO;
 }
 
 
