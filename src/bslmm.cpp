@@ -2026,13 +2026,13 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     
     //calculate beta_hat
     //cout << "inv(Omega) * Xty: ";
-    /*double lambda = 0.0;
+    double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
     lambda *= 0.00001;
-    gsl_vector_add_constant(&Omega_diag.vector, lambda);*/
+    
     
     /*gsl_permutation * p = gsl_permutation_alloc(s_size);
     int s = s_size;
@@ -2055,6 +2055,30 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     
     double bxy;
     gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
+    
+    if (yty < bxy) {
+        
+        do{
+            if (s_size < 10) {
+                // Error_Flag = 1;
+                //cerr << "Error in calcPosterior: P_yy = " << P_yy << endl;
+                //cout << "P_yy = " << P_yy << endl;
+                //cout << "est beta_hat: "; PrintVector(beta_hat);
+                WriteMatrix(&Xgamma_sub.matrix, "_X");
+                WriteMatrix(&XtX_sub.matrix, "_XtX");
+                WriteMatrix(Omega, "_Omega");
+                WriteVector(&sigma_sub.vector, "_sigma");
+                WriteVector(&Xty_sub.vector, "_Xty");
+                WriteVector(beta_hat, "_beta");
+            }
+
+         gsl_vector_add_constant(&Omega_diag.vector, lambda);
+         if(LapackSolve(Omega, &Xty_sub.vector, beta_hat)!=0)
+             EigenSolve(Omega, &Xty_sub.vector, beta_hat);
+         gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
+        } while (yty < bxy) ;
+    }
+    
     gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
     gsl_vector_memcpy(&beta_sub.vector, beta_hat);
     gsl_blas_dgemv (CblasNoTrans, 1.0, &Xgamma_sub.matrix, &beta_sub.vector, 0.0, Xb);
@@ -2069,36 +2093,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     logpost *= 0.5;
     
     P_yy = (yty - bxy);
-    if ((P_yy <= 0) && s_size < 10) {
-       // Error_Flag = 1;
-        //cerr << "Error in calcPosterior: P_yy = " << P_yy << endl;
-        cout << "P_yy = " << P_yy << endl;
-        //cout << "est beta_hat: "; PrintVector(beta_hat);
-        //cout << "set beta_hat to 0\n";
-        
-        WriteMatrix(&Xgamma_sub.matrix, "_X");
-        WriteMatrix(&XtX_sub.matrix, "_XtX");
-        WriteMatrix(Omega, "_Omega");
-        WriteVector(&sigma_sub.vector, "_sigma");
-        WriteVector(&Xty_sub.vector, "_Xty");
-        WriteVector(beta_hat, "_beta");
-        exit(-1);
-        
-       // gsl_vector_set_zero(beta_hat);
-       // gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
-       // gsl_vector_set_zero(&beta_sub.vector);
-       // gsl_vector_set_zero(Xb);
-        //for quantitative traits, calculate pve and pge
-       // if (a_mode==11) {
-        //    cHyp.pve=0.0;
-            //cHyp.pve/=cHyp.pve+1.0/tau;
-            // cHyp.pge=1.0;
-       // }
-        
-     //}
-    // else {
-    //     Error_Flag = 0;
-     }
+    
     
     gsl_matrix_free (Omega_temp);
     gsl_matrix_free (Omega);
@@ -2208,9 +2203,17 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
         
         if(flag_gamma==1)  {//add a snp;
             //cout << "add a snp" << endl;
-            do {
-                r_add=gsl_ran_discrete (gsl_r, gsl_t);                
-            } while ((mapRank2in.count(r_add)!=0) || (ColinearTest(X, Xgamma_old, XtX_old, r_add, rank_new.size())));
+            if (rank_new.size() > 0) {
+                do {
+                    r_add=gsl_ran_discrete (gsl_r, gsl_t);
+                } while ((mapRank2in.count(r_add)!=0) || (ColinearTest(X, Xgamma_old, XtX_old, r_add, rank_new.size())));
+            }
+            else {
+                do {
+                    r_add=gsl_ran_discrete (gsl_r, gsl_t);
+                } while ((mapRank2in.count(r_add)!=0));
+            }
+            
             
             double prob_total=1.0;
             for (size_t ii=0; ii<cHyp_new.n_gamma; ++ii) {
@@ -3698,10 +3701,10 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     
     gsl_vector *beta_gamma_hat = gsl_vector_alloc(s_size);
     
-   // gsl_matrix *XtXtemp = gsl_matrix_alloc(s_size, s_size);
-   // gsl_matrix_memcpy(XtXtemp, &XtX_gsub.matrix);
+    gsl_matrix *XtXtemp = gsl_matrix_alloc(s_size, s_size);
+    gsl_matrix_memcpy(XtXtemp, &XtX_gsub.matrix);
     
-    /*double lambda = 0.0;
+    double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(XtX, i, i);
     }
@@ -3709,42 +3712,34 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     lambda *= 0.00001;
    // cout << "labmda = " << lambda << endl;
     gsl_vector_view XtXtemp_diag = gsl_matrix_diagonal(XtXtemp);
-    gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);*/
+    double SSR, R2 ;
+    do{
+    gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);
     
-   /* gsl_permutation * p = gsl_permutation_alloc(s_size);
-    int s = s_size;
-    gsl_linalg_LU_decomp(XtXtemp, p, &s);
-    gsl_linalg_LU_solve(XtXtemp, p, &Xtz_gsub.vector, beta_gamma_hat);
-    gsl_permutation_free(p);
-    */
-    
-    if(LapackSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat) != 0)
-        EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat);
+    if(LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat) != 0)
+        EigenSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
     //EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);
     
     gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
     gsl_vector_scale(z_res, -1.0);
     gsl_vector_add(z_res, z);
     
-    double SSR;
     gsl_blas_ddot(z_res, z_res, &SSR);
-    double R2 = 1.0 - (SSR / ztz);
+    R2 = 1.0 - (SSR / ztz);
     // R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
    // cout << "R2 = "<< R2 << endl;
-    if(R2 <= 0.0) {
-        cout << "R2 = " << setprecision(6) << R2 << " <= 0, "<< endl;
+   // if(R2 < 0.0) {
+      //  cout << "R2 = " << setprecision(6) << R2 << " < 0, "<< endl;
         //cout << "beta_hat estimate from calculating residuals: \n ";
         //PrintVector(beta_gamma_hat);
         //cout << "SSR = " << SSR << "; ztz = " << ztz << "\n";
         //cout << "Set z_res equal to z... " << endl;
-        gsl_vector_memcpy(z_res, z);
+      //  gsl_vector_memcpy(z_res, z);
         //NormRes(z_res);
-        }
-        
-   // double res_mean = CenterVector(z_res);
-   // if(res_mean > 0.0001) cout << "res_mean = " << res_mean  << " > 0.0001" << endl;
+       // }
+    }while (R2 < 0.0);
     
-   // gsl_matrix_free(XtXtemp);
+    gsl_matrix_free(XtXtemp);
     gsl_vector_free(beta_gamma_hat);
     return;
 }
@@ -4019,12 +4014,12 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     //cout << "R2 = " << R2 << endl;
     if ( R2 >= 0.85 || R2 < 0) {
         colinear = 1;
-        if (R2 < 0) {
+        /*if (R2 < 0) {
             PrintMatrix(&XtX_sub.matrix, s_size, s_size);
             PrintVector(Xtx_temp);
             PrintVector(beta_temp);
             exit(-1);
-        }
+        }*/
     }
     
     gsl_vector_free(xvec_temp);
