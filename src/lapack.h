@@ -58,7 +58,7 @@ void GSLSolve(const gsl_matrix *XtX, const gsl_vector *Xty, gsl_vector *beta_hat
 double LapackCholSolve(gsl_matrix *Omega, const gsl_vector *Xty, gsl_vector *OiXty);
 double LapackLogDet(gsl_matrix *Omega);
 int LapackSolve(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x);
-int LapackSolve(gsl_matrix *A, gsl_vector *b, gsl_vector *x);
+//int LapackSolve(gsl_matrix *A, gsl_vector *b, gsl_vector *x);
 
 #endif
 

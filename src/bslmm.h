@@ -311,7 +311,7 @@ public:
     void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_snp);
-    bool ColinearTest(uchar ** X, gsl_matrix * Xtemp, gsl_matrix * XtX_temp, size_t r_add, size_t s_size);
+    //bool ColinearTest(uchar ** X, gsl_matrix * Xtemp, gsl_matrix * XtX_temp, size_t r_add, size_t s_size);
     bool ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix * XtX_temp, size_t r_add, size_t s_size);
 
 };

@@ -739,7 +739,7 @@ void Ginv(gsl_matrix *XtX_gtemp){
  }
  */
 
-int LapackSolve(gsl_matrix *A, gsl_vector *b, gsl_vector *x){
+/*int LapackSolve(gsl_matrix *A, gsl_vector *b, gsl_vector *x){
     
     int N=A->size1, NRHS=1, LDA=A->size1, LDB=b->size, INFO;
     int ipiv[N];
@@ -748,13 +748,13 @@ int LapackSolve(gsl_matrix *A, gsl_vector *b, gsl_vector *x){
     
     gsl_vector_memcpy (x, b);
     dgesv_( &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &INFO);
-    //if (INFO!=0) {
+    if (INFO!=0) {
         //PrintVector(x);
-       // cout<<"INFO ="<< INFO << ": Lapack solve unsuccessful in LapackSolve."<<endl;
-    //}
+        cout<<"INFO ="<< INFO << ": Lapack solve unsuccessful in LapackSolve."<<endl;
+    }
     
     return INFO;
-}
+}*/
 
 int LapackSolve(const gsl_matrix *XtX, const gsl_vector *b, gsl_vector *x){
     
@@ -769,10 +769,10 @@ int LapackSolve(const gsl_matrix *XtX, const gsl_vector *b, gsl_vector *x){
     gsl_vector_memcpy (x, b);
     dgesv_( &N, &NRHS, A->data, &LDA, ipiv, x->data, &LDB, &INFO);
     
-    //if (INFO!=0) {
+    if (INFO!=0) {
      //   PrintVector(x);
-     //   cout<<"INFO ="<< INFO << ": Lapack solve unsuccessful in LapackSolve."<<endl;
-    //}
+        cout<<"INFO ="<< INFO << ": Lapack solve unsuccessful in LapackSolve."<<endl;
+    }
     
     gsl_matrix_free(A);
     return INFO;
