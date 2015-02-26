@@ -2042,7 +2042,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     
     double bxy;
     gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
-    //double P_yy = (yty - bxy);
+    double P_yy = (yty - bxy);
     
     double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
@@ -2051,11 +2051,13 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     lambda /= (double)s_size;
     lambda *= 0.01;
 
-    while (yty < bxy) {
-            if (s_size < 10) {
+    int k=0;
+    while (P_yy < -1.0) {
+        
+        cout << "add lambda : negative P_yy in calcposterior..." << P_yy << "; k = " << k<< endl;
+            if (s_size < 20) {
                 // Error_Flag = 1;
                 //cerr << "Error in calcPosterior: P_yy = " << P_yy << endl;
-                //cout << "P_yy = " << P_yy << endl;
                 //cout << "est beta_hat: "; PrintVector(beta_hat);
                 WriteMatrix(&Xgamma_sub.matrix, "_X");
                 WriteMatrix(&XtX_sub.matrix, "_XtX");
@@ -2069,6 +2071,13 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
          if(LapackSolve(Omega, &Xty_sub.vector, beta_hat)!=0)
              EigenSolve(Omega, &Xty_sub.vector, beta_hat);
          gsl_blas_ddot (&Xty_sub.vector, beta_hat, &bxy);
+        P_yy = (yty - bxy);
+        k++;
+        if (k > 9) {
+            cout << "reached k = " << k << endl;
+            break;
+        }
+        
     }
     
     gsl_vector_view beta_sub=gsl_vector_subvector(beta, 0, s_size);
@@ -2192,6 +2201,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
         
         if(flag_gamma==1)  {//add a snp;
             //cout << "add a snp" << endl;
+           
             if (rank_new.size() > 0) {
                 do {
                     r_add=gsl_ran_discrete (gsl_r, gsl_t);
@@ -2202,7 +2212,6 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
                     r_add=gsl_ran_discrete (gsl_r, gsl_t);
                 } while ((mapRank2in.count(r_add)!=0));
             }
-            
             
             double prob_total=1.0;
             for (size_t ii=0; ii<cHyp_new.n_gamma; ++ii) {
@@ -2215,7 +2224,6 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             cHyp_new.n_gamma++;
             logp+=-log(p_gamma[r_add]/prob_total)-log((double)cHyp_new.n_gamma);
             // cout << "succesfully added a snp" << endl;
-            
         }
         else if (flag_gamma==2) {//delete a snp;
             // cout << "delete a snp" << endl;
@@ -2272,13 +2280,15 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             else {
                 gsl_s = MakeProposal(o_remove, p_BFr, X, z, mapRank2in);
             }
-            //construct gsl_s, JY
-            do {
-                j_add = gsl_ran_discrete(gsl_r, gsl_s);
-                o_add = (o_remove - win) + j_add;
-                r_add = SNPorder_vec[o_add].second;
-            } while ((s_size > 0) && ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size));
+            j_add = gsl_ran_discrete(gsl_r, gsl_s);
+            o_add = (o_remove - win) + j_add;
+            r_add = SNPorder_vec[o_add].second;
             
+            if ((s_size>0) &&  (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) ) {
+                flag_gamma=-1;
+            }
+            else{
+            //construct gsl_s, JY
             //cout << "o_add = " << o_add <<  "; r_add = "<<r_add << endl;
             if((o_add < 0) || (o_add >= (long int)ns_test) || (o_add == (long int)o_remove))
                 cout << "ERROR proposing switch snp"; //new snp != removed snp
@@ -2303,6 +2313,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             
             mapRank2in[r_add]=1;
             rank_new.push_back(r_add);
+            }
             
             gsl_matrix_free(Xgamma_temp);
             gsl_matrix_free(XtX_gamma);
@@ -2313,6 +2324,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             
             delete[] p_BFr;
             delete[] p_BFa;
+            
            // cout << "successfully switched a snp" << endl;
         }
         
@@ -2697,6 +2709,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             //repeat = 1;
             logMHratio = ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             //rank_new.clear(); cHyp_new.n_gamma=0;
+        if (flag_gamma > 0) {
+
             if(flag_gamma==1) nadd++;
             else if(flag_gamma==2) ndel++;
             else if(flag_gamma==3) nswitch++;
@@ -2738,6 +2752,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             else{
                 accept=0;
             }
+        }
+        else{
+            accept = 0;
+        }
             
             //cout << "accept = " << accept << endl;
             //accept = 1;
@@ -3692,17 +3710,18 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     gsl_matrix *XtXtemp = gsl_matrix_alloc(s_size, s_size);
     gsl_matrix_memcpy(XtXtemp, &XtX_gsub.matrix);
     
+    double SSR, R2 ;
+    
     if(LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat) != 0)
         EigenSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
-    
-    double SSR, R2 ;
-    gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
-    gsl_vector_scale(z_res, -1.0);
-    gsl_vector_add(z_res, z);
-    gsl_blas_ddot(z_res, z_res, &SSR);
-    R2 = 1.0 - (SSR / ztz);
+    gsl_blas_ddot(&Xtz_gsub.vector, beta_gamma_hat, &SSR);
+    R2 = (SSR / ztz);
     
     double lambda = 0.0;
+    int k=0;
+    
+if ((R2 < -1.0) || (R2 > 1.5)) {
+    
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(XtX, i, i);
     }
@@ -3710,31 +3729,36 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     lambda *= 0.01;
     // cout << "labmda = " << lambda << endl;
     gsl_vector_view XtXtemp_diag = gsl_matrix_diagonal(XtXtemp);
-    while (R2 < 0.0){
+    
+    while ((R2 < -1.0) || (R2 > 1.5)){
         
+        cout << "add lambda: negative R2 in calcresidual ...  "<< R2 << "; k = " << k << endl;
         gsl_vector_add_constant(&XtXtemp_diag.vector, lambda);
 
         if(LapackSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat) != 0)
             EigenSolve(XtXtemp, &Xtz_gsub.vector, beta_gamma_hat);
-    //EigenSolve(&XtX_gsub.matrix, &Xtz_gsub.vector, beta_gamma_hat, lambda);
-    
-        gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
-        gsl_vector_scale(z_res, -1.0);
-        gsl_vector_add(z_res, z);
-        gsl_blas_ddot(z_res, z_res, &SSR);
-        R2 = 1.0 - (SSR / ztz);
-    // R2 = R2 - (1 - R2) * s_size / (ni_test - s_size - 1);
-   // cout << "R2 = "<< R2 << endl;
-   // if(R2 < 0.0) {
-      //  cout << "R2 = " << setprecision(6) << R2 << " < 0, "<< endl;
-        //cout << "beta_hat estimate from calculating residuals: \n ";
-        //PrintVector(beta_gamma_hat);
-        //cout << "SSR = " << SSR << "; ztz = " << ztz << "\n";
-        //cout << "Set z_res equal to z... " << endl;
-      //  gsl_vector_memcpy(z_res, z);
-        //NormRes(z_res);
-       // }
+        gsl_blas_ddot(&Xtz_gsub.vector, beta_gamma_hat, &SSR);
+        R2 = (SSR / ztz);
+        
+        k++;
+        if (k > 9) {
+            break;
+        }
     }
+    
+    if ((R2 < 0.0) || (R2 > 1.0)) {
+        gsl_vector_memcpy(z_res, z);
+    }
+    
+}
+else if ( (R2 < 0.0) || (R2 > 1.0) ){
+    gsl_vector_memcpy(z_res, z);
+}
+else{
+    gsl_blas_dgemv(CblasNoTrans, 1.0, &X_gsub.matrix, beta_gamma_hat, 0.0, z_res);
+    gsl_vector_scale(z_res, -1.0);
+    gsl_vector_add(z_res, z);
+}
     
     gsl_matrix_free(XtXtemp);
     gsl_vector_free(beta_gamma_hat);
@@ -4006,17 +4030,54 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     gsl_blas_ddot(Xtx_temp, beta_temp, &vreg);
     //cout << "vreg = " << vreg << endl;
     
+    double tR2 = 0.95;
     double R2 = (vreg / xtx);
+    int k=0;
+    double lambda = 0.0;
     
-    if ( R2 >= 0.85 || R2 < 0) {
+    if ( R2 >= tR2) {
         colinear = 1;
-        if (R2 < 0) {
-            cout << "R2 in ColinearTest = " << R2 << endl;
-            WriteMatrix(&XtX_sub.matrix, "_XtX_ct");
-            WriteVector(Xtx_temp, "Xtx_ct");
-            WriteVector(beta_temp, "bct");
-            //exit(-1);
+    }
+    else if (R2 < -1.0){
+        
+        gsl_matrix *XtXlu = gsl_matrix_alloc(s_size, s_size);
+        gsl_matrix_memcpy(XtXlu, &XtX_sub.matrix);
+     
+        for (size_t i=0; i<s_size; ++i) {
+            lambda += gsl_matrix_get(XtXlu, i, i);
         }
+        lambda /= (double)s_size;
+        lambda *= 0.01;
+        gsl_vector_view XtXlu_diag = gsl_matrix_diagonal(XtXlu);
+    
+        while (R2 < -1.0) {
+        
+            cout << "R2 in ColinearTest = " << R2 << "; k = " << k << endl;
+            gsl_vector_add_constant(&XtXlu_diag.vector, lambda);
+            if (LapackSolve(XtXlu, Xtx_temp, beta_temp) !=0)
+                    EigenSolve(XtXlu, Xtx_temp, beta_temp);
+            gsl_blas_ddot(Xtx_temp, beta_temp, &vreg);
+            R2 = (vreg / xtx);
+        
+            k++;
+        
+            if (k>9) {
+                cout << "reached k = " << k << endl;
+                WriteMatrix(&XtX_sub.matrix, "_XtX_ct");
+                WriteVector(Xtx_temp, "_Xtx_ct");
+                WriteVector(beta_temp, "_bct");
+                break;
+            }
+        }
+        
+        if ( R2 >= tR2) {
+            colinear = 1;
+        } else {colinear = 0;}
+        
+        gsl_matrix_free(XtXlu);
+    }
+    else {
+        colinear = 0;
     }
     
     gsl_vector_free(xvec_temp);
