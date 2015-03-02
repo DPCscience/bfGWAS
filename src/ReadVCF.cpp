@@ -218,7 +218,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                 geno_mean /= (double)ni_test;
                 //geno_mean = -geno_mean;
                 gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
-                gsl_vector_scale(xvec, SNPsd[marker_i]); // standardize genotypes here
+                //gsl_vector_scale(xvec, SNPsd[marker_i]); // standardize genotypes here
             }
             free(UnCompBuffer);
         }
@@ -237,7 +237,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             geno_mean /= (double)ni_test;
             //geno_mean = -geno_mean;
             gsl_vector_add_constant(xvec, -geno_mean);
-            gsl_vector_scale(xvec, SNPsd[marker_i]);
+            //gsl_vector_scale(xvec, SNPsd[marker_i]);
         }
         
     }
