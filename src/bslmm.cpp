@@ -4413,22 +4413,19 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     double lambda = 0.0;
     gsl_matrix *XtXlu = gsl_matrix_alloc(s_size, s_size);
     
-    if (R2 > 1.0 || R2 < -0.0) {
+    if ( (R2 >= tR2) && (R2 <= 1.1) ) {
+        colinear = 1;
         cout << "R2 in ColinearTest = " << R2 << endl;
-        PrintMatrix(&XtX_sub.matrix, s_size, s_size);
+    }
+    else if ((R2 < -0.0) || (R2 > 1.0)){
+       
+        cout << "R2 in ColinearTest = " << R2 << "; k = " << k << endl;
+        //PrintMatrix(&XtX_sub.matrix, s_size, s_size);
         WriteMatrix(&Xgamma_sub.matrix, "_Xct");
         WriteMatrix(&XtX_sub.matrix, "_XtXct");
         WriteVector(beta_temp, "_bct");
         WriteVector(xvec_temp, "_xvec");
-        //exit(-1);
-    }
-    
-    if ( (R2 >= tR2) && (R2 <= 1.1) ) {
-        colinear = 1;
-       // cout << "R2 in ColinearTest = " << R2 << endl;
-    }
-    else if ((R2 < -0.1) || (R2 > 1.1)){
-       
+        
         gsl_matrix_memcpy(XtXlu, &XtX_sub.matrix);
         for (size_t i=0; i<s_size; ++i) {
             lambda += gsl_matrix_get(XtXlu, i, i);
@@ -4439,7 +4436,6 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     
         while ((R2 < -0.1) || (R2 > 1.1)) {
         
-            cout << "R2 in ColinearTest = " << R2 << "; k = " << k << endl;
             gsl_vector_add_constant(&XtXlu_diag.vector, lambda);
             if (LapackSolve(XtXlu, Xtx_temp, beta_temp) !=0)
                     EigenSolve(XtXlu, Xtx_temp, beta_temp);
