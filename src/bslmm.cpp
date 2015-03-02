@@ -2557,7 +2557,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
 
         }
         else if (flag_gamma==2) {//delete a snp;
-             // cout << "delete a snp" << endl;
+            //  cout << "delete a snp" << endl;
             
             col_id=gsl_rng_uniform_int(gsl_r, cHyp_new.n_gamma);
             r_remove=rank_new[col_id];
@@ -2573,7 +2573,10 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             rank_new.erase(rank_new.begin()+col_id);
             logp+=log(p_gamma[r_remove]/prob_total)+log((double)cHyp_new.n_gamma);
             cHyp_new.n_gamma--;
-            SetXgammaDel(Xgamma_old, XtX_old, Xtz_old, rank_old, col_id, Xgamma_new, XtX_new, Xtz_new);
+            
+            if (rank_new.size() > 0) {
+                SetXgammaDel(Xgamma_old, XtX_old, Xtz_old, rank_old, col_id, Xgamma_new, XtX_new, Xtz_new);
+            }
             // cout << "succesfully deleted a snp" << endl;
         }
         else if (flag_gamma==3) {//switch a snp;
@@ -2594,6 +2597,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             size_t s_size = rank_new.size();
             mapRank2in.erase(r_remove);
             
+            //cout << "s_size = "<< s_size << "; s_size+1 = " << s_size+1 << endl;
             gsl_matrix *Xgamma_temp=gsl_matrix_alloc (ni_test, s_size+1);
             gsl_matrix *XtX_gamma=gsl_matrix_alloc (s_size+1, s_size+1);
             gsl_vector *Xtz_gamma=gsl_vector_alloc (s_size+1);
@@ -2684,7 +2688,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
                 mapRank2in[r_add]=1;
                 rank_new.push_back(r_add);
                 SetXgamma (Xgamma_new, X, rank_new);
-                CalcXtX (Xgamma_new, z, s_size, XtX_new, Xtz_new);
+                CalcXtX (Xgamma_new, z, rank_new.size(), XtX_new, Xtz_new);
                 
                 gsl_ran_discrete_free(gsl_a);
             }
@@ -3036,7 +3040,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     }
     
     //Start MCMC
-    w_pace=100;
+    w_pace=1000;
     int accept; // accept_theta; naccept_theta=0,
     size_t total_step=w_step+s_step;
     size_t repeat=1;
@@ -3074,12 +3078,12 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         
         for (size_t i=0; i<n_mh; ++i) {
 
-           // cout << "\n \n propose gamam...\n";
+            //cout << "\n \n propose gamam...\n";
             //cout << "old rank: "; PrintVector(rank_old);
             //repeat = 1;
             //logMHratio = ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             logMHratio = ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old, ztz, flag_gamma, Xgamma_new, XtX_new, Xtz_new); //JY
-            //rank_new.clear(); cHyp_new.n_gamma=0;
+           // rank_new.clear(); cHyp_new.n_gamma=0;
            // cout << "propose new rank: "; PrintVector(rank_new);
             //cout << "flag_gamma = " << flag_gamma << endl;
             //cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
