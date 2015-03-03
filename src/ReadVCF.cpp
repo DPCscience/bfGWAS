@@ -28,7 +28,18 @@
     return j;
 }*/
 
-
+void CreateUcharTable(vector<pair<long long int, double> > &UcharTable)
+{
+    UcharTable.clear();
+    long long first_val;
+    double second_val;
+    for (int i=0; i <= UCHAR_MAX; i++) {
+        first_val = (long long)i;
+        second_val = ((double)i) * 0.01;
+        UcharTable.push_back(make_pair(first_val, second_val));
+        //cout << (uchar)i << ", " << first_val << ", " << second_val << endl;
+    }
+}
 
 
 double getDoubleDosageFromRecord(VcfRecord& record, const uint smNum)
@@ -187,11 +198,19 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 }
 
 
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag){
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<uchar> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable){
     
     if (marker_i < ns_test ) {
         
-        double geno, geno_mean = 0.0;
+        int c;
+        long long geno_long;
+        double geno;
+        long long geno_mean_long = (long long)SNPmean[marker_i];
+        /*if (geno_mean_long > 200 || geno_mean_long < 0)
+        {
+            cout << "\n geno_mean_long=" << geno_mean_long << endl;
+            exit(-1);
+         }*/
         
         if (Compress_Flag) {
             size_t compressedBufferSize = CompBuffSizeVec[marker_i];
@@ -206,41 +225,39 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             }
             else{
                 for (size_t j=0; j<ni_test; j++) {
-                    geno = UcharToDouble(UnCompBuffer[j]);
-                    //cout << geno << ", ";
-                    if (geno < 0.0 || geno > 2.0) {
-                        cerr << "wrong genotype value = " << geno << endl;
-                        exit(-1);
+
+                    geno_long = (long long)UnCompBuffer[j];
+                    if (geno_long >= geno_mean_long) {
+                        c = (int)(geno_long - geno_mean_long);
+                        geno = UcharTable[c].second;
                     }
+                    else{
+                        c = (int)(geno_mean_long - geno_long);
+                        geno = -UcharTable[c].second;
+                    }
+                    //if(i < 20)  cout << geno << ",";
                     gsl_vector_set(xvec, j, geno);
-                    geno_mean += geno;
                 }
-                geno_mean /= (double)ni_test;
-                //geno_mean = -geno_mean;
-                gsl_vector_add_constant(xvec, -geno_mean); // center genotypes here
-                //gsl_vector_scale(xvec, SNPsd[marker_i]); // standardize genotypes here
             }
             free(UnCompBuffer);
         }
-        
         else{
             for (size_t j=0; j<ni_test; j++) {
-                geno = UcharToDouble(X[marker_i][j]);
-                //cout << geno << ", ";
-                if (geno < 0.0 || geno > 2.0) {
-                    cerr << "wrong genotype value = " << geno << endl;
-                    exit(-1);
+
+               geno_long = (long long)X[marker_i][j];
+              if (geno_long >= geno_mean_long) {
+                c = (int)(geno_long - geno_mean_long);
+                geno = UcharTable[c].second;
                 }
+              else{
+                c = (int)(geno_mean_long - geno_long);
+                geno = -UcharTable[c].second;
+                }
+                //if(i < 20)  cout << geno << ",";
                 gsl_vector_set(xvec, j, geno);
-                geno_mean += geno;
             }
-            geno_mean /= (double)ni_test;
-            //geno_mean = -geno_mean;
-            gsl_vector_add_constant(xvec, -geno_mean);
-            //gsl_vector_scale(xvec, SNPsd[marker_i]);
         }
-        
-    }
+    }    
     else {
         std::cerr << "Marker index out of range \n";
         exit(-1);

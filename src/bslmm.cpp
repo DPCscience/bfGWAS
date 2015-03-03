@@ -73,6 +73,7 @@ void BSLMM::CopyFromParam (PARAM &cPar)
     iniType = cPar.iniType;
     iniSNPfile = cPar.iniSNPfile;
     hypfile = cPar.hypfile;
+    SNPmean = cPar.SNPmean;
     
     UnCompBufferSize = cPar.UnCompBufferSize;
     CompBuffSizeVec = cPar.CompBuffSizeVec;
@@ -670,7 +671,7 @@ void BSLMM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
 	for (size_t i=0; i<rank.size(); ++i) {
 		pos=SNPrank_vec[rank[i]].first;
 		gsl_vector_view Xgamma_col=gsl_matrix_column (Xgamma, i);
-        getGTgslVec(X, &Xgamma_col.vector, pos, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+        getGTgslVec(X, &Xgamma_col.vector, pos, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
     }	
 	return;
 }
@@ -951,7 +952,7 @@ void BSLMM::SetXgammaAdd (uchar **X, const gsl_matrix *X_old, const gsl_matrix *
     
     //create ranki
     gsl_vector_view xvec = gsl_matrix_column(X_new, s_size);
-    getGTgslVec(X, &xvec.vector, pos, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+    getGTgslVec(X, &xvec.vector, pos, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
 
     gsl_vector_view Xtx_col = gsl_matrix_subcolumn(XtX_new, s_size, 0, s_size);
     gsl_vector_view Xtx_row = gsl_matrix_subrow(XtX_new, s_size, 0, s_size);
@@ -1177,8 +1178,14 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
             pch = (char *)line.c_str();
             nch = strchr(pch, '\t');
             h = strtod(pch, NULL);
+            rv = 1.0 - h;
+            if (rv < 0.1) {
+                cerr << "residual variance  = " << rv << endl;
+                exit(-1);
+            }
+            tau = 1.0 / rv;
             pch = (nch == NULL) ? NULL : nch+1;
-            //cout << "h = "<<setprecision(5) << h ;
+            cout << "h = "<<setprecision(5)<< h <<";rv = "<< rv << ";tau = " << tau << endl;
             
             nch = strchr(pch, '\t');
             theta[0] = strtod(pch, NULL);
@@ -1273,7 +1280,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         
         gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
         gsl_vector * xvec = gsl_vector_alloc(ni_test);
-        getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //get geno column
+        getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //get geno column
         
         gsl_matrix * XtXr = gsl_matrix_alloc(cHyp.n_gamma, cHyp.n_gamma);
         gsl_vector * Xtxvec = gsl_vector_alloc(cHyp.n_gamma);
@@ -1305,7 +1312,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
                 rank.push_back(j);
                 posr = SNPrank_vec[j].first;
                 xtx = XtX_diagvec[posr];
-                getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); // get geno column
+                getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); // get geno column
             }
             i++;
             
@@ -1336,7 +1343,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
 
     gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
     gsl_vector * xvec = gsl_vector_alloc(ni_test);
-    getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //get geno column
+    getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //get geno column
     
     gsl_matrix * XtXr = gsl_matrix_alloc(cHyp.n_gamma, cHyp.n_gamma);
     gsl_vector * Xtyr = gsl_vector_alloc(cHyp.n_gamma);
@@ -1365,7 +1372,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         CalcRes(Xr, Uty, XtXr, Xtyr, yres, i, yty);
         for (size_t j=0; j<rank_loglr.size(); ++j) {
             posr = SNPrank_vec[rank_loglr[j].first].first;
-            getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); // get geno column
+            getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); // get geno column
             rank_loglr[j].second = CalcLR(yres, xvec, posr);
         }
         stable_sort (rank_loglr.begin(), rank_loglr.end(), comp_lr); //sort the initial rank.
@@ -1378,7 +1385,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
             }
             else {
                 posr = SNPrank_vec[radd].first;
-                getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+                getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
                 rank.push_back(radd);
                 rank_loglr.erase(rank_loglr.begin());
                 //cout << "rank added: " << radd << ", ";
@@ -1806,6 +1813,7 @@ void BSLMM::CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const 
     }
 }
 
+
 void BSLMM::getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, const vector<size_t> &rank)
 {
     size_t order_i;
@@ -1874,6 +1882,7 @@ void BSLMM::getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, cons
 
 //set sigma_subvec and mgamma vectoer and trace vector Gvec
 
+//used in EM-block
 void BSLMM::set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     size_t order_i;
@@ -2713,6 +2722,20 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
 
 void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     
+    string file_lnpost;
+    file_lnpost = "./output/" + file_out;
+    file_lnpost += ".lnpost";
+    ofstream outfile_lnpost;
+    outfile_lnpost.open (file_lnpost.c_str(), ofstream::out);
+    if (!outfile_lnpost) {cout<<"error writing file: "<<file_lnpost<<endl; return;}
+    for (size_t i=0; i < s_step; i++) {
+        if ((i % 100) == 0) {
+            outfile_lnpost << scientific << setprecision(6) << gsl_vector_get(LnPost, i) << endl;
+        }
+    }
+    outfile_lnpost.clear();
+    outfile_lnpost.close();
+    
     //vector<double> em_gamma_avg(n_type, 0.0);
     //em_gamma_avg[0] = em_gamma[0] / (double)s_step;
     //em_gamma_avg[1] = em_gamma[1] / (double)s_step;
@@ -2892,12 +2915,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector_scale(z, 1.0 / sqrt(ztz / (double)(ni_test-1))); // standardize phenotype z
     //for quantitative traits, y is centered already in gemma.cpp, but just in case
     gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
-    
-    rv = 0.6; tau = 1.0 / rv;
-    logrv = log(rv);
-    cout << "ztz = " << ztz << "; Fix Residual Variance = " << rv << endl;
-    cout << "PI = " << M_PI << "; tau = " << tau << "; logrv = " <<logrv << endl;
-    
+    cout << "ztz = " << ztz << endl;
     // cout << "mean of z = " << mean_z << endl;
     
     //Initialize variables for MH
@@ -2919,13 +2937,16 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //Setup log-likelihood ratio test statistics
     time_start=clock();
     
+    cout << "create UcharTable ...\n";
+    CreateUcharTable(UcharTable);
+    
     // Jingjing add a vector of "snpPos" structs snp_pos
     vector<SNPPOS> snp_pos;
     CreateSnpPosVec(snp_pos); //ordered by chr/bp
     //cout << "1 / SNP_sd  = "; PrintVector(SNPsd, 10);
     
     vector<pair<size_t, double> > pos_loglr;
-    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, Gvec, XtX_diagvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag); //calculate trace_G or Gvec
+    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec
     trace_G = (Gvec[0] + Gvec[1]) / double(ni_test * ns_test);
     cout << "trace_G = " << trace_G << endl;
     cout << "Total trace_G vec : " << Gvec[0] << ", " << Gvec[1] << endl;
@@ -2980,6 +3001,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //Initial parameters
     cout << "Start initializing MCMC ... \n";
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
+    logrv = log(rv);
+    cout<< "Fix Residual Variance = " << rv << endl;
+    cout << "tau = " << tau << "; logrv = " <<logrv << endl;
+    
     inv_subvar.assign(n_type, 0.0), log_subvar.assign(n_type, 0.0);
     inv_subvar[0] = (1.0 / subvar[0]); inv_subvar[1] = (1.0 / subvar[1]);
     log_subvar[0] = (log(subvar[0])); log_subvar[1] = (log(subvar[1]));
@@ -4216,7 +4241,7 @@ gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, uchar **
             rank_j = SNPorder_vec[(size_t)orderj].second;
         if((orderj >= 0) && (orderj < (long int)ns_test) && (j != win) && (mapRank2in.count(rank_j) == 0)){
             posj = SNPorder_vec[(size_t)orderj].first;
-            getGTgslVec(X, xvec, posj, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+            getGTgslVec(X, xvec, posj, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
             p_BF[j]=CalcLR(z_res, xvec, posj); //calc loglr
             j_ind.push_back(1);
             countj += 1.0;
@@ -4396,7 +4421,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     gsl_vector *beta_temp = gsl_vector_alloc(s_size);
     gsl_vector *Xtx_temp = gsl_vector_alloc(s_size);
     gsl_vector *xvec_temp = gsl_vector_alloc(ni_test);
-    getGTgslVec(X, xvec_temp, pos, ni_test, ns_test, SNPsd, CompBuffSizeVec, UnCompBufferSize, Compress_Flag);
+    getGTgslVec(X, xvec_temp, pos, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
     //gsl_blas_ddot(xvec_temp, xvec_temp, &xtx);
     //cout << "XtX_diagvec[pos] = "<< XtX_diagvec[pos] << "; xtx = " << xtx << endl;
     
@@ -4411,7 +4436,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     gsl_blas_ddot(Xtx_temp, beta_temp, &vreg);
     //cout << "vreg = " << vreg << endl;
     
-    double tR2 = 0.95;
+    double tR2 = 0.99;
     double R2 = (vreg / xtx);
     int k=0;
     double lambda = 0.0;

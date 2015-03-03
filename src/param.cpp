@@ -790,7 +790,7 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
 	}
 	
     else if(!file_vcf.empty()){
-        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, GTfield, CompBuffSizeVec, SampleVcfPos, Compress_Flag)==false )
+        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, GTfield, SNPmean, CompBuffSizeVec, SampleVcfPos, Compress_Flag)==false )
         {error=true;} // revised
     }
     

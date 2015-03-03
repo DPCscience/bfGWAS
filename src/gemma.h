@@ -26,6 +26,8 @@
 #include "VcfFileReader.h"
 #endif
 
+#include "ReadVCF.h"
+
 using namespace std;
 
 class GEMMA {

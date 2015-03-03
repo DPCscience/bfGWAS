@@ -1908,7 +1908,7 @@ bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_
 
 
 //Read VCF genotype file, the second time, recode genotype and calculate K
-bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos, bool Compress_Flag)
+bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector<uchar> &SNPmean, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos, bool Compress_Flag)
 {
     if (GTfield.empty()) {
         GTfield = "GT"; //defalt load GT Data
@@ -1917,7 +1917,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
     
     //size_t ni_total = indicator_idv.size();
     //size_t ns_total = indicator_snp.size();
-    
+
     // Open the VCF file.
     igzstream infile(file_vcf.c_str(), igzstream::in);
     cout << "open vcf file second time ...\n";
@@ -1938,10 +1938,8 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
     size_t compressedBufferSize = BufferSize;
     //cout << "Source Buffer Size = " << sourceBufferSize << "; Comp Buffer Bound = " << BufferSize  << endl;
     CompBuffSizeVec.clear();
-    
-    
-   
-    
+    SNPmean.clear();
+
     double geno, geno_mean, vtx;
     size_t n_miss, c_idv=0, c_snp=0, ctest_snp = 0, ctest_idv=0;
     int result;
@@ -2043,6 +2041,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
             }
         
         geno_mean/=(double)(ni_test-n_miss);
+            SNPmean.push_back(DoubleToUchar(geno_mean));
         
         for (size_t i=0; i < ni_test; ++i) {
                 if (genotype_miss[i]) {geno=geno_mean; gsl_vector_set (genotype, i, geno);}
@@ -2094,7 +2093,8 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
         }
     }
    // cout << "ctest_snp = " << c_snp << "; ns_test = " << ns_test << endl;
-    
+     cout << "SNPmean size = " << SNPmean.size() << endl;
+
     if (calc_K==true) {
         gsl_matrix_scale (K, 1.0/(double)ns_test);
         

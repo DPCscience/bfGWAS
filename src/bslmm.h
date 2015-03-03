@@ -86,6 +86,7 @@ public:
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
     double GV, rv, tau, logrv;
     vector<double> SNPsd, XtX_diagvec;
+    vector<uchar> SNPmean;
     
     
     double h;
@@ -101,6 +102,7 @@ public:
     bool Compress_Flag;
 	int a_mode;
 	size_t d_pace;
+    vector<pair<long long int, double> > UcharTable;
 	
 	string file_bfile;
 	string file_geno;

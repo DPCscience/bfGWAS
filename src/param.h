@@ -161,6 +161,8 @@ public:
     vector<size_t> SampleVcfPos;
     vector<string> VcfSampleID; // size=total sample #
     vector<string> InputSampleID; //size = ni_total
+    vector<pair<long long int, double> > UcharTable;
+    vector<uchar> SNPmean;
     
 	bool mode_silence;
 	int a_mode;				//analysis mode, 1/2/3/4 for Frequentist tests

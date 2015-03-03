@@ -881,6 +881,11 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 void GEMMA::BatchRun (PARAM &cPar) 
 {
 	clock_t time_begin, time_start;
+    
+    //cout << "create UcharTable ...\n";
+    //vector<pair<long long int, double> > UcharTable;
+    //CreateUcharTable(UcharTable);
+    
 	time_begin=clock();	
 	
 	//Read Files
