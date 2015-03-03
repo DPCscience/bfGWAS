@@ -1178,11 +1178,12 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
             pch = (char *)line.c_str();
             nch = strchr(pch, '\t');
             h = strtod(pch, NULL);
-            rv = 1.0 - h;
+            /*rv = 1.0 - h;
             if (rv < 0.1) {
                 cerr << "residual variance  = " << rv << endl;
                 exit(-1);
-            }
+            }*/
+            rv = 0.55;
             tau = 1.0 / rv;
             pch = (nch == NULL) ? NULL : nch+1;
             cout << "h = "<<setprecision(5)<< h <<";rv = "<< rv << ";tau = " << tau << endl;
@@ -2728,11 +2729,12 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     ofstream outfile_lnpost;
     outfile_lnpost.open (file_lnpost.c_str(), ofstream::out);
     if (!outfile_lnpost) {cout<<"error writing file: "<<file_lnpost<<endl; return;}
-    for (size_t i=0; i < s_step; i++) {
+    for (size_t i=0; i < (s_step-1); i++) {
         if ((i % 100) == 0) {
             outfile_lnpost << scientific << setprecision(6) << gsl_vector_get(LnPost, i) << endl;
         }
     }
+    outfile_lnpost << scientific << setprecision(6) << gsl_vector_get(LnPost, (s_step-1)) << endl;
     outfile_lnpost.clear();
     outfile_lnpost.close();
     
@@ -3001,6 +3003,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //Initial parameters
     cout << "Start initializing MCMC ... \n";
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
+    //rv = 0.55; tau = 1.0 / rv;
     logrv = log(rv);
     cout<< "Fix Residual Variance = " << rv << endl;
     cout << "tau = " << tau << "; logrv = " <<logrv << endl;
