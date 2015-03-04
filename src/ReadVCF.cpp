@@ -197,18 +197,17 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
     }
 }
 
-
+//used in EM-BLock
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<uchar> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable){
     
     if (marker_i < ns_test ) {
         
         int c;
-        long long geno_long;
         double geno;
-        long long geno_mean_long = (long long)SNPmean[marker_i];
-        /*if (geno_mean_long > 200 || geno_mean_long < 0)
+        int geno_mean = (int)SNPmean[marker_i];
+        /*if (geno_mean > 200 || geno_mean < 0)
         {
-            cout << "\n geno_mean_long=" << geno_mean_long << endl;
+            cout << "\n geno_mean=" << geno_mean << endl;
             exit(-1);
          }*/
         
@@ -226,13 +225,13 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             else{
                 for (size_t j=0; j<ni_test; j++) {
 
-                    geno_long = (long long)UnCompBuffer[j];
-                    if (geno_long >= geno_mean_long) {
-                        c = (int)(geno_long - geno_mean_long);
+                    c = (int)UnCompBuffer[j];
+                    if (c >= geno_mean) {
+                        c = c - geno_mean;
                         geno = UcharTable[c].second;
                     }
                     else{
-                        c = (int)(geno_mean_long - geno_long);
+                        c = geno_mean - c ;
                         geno = -UcharTable[c].second;
                     }
                     //if(i < 20)  cout << geno << ",";
@@ -244,14 +243,14 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
         else{
             for (size_t j=0; j<ni_test; j++) {
 
-               geno_long = (long long)X[marker_i][j];
-              if (geno_long >= geno_mean_long) {
-                c = (int)(geno_long - geno_mean_long);
-                geno = UcharTable[c].second;
+               c = (int)X[marker_i][j];
+                if (c >= geno_mean) {
+                    c = c - geno_mean;
+                    geno = UcharTable[c].second;
                 }
-              else{
-                c = (int)(geno_mean_long - geno_long);
-                geno = -UcharTable[c].second;
+                else{
+                    c = geno_mean - c ;
+                    geno = -UcharTable[c].second;
                 }
                 //if(i < 20)  cout << geno << ",";
                 gsl_vector_set(xvec, j, geno);
