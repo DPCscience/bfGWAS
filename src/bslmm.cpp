@@ -1153,6 +1153,9 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
     log_theta.clear();
     log_theta.push_back(log(theta[0]));
     log_theta.push_back(log(theta[1]));
+    log_qtheta.clear();
+    log_qtheta.push_back(log(1.0 - theta[0]));
+    log_qtheta.push_back(log(1.0 - theta[1]));
     
     subvar.assign(n_type, subvar_temp);
     
@@ -1191,22 +1194,25 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
             nch = strchr(pch, '\t');
             theta[0] = strtod(pch, NULL);
             log_theta[0] = log(theta[0]);
+            log_qtheta[0] = log(1.0 - theta[0]);
             pch = (nch == NULL) ? NULL : nch+1;
             
             nch = strchr(pch, '\t');
             theta[1] = strtod(pch, NULL);
             log_theta[1] = log(theta[1]);
+            log_qtheta[1] = log(1.0 - theta[1]);
             pch = (nch == NULL) ? NULL : nch+1;
             
             nch = strchr(pch, '\t');
-            subvar[0] = tau * strtod(pch, NULL);
+            subvar[0] = strtod(pch, NULL);
             pch = (nch == NULL) ? NULL : nch+1;
             
-            subvar[1] = tau * strtod(pch, NULL);
+            subvar[1] = strtod(pch, NULL);
         }
     }
     }
     cout << "pve = "<<setprecision(5) << h << "; theta = " << theta[0] << ", " << theta[1] << "; subvar = " << subvar[0] << ", " << subvar[1] << endl;
+    cout << "log_qtheta: " <<log_qtheta[0] << ", " << log_qtheta[1] << endl;
 }
 
 
@@ -1743,8 +1749,9 @@ double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp)
      //   cHyp.pge=1.0;
     }
     //calculate likelihood
-    if (a_mode==11) {logpost-=0.5*(double)ni_test*log(yty);}
-    else {logpost-=0.5*yty;}
+   // if (a_mode==11) {logpost-=0.5*(double)ni_test*log(yty);}
+   // else {logpost-=0.5*yty;}
+    
     // calculate gamma likelihood
     //logpost += CalcLikegamma(cHyp);
     
@@ -2021,7 +2028,7 @@ double BSLMM::CalcLikegamma(const class HYPBSLMM &cHyp)
     double loglikegamma = 0.0;
     
     for (size_t i=0; i < n_type; i++) {
-        loglikegamma +=  log_theta[i] * (double)cHyp.m_gamma[i] + (double)(mFunc[i] - cHyp.m_gamma[i]) * log(1.0 - theta[i]);
+        loglikegamma +=  log_theta[i] * ((double)cHyp.m_gamma[i]) + ((double)(mFunc[i] - cHyp.m_gamma[i])) * log_qtheta[i];
     }
     return loglikegamma;
 }
@@ -2137,7 +2144,7 @@ void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec)
 } */
 
 // for the new model
-double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag)
+double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag, double &loglike)
 {
     //conditioning on hyper parameters: subvar, log_theta
     double logpost=0.0;
@@ -2246,9 +2253,11 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
         }
     }
     
-    logpost = -((double)s_size * logrv + logdet_O) + tau * bxy;
-    logpost *= 0.5;
+    logpost = tau * bxy;
+    loglike = -0.5 * ((double)cHyp.n_gamma * logrv + (double)cHyp.m_gamma[0] * log_subvar[0] + (double)cHyp.m_gamma[1] * log_subvar[1] - logpost);
     
+    logpost = -0.5 * (logdet_O - logpost);
+
     gsl_matrix_free (Omega);
     gsl_vector_free (beta_hat);
     
@@ -2921,7 +2930,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     // cout << "mean of z = " << mean_z << endl;
     
     //Initialize variables for MH
-    double logPost_new, logPost_old;
+    double logPost_new, logPost_old, loglike_new, loglike_old, loglikegamma;
     double logMHratio;
     vector<size_t> rank_new, rank_old;
     vector<double> Gvec;
@@ -3004,7 +3013,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "Start initializing MCMC ... \n";
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
     //rv = 0.55; tau = 1.0 / rv;
-    logrv = log(rv);
+    logrv = log(2.0 * M_PI * rv);
     cout<< "Fix Residual Variance = " << rv << endl;
     cout << "tau = " << tau << "; logrv = " <<logrv << endl;
     
@@ -3032,10 +3041,14 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //Calculate first loglikelihood
     //cout << "first calculating logpost ... \n";
     if (cHyp_old.n_gamma==0) {
-        logPost_old = CalcPosterior (ztz, cHyp_old) + CalcLikegamma(cHyp_old);
+        loglikegamma = CalcLikegamma(cHyp_old);
+        logPost_old = CalcPosterior (ztz, cHyp_old) + loglikegamma;
+        loglike_old = loglikegamma;
     }
     else {
-        logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag) + CalcLikegamma(cHyp_old);
+        loglikegamma = CalcLikegamma(cHyp_old);
+        logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag, loglike_old) + loglikegamma;
+        loglike_old += loglikegamma;
     }
     if (!Error_Flag) {
        // cout <<  "logPost_old = " << logPost_old << endl;
@@ -3090,12 +3103,16 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             
             //First proposal need to be revised
             if (cHyp_old.n_gamma==0) {
-                logPost_old= CalcPosterior (ztz, cHyp_old) + CalcLikegamma(cHyp_old);
+                loglikegamma = CalcLikegamma(cHyp_old);
+                logPost_old = CalcPosterior (ztz, cHyp_old) + loglikegamma;
+                loglike_old = loglikegamma;
             } else {
                 gsl_matrix_view Xold_sub=gsl_matrix_submatrix(Xgamma_old, 0, 0, ni_test, rank_old.size());
                 gsl_vector_view Xtz_sub=gsl_vector_subvector(Xtz_old, 0, rank_old.size());
                 gsl_blas_dgemv (CblasTrans, 1.0, &Xold_sub.matrix, z, 0.0, &Xtz_sub.vector);
-                logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag) + CalcLikegamma(cHyp_old);
+                loglikegamma = CalcLikegamma(cHyp_old);
+                logPost_old = CalcPosterior (Xgamma_old, XtX_old, Xtz_old, ztz, Xb_old, beta_old, cHyp_old, sigma_subvec_old, Error_Flag, loglike_old) + loglikegamma;
+                loglike_old += loglikegamma;
             }
         }
 
@@ -3112,10 +3129,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             //logMHratio = ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old,  ztz, flag_gamma); //JY
             logMHratio = ProposeGamma (rank_old, rank_new, p_gamma, cHyp_old, cHyp_new, repeat, X, z, Xgamma_old, XtX_old, Xtz_old, ztz, flag_gamma, Xgamma_new, XtX_new, Xtz_new); //JY
            // rank_new.clear(); cHyp_new.n_gamma=0;
-           // cout << "propose new rank: "; PrintVector(rank_new);
+            //cout << "propose new rank: "; PrintVector(rank_new);
             //cout << "flag_gamma = " << flag_gamma << endl;
             //cout << "propose gamma success... with rank_new.size = " << rank_new.size() << endl;
-            //cout << "propose gamma MHratio = " << exp(logMHratio) << endl;
+            //cout << "propose gamma logMHratio = "<<logMHratio << "; MHratio = " << exp(logMHratio) << endl;
             
         if (flag_gamma > 0) {
 
@@ -3126,18 +3143,22 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             if (rank_new.size() > 0) {
                 set_mgamma(cHyp_new, rank_new, snp_pos);
                 getSubVec(sigma_subvec_new, rank_new, snp_pos);
-                logPost_new = CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, sigma_subvec_new, Error_Flag) + CalcLikegamma(cHyp_new);
+                loglikegamma = CalcLikegamma(cHyp_new);
+                logPost_new = CalcPosterior (Xgamma_new, XtX_new, Xtz_new, ztz, Xb_new, beta_new, cHyp_new, sigma_subvec_new, Error_Flag, loglike_new) + loglikegamma;
+                loglike_new += loglikegamma;
             }
             else {
                 cHyp_new.m_gamma.assign(n_type, 0);
-                logPost_new = CalcPosterior (ztz, cHyp_new) + CalcLikegamma(cHyp_new);
+                loglikegamma = CalcLikegamma(cHyp_new);
+                logPost_new = CalcPosterior (ztz, cHyp_new) + loglikegamma;
+                loglike_new = loglikegamma;
             }
            // cout << "new m_gamma: " << cHyp_new.m_gamma[0] << ", "<< cHyp_new.m_gamma[1]<< endl;
 
              // cout << "Calcposterior success." << endl;
             if (!Error_Flag) {
                 logMHratio += logPost_new-logPost_old;
-                // cout <<"logPost_old = " << logPost_old<< "; logPost_new = "<< logPost_new<< "; MHratio = " << exp(logMHratio) << endl;
+                //cout <<"logPost_old = " << logPost_old<< "; logPost_new = "<< logPost_new<< "\n logMHratio = " << logMHratio<< "; MHratio = " << exp(logMHratio) << endl;
                 if (logMHratio>0 || log(gsl_rng_uniform(gsl_r))<logMHratio)
                     { accept=1; if (flag_gamma < 4) n_accept++;}
                 else {accept=0;}
@@ -3151,7 +3172,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             accept = 0;
         }
             
-           // cout << "accept = " << accept << endl;
+            //cout << "accept = " << accept << endl;
             
             if (accept==1) {
                     if(flag_gamma==1) nadd_accept++;
@@ -3160,6 +3181,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     else nother_accept++;
                 
                     logPost_old=logPost_new;
+                    loglike_old = loglike_new;
                     cHyp_old.n_gamma = cHyp_new.n_gamma;
                // cout << "cHyp_old.m_gamma = "; PrintVector(cHyp_old.m_gamma);
                     cHyp_old.m_gamma = cHyp_new.m_gamma;
@@ -3229,13 +3251,13 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
             cout << "gamma acceptance percentage = " <<setprecision(6) << accept_percent << endl ;
              cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
              cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
-             cout << "loglike: " << logPost_old << endl;
+             cout << "loglike: " << loglike_old << endl;
         }
         
         //Save data
         if (t<w_step) {continue;}
         else {
-                gsl_vector_set (LnPost, (t-w_step), logPost_old);
+                gsl_vector_set (LnPost, (t-w_step), loglike_old);
                 em_gamma[0] += (double)cHyp_old.m_gamma[0];
                 em_gamma[1] += (double)cHyp_old.m_gamma[1];
                 GV += cHyp_old.pve;
@@ -3264,7 +3286,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "gamma acceptance percentage = " << accept_percent << endl ;
     cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
     cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
-    cout << "loglike: " << logPost_old << endl;
+    cout << "loglike: " << loglike_old << endl;
     
     //save last causal SNPIDs
     if (saveSNP) WriteIniSNP(rank_old, snp_pos);
@@ -4439,7 +4461,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     gsl_blas_ddot(Xtx_temp, beta_temp, &vreg);
     //cout << "vreg = " << vreg << endl;
     
-    double tR2 = 0.99;
+    double tR2 = 1.0;
     double R2 = (vreg / xtx);
     int k=0;
     double lambda = 0.0;

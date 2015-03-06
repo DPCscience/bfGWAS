@@ -92,6 +92,7 @@ public:
     double h;
     vector <double> theta; // global hyper parameter
     vector <double> log_theta;
+    vector <double> log_qtheta;
     vector <double> theta_total;
     vector <double> subvar, inv_subvar, log_subvar, sumbeta2; // global hyper parameter
 
@@ -304,7 +305,7 @@ public:
     void setSubvar(class HYPBSLMM &cHyp);
     double CalcLikegamma(const class HYPBSLMM &cHyp);
     double CalcPosterior (const double yty, class HYPBSLMM &cHyp);
-    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag);
+    double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag, double &loglike);
     
     //EM-BlockMCMC related
     void setHyp(double htemp, double theta_temp, double subvar_temp);
