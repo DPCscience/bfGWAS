@@ -654,11 +654,11 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 void BSLMM::CalcPgamma (double *p_gamma)
 {
 	double p, q;
-    p = 0.9 / 1000;
-    q = 0.1 / (ns_test-1000);
+    p = 0.9 / 100.0;
+    q = 0.1 / ((double)(ns_test-100));
     
 	for (size_t i=0; i<ns_test; ++i) {
-        if(i < 1000) p_gamma[i] = p;
+        if(i < 100) p_gamma[i] = p;
         else p_gamma[i] = q;
 	}
 	return;
@@ -4461,7 +4461,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     gsl_blas_ddot(Xtx_temp, beta_temp, &vreg);
     //cout << "vreg = " << vreg << endl;
     
-    double tR2 = 1.0;
+    double tR2 = 0.99;
     double R2 = (vreg / xtx);
     int k=0;
     double lambda = 0.0;
