@@ -413,6 +413,56 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
     outfile.close();
 }
 
+void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
+{
+    string file_str;
+    file_str="./output/"+file_out;
+    file_str+=".geno";
+    
+    ofstream outfile (file_str.c_str(), ofstream::out);
+    if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
+    
+    outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "Func_code"<< "\t" << "maf"  << "\t";
+    
+    for (size_t i=0; i<ni_test; i++) {
+        if (i ==(ni_test-1)) {
+            outfile << "Sample"<<i << endl;
+        }
+        else outfile << "Sample"<<i << "\t";
+    }
+
+    size_t pos;
+    string rs;
+    
+    for (size_t i=0; i<ns_test; ++i) {
+        
+        // save the data along the order of all variants, snp_pos is sorted by order
+        rs = snp_pos[i].rs;
+        outfile<< rs <<"\t"<< snp_pos[i].chr<<"\t" <<snp_pos[i].bp << "\t";
+        
+        for (size_t j=0; j < n_type; j++) {
+            if (snp_pos[i].indicator_func[j]) {
+                outfile << j << "\t";
+                break;
+            }
+            else if(j == (n_type - 1)) outfile << "NA" << "\t";
+        }
+        
+        outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
+        
+        for (size_t j=0; j < ni_test; j++) {
+            if (j == (ni_test-1))
+                outfile << fixed << setprecision(2)  << UcharTable[X[i][j]].second << endl;
+            else
+                outfile << fixed << setprecision(2) << UcharTable[X[i][j]].second << "\t";
+        }
+    }
+    
+    outfile.clear();
+    outfile.close();
+}
+
+
 
 void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
@@ -2989,6 +3039,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         SNPorder_vec.push_back(make_pair(snp_pos[i].pos, mapOrder2Rank[i]));
         SNPrank_vec.push_back(make_pair(pos_loglr[i].first, mapRank2Order[i]));
     }
+    //cout << "Write genotype txt file ... \n";
+    //WriteGenotypeFile(X, snp_pos);
+    //exit(-1);
+    
     //end of Jingjing's edit
     
     //Calculate proposal distribution for gamma (unnormalized), and set up gsl_r and gsl_t
@@ -3277,7 +3331,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     }
                 }
               }
-            else{cout << "rank size = " << rank_old.size() << endl;}
+            //else{cout << "rank size = " << rank_old.size() << endl;}
             }
     }
     
@@ -4469,7 +4523,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     
     if ( (R2 >= tR2) && (R2 <= 1.1) ) {
         colinear = 1;
-        cout << "R2 in ColinearTest = " << R2 << endl;
+       // cout << "R2 in ColinearTest = " << R2 << endl;
     }
     else if ((R2 < -0.0) || (R2 > 1.0)){
        

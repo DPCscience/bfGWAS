@@ -104,6 +104,7 @@ public:
 	int a_mode;
 	size_t d_pace;
     vector<pair<long long int, double> > UcharTable;
+    vector<string> InputSampleID; //size = ni_total
 	
 	string file_bfile;
 	string file_geno;
@@ -319,6 +320,8 @@ public:
     bool ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix * XtX_temp, size_t r_add, size_t s_size);
     void SetXgammaDel(const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const vector<size_t> &rank_old, size_t col_id, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new);
     void SetXgammaAdd (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, size_t ranki, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new);
+    
+    void WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos);
 
 };
 
