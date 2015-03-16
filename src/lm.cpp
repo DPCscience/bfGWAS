@@ -600,8 +600,8 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
         
         for (size_t j=0; j<n_type; j++) {
             if (snp_pos[i].indicator_func[j]) {
-                //Gvec[j] += (xtx / (double)ni_test);
-                Gvec[j] += (xtx );
+                Gvec[j] += (xtx / (double)ni_test);
+                //Gvec[j] += (xtx );
                 continue;
             }
         }

@@ -90,6 +90,8 @@ public:
     
     
     double h;
+    vector <double> rho_vec;
+    vector <double> Gvec;
     vector <double> theta; // global hyper parameter
     vector <double> log_theta;
     vector <double> log_qtheta;

@@ -700,8 +700,8 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 }
 
 
-//Revise p_gamma 
-void BSLMM::CalcPgamma (double *p_gamma)
+//Previously used p_gamma
+/*void BSLMM::CalcPgamma (double *p_gamma)
 {
 	double p, q;
     p = 0.9 / 100.0;
@@ -712,6 +712,20 @@ void BSLMM::CalcPgamma (double *p_gamma)
         else p_gamma[i] = q;
 	}
 	return;
+}*/
+
+// used for EM-block
+void BSLMM::CalcPgamma (double *p_gamma)
+{
+    double p, q;
+    p = 0.9 / 300.0;
+    q = 0.1 / ((double)(ns_test-300));
+    
+    for (size_t i=0; i<ns_test; ++i) {
+        if(i < 300) p_gamma[i] = p;
+        else p_gamma[i] = q;
+    }
+    return;
 }
 
 //currently used
@@ -1199,6 +1213,7 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
     
     h = htemp;
     
+    //rho_vec.assign(n_type, 0.0);
     theta.assign(n_type, theta_temp);
     log_theta.clear();
     log_theta.push_back(log(theta[0]));
@@ -1254,6 +1269,7 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
             pch = (nch == NULL) ? NULL : nch+1;
             
             nch = strchr(pch, '\t');
+            //rho_vec[0] = strtod(pch, NULL);
             subvar[0] = strtod(pch, NULL);
             pch = (nch == NULL) ? NULL : nch+1;
             
@@ -2512,7 +2528,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             //cout << "XtX from set Xgamma: \n"; PrintMatrix(XtX_gamma, s_size, s_size);
             if ((s_size>0) &&  (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) ) {
                 flag_gamma=-1;
-                cout << "Failed colinear test in switch" << endl;
+                //cout << "Failed colinear test in switch" << endl;
                 mapRank2in[r_remove]=1;
                 rank_new.push_back(r_remove);
                 break;
@@ -2702,7 +2718,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
                 
                 if (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) {
                     flag_gamma=-1;
-                    cout << "Failed colinear test in switch" << endl;
+                    //cout << "Failed colinear test in switch" << endl;
                 }
                 else{
                     gsl_a = MakeProposal(o_add, p_BFa, X, z_res, mapRank2in);
@@ -2809,7 +2825,7 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     em_logpost /= double(s_step);
     em_logpost = log(em_logpost) + logpost_max;
     
-    //save E(GV, sumbeta2[0], sumbeta2[1], sum_m0, sum_m1, lnpost, m0, m1, n0, n1)
+    //save E(GV, sumbeta2[0], sumbeta2[1], sum_m0, sum_m1, lnpost, m0, m1, n0, n1, G0, G1)
     string file_hyp;
     file_hyp = "./output/" + file_out;
     file_hyp += ".hyptemp";
@@ -2820,7 +2836,8 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     outfile_hyp << scientific << setprecision(6) << (GV / (double)s_step) << "\t" << rv << "\t" << sumbeta2[0] << "\t" << sumbeta2[1] << "\t";
     outfile_hyp << em_gamma[0] << "\t" << em_gamma[1]<< "\t";
     outfile_hyp << em_logpost << "\t" << (em_gamma[0] / (double)s_step) << "\t" << (em_gamma[1] / (double)s_step) << "\t" ;
-    outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << endl;
+    outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << "\t" ;
+    outfile_hyp << scientific << setprecision(6) << Gvec[0] << "\t" << Gvec[1] << endl;
     outfile_hyp.clear();
     outfile_hyp.close();
     
@@ -2983,7 +3000,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     double logPost_new, logPost_old, loglike_new, loglike_old, loglikegamma;
     double logMHratio;
     vector<size_t> rank_new, rank_old;
-    vector<double> Gvec;
+    //vector<double> Gvec;
     class HYPBSLMM cHyp_old, cHyp_new;
     bool Error_Flag=0;
     
@@ -3008,7 +3025,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     
     vector<pair<size_t, double> > pos_loglr;
     MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec
-    trace_G = (Gvec[0] + Gvec[1]) / double(ni_test * ns_test);
+    trace_G = (Gvec[0] + Gvec[1]) / double(ns_test);
     cout << "trace_G = " << trace_G << endl;
     cout << "Total trace_G vec : " << Gvec[0] << ", " << Gvec[1] << endl;
     
@@ -4515,7 +4532,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     gsl_blas_ddot(Xtx_temp, beta_temp, &vreg);
     //cout << "vreg = " << vreg << endl;
     
-    double tR2 = 0.99;
+    double tR2 = 0.95;
     double R2 = (vreg / xtx);
     int k=0;
     double lambda = 0.0;
