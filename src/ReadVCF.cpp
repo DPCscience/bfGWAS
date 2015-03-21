@@ -1,10 +1,6 @@
 #include "ReadVCF.h"
 #include "bslmm.h"
 
-
-
-
-
 //parse for individual IDs and number
 /*int parseInds(char* line, std::set<std::string>& idset, int startIdx = 9) {
     char* pch = line;
@@ -198,13 +194,13 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 }
 
 //used in EM-BLock
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<uchar> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable){
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<double> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable){
     
     if (marker_i < ns_test ) {
         
         int c;
         double geno;
-        int geno_mean = (int)SNPmean[marker_i];
+        double geno_mean = SNPmean[marker_i];
         /*if (geno_mean > 200 || geno_mean < 0)
         {
             cout << "\n geno_mean=" << geno_mean << endl;
@@ -226,14 +222,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
                 for (size_t j=0; j<ni_test; j++) {
 
                     c = (int)UnCompBuffer[j];
-                    if (c >= geno_mean) {
-                        c = c - geno_mean;
-                        geno = UcharTable[c].second;
-                    }
-                    else{
-                        c = geno_mean - c ;
-                        geno = -UcharTable[c].second;
-                    }
+                    geno = UcharTable[c].second;
                     //if(i < 20)  cout << geno << ",";
                     gsl_vector_set(xvec, j, geno);
                 }
@@ -244,19 +233,13 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
             for (size_t j=0; j<ni_test; j++) {
 
                c = (int)X[marker_i][j];
-                if (c >= geno_mean) {
-                    c = c - geno_mean;
-                    geno = UcharTable[c].second;
-                }
-                else{
-                    c = geno_mean - c ;
-                    geno = -UcharTable[c].second;
-                }
+                geno = UcharTable[c].second;
                 //if(i < 20)  cout << geno << ",";
                 gsl_vector_set(xvec, j, geno);
             }
         }
-    }    
+        gsl_vector_add_constant(xvec, -geno_mean);
+    }
     else {
         std::cerr << "Marker index out of range \n";
         exit(-1);

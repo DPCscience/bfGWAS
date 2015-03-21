@@ -359,7 +359,7 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
     ofstream outfile (file_str.c_str(), ofstream::out);
     if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
     
-    //outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "maf" << "\t" << "Func_code"<< "\t" <<"beta"<<"\t"<<"gamma" << endl;
+    //outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "maf" << "\t" << "Func_code"<< "\t" <<"beta"<<"\t"<<"gamma" << "\t" << "LRT" << endl;
     
     size_t pos;
     vector< pair<string , double> > pivec;
@@ -383,15 +383,27 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
         outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
         
         pos = snp_pos[i].pos;
+        //beta_g is saved by position
         if (beta_g[pos].second!=0) {
             pitemp = beta_g[pos].second/(double)s_step;
-            outfile << beta_g[pos].first/beta_g[pos].second<< "\t" << pitemp <<endl;
+            outfile << beta_g[pos].first/beta_g[pos].second<< "\t" << pitemp <<"\t";
         }
         else {
             pitemp = 0.0;
-            outfile << 0.0 << "\t" << 0.0 << endl;
+            outfile << 0.0 << "\t" << 0.0 << "\t";
         }
         pivec.push_back(make_pair(rs, pitemp));
+        
+        if ( SNPorder_vec[i].first  != pos) {
+            cerr << "ERROR: SNPorder_vec[i].first not equal to pos... \n";
+            exit(-1);
+        }
+        outfile << scientific << setprecision(6) << pos_loglr[SNPorder_vec[i].second].second << "\t";
+        //outfile << XtX_diagvec[i]  << "\t" ;
+        outfile << mapOrder2Rank[i];
+        outfile << endl;
+        //outfile << i <<  "\t" << mapPos2Order[pos]<< "\t" << pos << "\t" << mapOrder2pos[i] << "\t" << SNPorder_vec[i].second <<"\t" << mapOrder2Rank[i] << endl;
+        // order << position << LRT.rank
     }
     
     // Save top significant SNPs as starting position for next step
@@ -422,20 +434,21 @@ void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
     ofstream outfile (file_str.c_str(), ofstream::out);
     if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
     
-    outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "Func_code"<< "\t" << "maf"  << "\t";
+   /* outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "Func_code"<< "\t" << "maf"  << "\t";
     
     for (size_t i=0; i<ni_test; i++) {
         if (i ==(ni_test-1)) {
             outfile << "Sample"<<i << endl;
         }
         else outfile << "Sample"<<i << "\t";
-    }
+    } */
 
     size_t pos;
     string rs;
     
     for (size_t i=0; i<ns_test; ++i) {
         
+        pos = snp_pos[i].pos;
         // save the data along the order of all variants, snp_pos is sorted by order
         rs = snp_pos[i].rs;
         outfile<< rs <<"\t"<< snp_pos[i].chr<<"\t" <<snp_pos[i].bp << "\t";
@@ -452,9 +465,9 @@ void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
         
         for (size_t j=0; j < ni_test; j++) {
             if (j == (ni_test-1))
-                outfile << fixed << setprecision(2)  << UcharTable[X[i][j]].second << endl;
+                outfile << fixed << setprecision(2)  << UcharTable[X[pos][j]].second << endl;
             else
-                outfile << fixed << setprecision(2) << UcharTable[X[i][j]].second << "\t";
+                outfile << fixed << setprecision(2) << UcharTable[X[pos][j]].second << "\t";
         }
     }
     
@@ -1321,15 +1334,17 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
                     //snp_pos[orderj].printMarker();
                     break;
                 }
-                if ( i == (snp_pos.size()-1) ) {
-                    cout << "Reach end of vector, failed finding snp " << lineid << endl;
-                }
             }
-            
         }
-        cout << endl;
         infile.close();
         infile.clear();
+        
+        if (rank.size() == 0) {
+            for (size_t i=0; i<cHyp.n_gamma; ++i) {
+                rank.push_back(i);
+            }
+        } //take rank 0 if tracked no SNPs from the iniSNPfile
+        
         cHyp.n_gamma = rank.size();
     }
     else if(iniType == 0) {iniType = 1;}
@@ -1477,7 +1492,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     }
     cout << "number of snps = " << cHyp.n_gamma << endl;
     //stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
-    PrintVector(rank);
+    cout << "Starting with ranks: \n"; PrintVector(rank);
     
     cHyp.logp=log((double)cHyp.n_gamma/(double)ns_test);
     cHyp.h=pve_null;
@@ -2994,6 +3009,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //for quantitative traits, y is centered already in gemma.cpp, but just in case
     gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
     cout << "ztz = " << ztz << endl;
+    // WriteVector(z, "_z");
     // cout << "mean of z = " << mean_z << endl;
     
     //Initialize variables for MH
@@ -3020,7 +3036,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     
     // Jingjing add a vector of "snpPos" structs snp_pos
     vector<SNPPOS> snp_pos;
-    CreateSnpPosVec(snp_pos); //ordered by chr/bp
+    CreateSnpPosVec(snp_pos); //ordered by position here
     //cout << "1 / SNP_sd  = "; PrintVector(SNPsd, 10);
     
     vector<pair<size_t, double> > pos_loglr;
@@ -3029,7 +3045,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "trace_G = " << trace_G << endl;
     cout << "Total trace_G vec : " << Gvec[0] << ", " << Gvec[1] << endl;
     
-    stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp);
+    stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp); // order snp_pos by chr/bp
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
     
     //Jingjing's edit, create maps between rank and order
@@ -3056,7 +3072,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         SNPorder_vec.push_back(make_pair(snp_pos[i].pos, mapOrder2Rank[i]));
         SNPrank_vec.push_back(make_pair(pos_loglr[i].first, mapRank2Order[i]));
     }
-    //cout << "Write genotype txt file ... \n";
+    //cout << "Write genotype txt file after snp_pos is ordered ... \n";
     //WriteGenotypeFile(X, snp_pos);
     //exit(-1);
     

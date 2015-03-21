@@ -86,7 +86,7 @@ public:
     vector< pair<size_t, size_t> > SNPrank_vec; //<pos, order>
     double GV, rv, tau, logrv;
     vector<double> SNPsd, XtX_diagvec;
-    vector<uchar> SNPmean;
+    vector<double> SNPmean;
     
     
     double h;
