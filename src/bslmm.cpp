@@ -1300,14 +1300,14 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
 
 {
     //double q_genome=gsl_cdf_chisq_Qinv(0.05/(double)ns_test, 1);
-    double q_genome=gsl_cdf_chisq_Qinv(0.05/444594.0, 1);
+    double q_genome=gsl_cdf_chisq_Qinv(0.05/444584.0, 1);
     cout << "significant chisquare value : " << q_genome << endl;
     cHyp.n_gamma=0;
     for (size_t i=0; i<pos_loglr.size(); ++i) {
         if (2.0*pos_loglr[i].second>q_genome) {cHyp.n_gamma++;}
     }
     //cout << "number of snps before adjust = " << cHyp.n_gamma << endl;
-    if (cHyp.n_gamma<3) {cHyp.n_gamma=3;}
+    if (cHyp.n_gamma<30) {cHyp.n_gamma=30;}
     if (cHyp.n_gamma>s_max) {cHyp.n_gamma=s_max;}
     if (cHyp.n_gamma<s_min) {cHyp.n_gamma=s_min;}
     
@@ -2262,18 +2262,20 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
     double R2 = bxy / yty;
     
     
-    double lambda = 0.0;
+   /* double lambda = 0.0;
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(Omega, i, i);
     }
     lambda /= (double)s_size;
     lambda *= 0.01;
 
-    int k=0;
+    int k=0;*/
      
     if (R2 > 1.0 || R2 < -0.0) {
         
-        cout << "R2 in CalcPosterior = " << R2 << endl;
+        //cout << "R2 in CalcPosterior = " << R2 << endl;
+        Error_Flag=1;
+        /*
         WriteMatrix(&Xgamma_sub.matrix, "_X");
         WriteMatrix(&XtX_sub.matrix, "_XtX");
         WriteMatrix(Omega, "_Omega");
@@ -2320,8 +2322,9 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
                 //cHyp.pve/=cHyp.pve+1.0/tau;
                 // cHyp.pge=1.0;
             }
-        }
+        }*/
     }
+
     else{
         Error_Flag=0;
         gsl_vector_memcpy(&beta_sub.vector, beta_hat);
@@ -2986,6 +2989,9 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 4);
     //gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
     
+    gsl_vector *Xb_mcmc = gsl_vector_alloc(ni_test);
+    gsl_vector_set_zero(Xb_mcmc);
+    
     gsl_vector *Xb_new=gsl_vector_alloc (ni_test);
     gsl_vector *Xb_old=gsl_vector_alloc (ni_test);
     gsl_vector *z_hat=gsl_vector_alloc (ni_test);
@@ -3005,9 +3011,11 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector_memcpy (z, y);
     double mean_z = CenterVector (z);
     gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
-    gsl_vector_scale(z, 1.0 / sqrt(ztz / (double)(ni_test-1))); // standardize phenotype z
+    
+    //gsl_vector_scale(z, 1.0 / sqrt(ztz / (double)(ni_test-1))); // standardize phenotype z
     //for quantitative traits, y is centered already in gemma.cpp, but just in case
-    gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
+    //gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
+    
     cout << "ztz = " << ztz << endl;
     // WriteVector(z, "_z");
     // cout << "mean of z = " << mean_z << endl;
@@ -3307,6 +3315,11 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     gsl_matrix_memcpy(&XtXold_sub.matrix, &XtXnew_sub.matrix);
                     gsl_vector_memcpy(&Xtzold_sub.vector, &Xtznew_sub.vector);
                     gsl_vector_memcpy(&betaold_sub.vector, &betanew_sub.vector);
+                    
+                    gsl_vector_memcpy(Xb_old, Xb_new);
+                }
+                else{
+                    gsl_vector_set_zero(Xb_old); // set Xb = 0
                 }
             } else {
                 cHyp_new.n_gamma = cHyp_old.n_gamma;
@@ -3344,6 +3357,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         //Save data
         if (t<w_step) {continue;}
         else {
+                // add Xb_old to Xb_mcmc
+                gsl_vector_add(Xb_mcmc, Xb_old);
+            
+            //save loglikelihood
                 gsl_vector_set (LnPost, (t-w_step), loglike_old);
                 em_gamma[0] += (double)cHyp_old.m_gamma[0];
                 em_gamma[1] += (double)cHyp_old.m_gamma[1];
@@ -3378,6 +3395,11 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //save last causal SNPIDs
     if (saveSNP) WriteIniSNP(rank_old, snp_pos);
     
+    //save Xb_mcmc
+    gsl_vector_scale(Xb_mcmc, 1.0/((double)s_step));
+    WriteVector(Xb_mcmc, ".Xbtemp");
+    //WriteVector(z, ".yscale");
+    
     //Save temp EM results
     WriteHyptemp(LnPost, em_gamma);
     WriteParamtemp(beta_g, snp_pos, pos_loglr);
@@ -3393,6 +3415,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector_free(z);
     gsl_vector_free(Xb_new);	
     gsl_vector_free(Xb_old);
+    
+    gsl_vector_free(Xb_mcmc);
     
     gsl_matrix_free(Xgamma_old);
     gsl_matrix_free(XtX_old);
@@ -4230,10 +4254,10 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
     gsl_blas_ddot(&Xtz_gsub.vector, beta_gamma_hat, &SSR);
     R2 = (SSR / ztz);
 
-    double lambda = 0.0;
+    /* double lambda = 0.0;
     int k=0;
     
-    if ((R2 < -0.0) || (R2 > 1.0)) {
+   if ((R2 < -0.0) || (R2 > 1.0)) {
         cout << "R2 in Calcres = " << R2 << endl;
         PrintMatrix(XtXtemp, s_size, s_size);
         WriteMatrix(&X_gsub.matrix, "_Xres");
@@ -4241,10 +4265,10 @@ void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_mat
         WriteVector(beta_gamma_hat, "_bres");
         WriteVector(z_res, "_zres");
         //exit(-1);
-    }
+    }*/
     
 if ((R2 < -0.1) || (R2 > 1.1)) {
-    
+    /*
     for (size_t i=0; i<s_size; ++i) {
         lambda += gsl_matrix_get(XtX, i, i);
     }
@@ -4271,7 +4295,8 @@ if ((R2 < -0.1) || (R2 > 1.1)) {
     
     if ((R2 < 0.0) || (R2 > 1.0)) {
         gsl_vector_memcpy(z_res, z);
-    }
+    }*/
+    gsl_vector_memcpy(z_res, z);
     
 }
 else if ( (R2 < 0.0) || (R2 > 1.0) ){
@@ -4550,17 +4575,18 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
     
     double tR2 = 0.95;
     double R2 = (vreg / xtx);
-    int k=0;
-    double lambda = 0.0;
-    gsl_matrix *XtXlu = gsl_matrix_alloc(s_size, s_size);
+//    int k=0;
+//    double lambda = 0.0;
+//    gsl_matrix *XtXlu = gsl_matrix_alloc(s_size, s_size);
     
     if ( (R2 >= tR2) && (R2 <= 1.1) ) {
         colinear = 1;
        // cout << "R2 in ColinearTest = " << R2 << endl;
     }
     else if ((R2 < -0.0) || (R2 > 1.0)){
-       
-        cout << "R2 in ColinearTest = " << R2 << "; k = " << k << endl;
+       colinear = 1;
+        //cout << "R2 in ColinearTest = " << R2 << "; k = " << k << endl;
+        /*
         //PrintMatrix(&XtX_sub.matrix, s_size, s_size);
         WriteMatrix(&Xgamma_sub.matrix, "_Xct");
         WriteMatrix(&XtX_sub.matrix, "_XtXct");
@@ -4596,13 +4622,13 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
         
         if ((R2 >= tR2) && (R2 <= 1.1)) {
             colinear = 1;
-        } else {colinear = 0;}
+        } else {colinear = 0;} */
     }
     else {
         colinear = 0;
     }
     
-    gsl_matrix_free(XtXlu);
+ //   gsl_matrix_free(XtXlu);
     gsl_vector_free(xvec_temp);
     gsl_vector_free(beta_temp);
     gsl_vector_free(Xtx_temp);
