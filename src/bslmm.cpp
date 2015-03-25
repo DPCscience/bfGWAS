@@ -3318,9 +3318,9 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
                     
                     gsl_vector_memcpy(Xb_old, Xb_new);
                 }
-                else{
-                    gsl_vector_set_zero(Xb_old); // set Xb = 0
-                }
+                //else{
+                  //  gsl_vector_set_zero(Xb_old); // set Xb = 0
+                //}
             } else {
                 cHyp_new.n_gamma = cHyp_old.n_gamma;
                 cHyp_new.m_gamma = cHyp_old.m_gamma;
@@ -3358,7 +3358,9 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         if (t<w_step) {continue;}
         else {
                 // add Xb_old to Xb_mcmc
+            if (rank_old.size()>0) {
                 gsl_vector_add(Xb_mcmc, Xb_old);
+            }
             
             //save loglikelihood
                 gsl_vector_set (LnPost, (t-w_step), loglike_old);
