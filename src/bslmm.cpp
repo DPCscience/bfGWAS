@@ -64,6 +64,7 @@ using namespace std;
 
 void BSLMM::CopyFromParam (PARAM &cPar) 
 {
+    rv = cPar.rv;
     n_type = cPar.n_type;
     mFunc = cPar.mFunc;
     e = cPar.e;
@@ -1223,9 +1224,7 @@ vector<pair<size_t, double> > rank_loglr;
 
 
 void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
-    
-    h = htemp;
-    
+        
     //rho_vec.assign(n_type, 0.0);
     theta.assign(n_type, theta_temp);
     log_theta.clear();
@@ -1236,6 +1235,42 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
     log_qtheta.push_back(log(1.0 - theta[1]));
     
     subvar.assign(n_type, subvar_temp);
+    string line;
+    char *pch, *nch;
+    string block;
+    //cout << "load fixed hyper parameter values from : " << hypfile << endl;
+   
+   cout << "rv from command line = " << rv << endl;
+   if(rv < 0.0 || rv > 1.0){
+    string rv_file = "./genetic_var.txt";
+    cout << "load genetic variance from " << rv_file << endl;
+    cout << "file_out = " << file_out << endl;
+
+    ifstream rv_infile(rv_file.c_str(), ifstream::in);
+    if(!rv_infile){cout << "Error opening file " << rv_file << endl; exit(-1);}
+    while (!safeGetline(rv_infile, line).eof()){
+        pch = (char *)line.c_str();
+        nch = strchr(pch, '\t');
+        block.assign(pch, nch - pch);
+        // cout << "block: " << block << endl;
+        if(file_out.compare(block) == 0) 
+        {
+            h = strtod(nch+1, NULL);
+            cout << "h = " << h << endl;
+            rv = 1.0 - h; // assume residual varaince is 0.8
+            tau = 1.0 / rv;
+            cout << "rv from genetic_var.txt file = " << rv << endl;
+            break;
+        }
+        else{continue;}
+    }
+    rv_infile.clear();
+    rv_infile.close();
+
+    if(rv < 0.1 ) rv = 0.1;
+    else if (rv > 1.0) rv = 1.0;
+
+    }
     
     
     if (hypfile.c_str() == NULL) {
@@ -1247,10 +1282,7 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
         if(!infile) {cout << "Error opening file " << hypfile << endl; exit(-1);
            // cout << "load hyp from hypfile... " << hypfile << endl;
     }
-    string line;
-    char *pch, *nch;
-    //cout << "load fixed hyper parameter values from : " << hypfile << endl;
-    
+ 
     while (!safeGetline(infile, line).eof()) {
         if ((line[0] == 'h') || (line[0] == '#') || (line[0] == 'p')) {
             continue;
@@ -1258,16 +1290,8 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
         else{
             pch = (char *)line.c_str();
             nch = strchr(pch, '\t');
-            h = strtod(pch, NULL);
-            /*rv = 1.0 - h;
-            if (rv < 0.1) {
-                cerr << "residual variance  = " << rv << endl;
-                exit(-1);
-            }*/
-            rv = 0.55;
-            tau = 1.0 / rv;
+            h_global = strtod(pch, NULL);
             pch = (nch == NULL) ? NULL : nch+1;
-            cout << "h = "<<setprecision(5)<< h <<";rv = "<< rv << ";tau = " << tau << endl;
             
             nch = strchr(pch, '\t');
             theta[0] = strtod(pch, NULL);
@@ -1289,9 +1313,13 @@ void BSLMM::setHyp(double htemp, double theta_temp, double subvar_temp){
             subvar[1] = strtod(pch, NULL);
         }
     }
-    }
-    cout << "pve = "<<setprecision(5) << h << "; theta = " << theta[0] << ", " << theta[1] << "; subvar = " << subvar[0] << ", " << subvar[1] << endl;
+    infile.clear();
+    infile.close();
+}
+    
+    cout << "pve = "<<setprecision(5) << h_global << "; theta = " << theta[0] << ", " << theta[1] << "; subvar = " << subvar[0] << ", " << subvar[1] << endl;
     cout << "log_qtheta: " <<log_qtheta[0] << ", " << log_qtheta[1] << endl;
+
 }
 
 
@@ -1529,12 +1557,6 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     cHyp.theta = theta;
     cHyp.log_theta = log_theta;
     cHyp.subvar = subvar; // initial subvar vector
-    
-   // e_shape =  e;
-   // e_rate = e_shape / sigma_a2; // Gamma with mean sigma_a2,
-    //cout << "IG with shape = " << e_shape << "; rate = " << e_rate;
-   // cout << "; mean = " << sigma_a2 << "; sd = " << (sigma_a2 / sqrt(e_shape)) << endl;
-    
     
     cout<<"initial value of h = "<< h <<endl;
     //cout<<"initial value of rho = "<<cHyp.rho<<endl;
@@ -2816,7 +2838,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
 
 void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     
-    string file_lnpost;
+   /* string file_lnpost;
     file_lnpost = "./output/" + file_out;
     file_lnpost += ".lnpost";
     ofstream outfile_lnpost;
@@ -2829,7 +2851,7 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     }
     outfile_lnpost << scientific << setprecision(6) << gsl_vector_get(LnPost, (s_step-1)) << endl;
     outfile_lnpost.clear();
-    outfile_lnpost.close();
+    outfile_lnpost.close();*/
     
     //vector<double> em_gamma_avg(n_type, 0.0);
     //em_gamma_avg[0] = em_gamma[0] / (double)s_step;
@@ -2843,19 +2865,22 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     em_logpost /= double(s_step);
     em_logpost = log(em_logpost) + logpost_max;
     
-    //save E(GV, sumbeta2[0], sumbeta2[1], sum_m0, sum_m1, lnpost, m0, m1, n0, n1, G0, G1)
+    //save E(file_out, GV, sumbeta2[0], sumbeta2[1], sum_m0, sum_m1, lnpost, m0, m1, n0, n1, G0, G1)
     string file_hyp;
     file_hyp = "./output/" + file_out;
     file_hyp += ".hyptemp";
     ofstream outfile_hyp;
     outfile_hyp.open (file_hyp.c_str(), ofstream::out);
     if (!outfile_hyp) {cout<<"error writing file: "<<file_hyp<<endl; return;}
-    
+    cout << "output file_out : " << file_out << endl;
+
+    outfile_hyp << file_out << "\t";
     outfile_hyp << scientific << setprecision(6) << (GV / (double)s_step) << "\t" << rv << "\t" << sumbeta2[0] << "\t" << sumbeta2[1] << "\t";
     outfile_hyp << em_gamma[0] << "\t" << em_gamma[1]<< "\t";
     outfile_hyp << em_logpost << "\t" << (em_gamma[0] / (double)s_step) << "\t" << (em_gamma[1] / (double)s_step) << "\t" ;
     outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << "\t" ;
-    outfile_hyp << scientific << setprecision(6) << Gvec[0] << "\t" << Gvec[1] << endl;
+    outfile_hyp << scientific << setprecision(6) << Gvec[0] << "\t" << Gvec[1]<< endl;
+
     outfile_hyp.clear();
     outfile_hyp.close();
     
@@ -3016,7 +3041,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //for quantitative traits, y is centered already in gemma.cpp, but just in case
     //gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
     
-    cout << "ztz = " << ztz << endl;
+    cout << "ztz = " << ztz << "; phenotype variance = " << ztz / ((double)(ni_test-1)) <<endl;
+    
     // WriteVector(z, "_z");
     // cout << "mean of z = " << mean_z << endl;
     
@@ -3107,10 +3133,12 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //Initial parameters
     cout << "Start initializing MCMC ... \n";
     InitialMCMC (X, z, rank_old, cHyp_old, pos_loglr, snp_pos); // Initialize rank and cHyp
-    //rv = 0.55; tau = 1.0 / rv;
+   
+    cout<< "Residual Variance Proportion = " << rv << endl;
+    rv *= ztz / ((double)(ni_test-1)); tau = 1.0 / rv; // assume residual varaince = 80% phenotype variance
     logrv = log(2.0 * M_PI * rv);
     cout<< "Fix Residual Variance = " << rv << endl;
-    cout << "tau = " << tau << "; logrv = " <<logrv << endl;
+    cout << "tau = " << tau << "; log(2pi*rv) = " <<logrv << endl;
     
     inv_subvar.assign(n_type, 0.0), log_subvar.assign(n_type, 0.0);
     inv_subvar[0] = (1.0 / subvar[0]); inv_subvar[1] = (1.0 / subvar[1]);
@@ -4359,7 +4387,7 @@ double BSLMM::CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec, size_t po
     //double V = (ixtx * ztz_res - bhat * bhat) / (ni_test);
     //double Z2 = bhat * bhat / V;
     //double VpW = V + Wvar;
-    LR = 0.5*(ni_test)*(log(ztz_res)-log(ztz_res-xtz_res*xtz_res/xtx_vec));
+    LR = (ni_test)*(log(ztz_res)-log(ztz_res-xtz_res*xtz_res/xtx_vec));
     //sqrt(VpW / V) * exp(-0.5 * Z2 * Wvar / VpW);
     //cout << "log LR = " << BF << ", ";
     return (LR);

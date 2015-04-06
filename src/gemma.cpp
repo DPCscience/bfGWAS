@@ -782,6 +782,13 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
             str.assign(argv[i]);
             cPar.vscale=atof(str.c_str());
         }
+        else if (strcmp(argv[i], "-rv")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.rv=atof(str.c_str());
+        }
 		else if (strcmp(argv[i], "-w")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;

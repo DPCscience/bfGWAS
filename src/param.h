@@ -150,6 +150,7 @@ public:
     bool saveSNP;
     string iniSNPfile;
     string hypfile;
+    double rv;
     
     
 	// IO related parameters

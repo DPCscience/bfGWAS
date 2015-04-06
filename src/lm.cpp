@@ -566,7 +566,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
       gsl_blas_ddot(xvec, xvec, &xtx);
 	  gsl_blas_ddot(xvec, y, &xty);
 
-	  log_lr=0.5*((double)y->size)*(log(yty)-log(yty-xty*xty/xtx));
+	  log_lr=((double)y->size)*(log(yty)-log(yty-xty*xty/xtx));
 	  pos_loglr.push_back(make_pair(i,log_lr) );
         trace_G += (xtx );
         //trace_G += (xtx / (double)ni_test);
@@ -596,7 +596,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
         XtX_diagvec.push_back(xtx);
         gsl_blas_ddot(xvec, y, &xty);
         
-        log_lr=0.5*((double)ni_test)*(log(yty)-log(yty-xty*xty/xtx));
+        log_lr=((double)ni_test)*(log(yty)-log(yty-xty*xty/xtx));
         pos_loglr.push_back(make_pair(i,log_lr) );
         
         for (size_t j=0; j<n_type; j++) {

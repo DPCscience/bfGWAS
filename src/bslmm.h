@@ -89,7 +89,7 @@ public:
     vector<double> SNPmean;
     
     
-    double h;
+    double h, h_global;
     vector <double> rho_vec;
     vector <double> Gvec;
     vector <double> theta; // global hyper parameter
