@@ -426,6 +426,41 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
     outfile.close();
 }
 
+void BSLMM::WriteFGWAS_InputFile(const vector<SNPPOS> &snp_pos, const vector<double> &Z_scores, const vector<double> &SE_beta)
+{
+    string file_str;
+    file_str="./output/"+file_out;
+    file_str+=".ifgwas";
+    
+    ofstream outfile (file_str.c_str(), ofstream::out);
+    if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
+    
+    //header of the space-delimited text file
+    outfile<<"SNPID"<<" "<<"CHR"<<" " <<"POS"<<" " << "F" << " " << "Z"<< " " << "SE" << " " << "N" << " " << "nonsynonymous" << endl;
+    
+    size_t pos;
+    
+    for (size_t i=0; i<ns_test; ++i) {
+        // save the data along the order of all variants, snp_pos is sorted by order
+        pos = snp_pos[i].pos;
+
+        outfile<< snp_pos[i].rs <<" "<< snp_pos[i].chr<<" " <<snp_pos[i].bp << " ";
+        
+        outfile << scientific << setprecision(6)  << snp_pos[i].maf << " " << Z_scores[pos] << " " << SE_beta[pos] << " ";
+
+        outfile << ni_test << " ";
+
+        if(snp_pos[i].indicator_func[0]) outfile << 1 ;
+        else outfile << 0;
+        
+        outfile << endl;
+    }
+    
+    outfile.clear();    
+    outfile.close();
+}
+
+
 void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
 {
     string file_str;
@@ -3074,7 +3109,10 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //cout << "1 / SNP_sd  = "; PrintVector(SNPsd, 10);
     
     vector<pair<size_t, double> > pos_loglr;
-    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec
+    vector<double> Z_scores;
+    vector<double> SE_beta;
+    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, Z_scores, SE_beta, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec, Z_scores, SE_beta
+//    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec
     trace_G = (Gvec[0] + Gvec[1]) / double(ns_test);
     cout << "trace_G = " << trace_G << endl;
     cout << "Total trace_G vec : " << Gvec[0] << ", " << Gvec[1] << endl;
@@ -3433,6 +3471,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //Save temp EM results
     WriteHyptemp(LnPost, em_gamma);
     WriteParamtemp(beta_g, snp_pos, pos_loglr);
+    WriteFGWAS_InputFile(snp_pos, Z_scores, SE_beta);
     
    // gsl_matrix_free(Result_hyp);
    // gsl_matrix_free(Result_gamma);

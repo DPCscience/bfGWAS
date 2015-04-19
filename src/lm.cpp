@@ -611,3 +611,47 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
     //cout << "trace_G : " << Gvec[0] << ", " << Gvec[1] << endl;
 	return;
 }
+
+//calculate Z-Scores and SE(beta) 
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, vector<double> &Z_scores, vector<double> &SE_beta, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
+{
+    size_t n_type = snp_pos[0].indicator_func.size();
+    Gvec.assign(n_type, 0.0);
+    XtX_diagvec.clear();
+    Z_scores.clear(); //saved by position
+    SE_beta.clear();
+    
+    gsl_vector *xvec = gsl_vector_alloc(ni_test);
+	double yty, xty, xtx, log_lr, beta_est, se_beta;
+	gsl_blas_ddot(y, y, &yty);
+    cout << "calcLR: yty = " << yty << endl;
+    
+	for (size_t i=0; i<ns_test; ++i) {
+        
+        getGTgslVec(X, xvec, i, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
+        gsl_blas_ddot(xvec, xvec, &xtx);
+        XtX_diagvec.push_back(xtx);
+        gsl_blas_ddot(xvec, y, &xty);
+
+        //calculate Zscores and se_beta
+        beta_est = xty / xtx;
+        se_beta = sqrt(yty / ( ((double)ni_test) * xtx ) );
+        Z_scores.push_back(beta_est / se_beta);
+        SE_beta.push_back(se_beta);
+
+        // calculate likelihood ratio test statistic values        
+        log_lr=((double)ni_test)*(log(yty)-log(yty-xty*xty/xtx));
+        pos_loglr.push_back(make_pair(i,log_lr) );
+        
+        for (size_t j=0; j<n_type; j++) {
+            if (snp_pos[i].indicator_func[j]) {
+                Gvec[j] += (xtx / (double)ni_test);
+                //Gvec[j] += (xtx );
+                continue;
+            }
+        }
+	}
+	gsl_vector_free(xvec);
+    //cout << "trace_G : " << Gvec[0] << ", " << Gvec[1] << endl;
+	return;
+}
