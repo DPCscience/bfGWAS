@@ -375,7 +375,7 @@ bool print(uchar **genotypes, uint numMarkers, uint numSamples)
         {
             std::cout << "\t";
             intc = (int)genotypes[i][j];
-            //std::cout << intc << ":" ;
+            std::cout << intc << ":" ;
             
             if(genotypes[i][j] != UCHAR_MAX)
             {

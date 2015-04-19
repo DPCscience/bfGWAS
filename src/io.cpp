@@ -306,22 +306,35 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
            // }
               
             pch = (nch == NULL) ? NULL : nch+1;
+            //if(snp_i < 10) cout << "pch[0] = " << pch[0];
             snp_nfunc = 0;
             snpInfo[snp_i].indicator_func.assign(n_type, 0);
             //if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
-            while (pch != NULL) {
-                nch = strchr(pch, ',');
-                if (nch == NULL) func_type.assign(pch);
-                else func_type.assign(pch, nch-pch);
-                func_code = mapFunc2Code[func_type];
-               // cout << func_type << " with code " << func_code << endl;
-                if(!snpInfo[snp_i].indicator_func[func_code])
-                {
-                    snpInfo[snp_i].indicator_func[func_code] = 1;
-                    snp_nfunc++;
-                }
-                pch = (nch == NULL) ? NULL : nch+1;
-            }
+            if( isalpha(pch[0]) || isdigit(pch[0]) ){
+            	while (pch != NULL) {
+	                nch = strchr(pch, ',');
+	                if (nch == NULL) func_type.assign(pch);
+	                else func_type.assign(pch, nch-pch);
+	                func_code = mapFunc2Code[func_type];
+	                //if(snp_i < 10)  cout << func_type << " with code " << func_code << endl;
+	                if(!snpInfo[snp_i].indicator_func[func_code])
+	                {
+	                    snpInfo[snp_i].indicator_func[func_code] = 1;
+	                    snp_nfunc++;
+	                }
+	                pch = (nch == NULL) ? NULL : nch+1;
+            	}
+        	}
+        	else{
+        		func_type.assign("NA");
+        		func_code = mapFunc2Code[func_type];
+        		//if(snp_i < 10)  cout << "NA" << " with code " << func_code << endl;
+        		if(!snpInfo[snp_i].indicator_func[func_code])
+	                {
+	                    snpInfo[snp_i].indicator_func[func_code] = 1;
+	                    snp_nfunc++;
+	                }
+        	}
             
             //if ((snp_nfunc > 0) && (snp_nfunc <= n_type))
             if (snp_nfunc == 1)
@@ -719,6 +732,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
         GTfield = "GT"; //defalt load GT Data
     }
     int lkey = GTfield.size(); //length of the field-key string
+    cout << "Load VCF file genotype field: " << GTfield << endl;
     
     indicator_snp.clear();
     snpInfo.clear();

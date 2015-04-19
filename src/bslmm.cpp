@@ -1482,7 +1482,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     vector<pair<size_t, double> > rank_loglr;
     size_t posr, radd;
         
-    for (size_t i=1; i<1000; ++i) {
+    for (size_t i=1; i<500; ++i) {
         rank_loglr.push_back(make_pair(i, pos_loglr[i].second));
     }
     cout << endl;
@@ -1490,7 +1490,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     rank.clear();
     rank.push_back(0);
     posr = SNPrank_vec[0].first;
-   // cout << "rank added: " << 0 << ", ";
+    cout << "rank added: " << 0 << " with LRT "<< pos_loglr[0].second << "," ;
 
     gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
     gsl_vector * xvec = gsl_vector_alloc(ni_test);
@@ -1520,6 +1520,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         gsl_blas_ddot(xvec, Uty, &xty);
         gsl_vector_set(Xtyr, (i-1), xty);
         
+        // calculate conditional yres
         CalcRes(Xr, Uty, XtXr, Xtyr, yres, i, yty);
         for (size_t j=0; j<rank_loglr.size(); ++j) {
             posr = SNPrank_vec[rank_loglr[j].first].first;
@@ -1539,7 +1540,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
                 getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
                 rank.push_back(radd);
                 rank_loglr.erase(rank_loglr.begin());
-                //cout << "rank added: " << radd << ", ";
+                cout << "rank added: " << radd << " with LRT "<< rank_loglr[0].second << "," ;
             }
         }
         else break;
@@ -3111,6 +3112,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     vector<pair<size_t, double> > pos_loglr;
     vector<double> Z_scores;
     vector<double> SE_beta;
+
+    cout << "Calculating Z_scores and LRT statistic values ... \n";
     MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, Z_scores, SE_beta, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec, Z_scores, SE_beta
 //    MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec
     trace_G = (Gvec[0] + Gvec[1]) / double(ns_test);
