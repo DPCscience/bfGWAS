@@ -1490,7 +1490,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     rank.clear();
     rank.push_back(0);
     posr = SNPrank_vec[0].first;
-    cout << "rank added: " << 0 << " with LRT "<< pos_loglr[0].second << "," ;
+    //cout << "rank added: " << 0 << " with LRT "<< pos_loglr[0].second << "," ;
 
     gsl_matrix * Xr = gsl_matrix_alloc(ni_test, cHyp.n_gamma);
     gsl_vector * xvec = gsl_vector_alloc(ni_test);
@@ -1540,7 +1540,7 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
                 getGTgslVec(X, xvec, posr, ni_test, ns_test, SNPsd, SNPmean,CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
                 rank.push_back(radd);
                 rank_loglr.erase(rank_loglr.begin());
-                cout << "rank added: " << radd << " with LRT "<< rank_loglr[0].second << "," ;
+                //cout << "rank added: " << radd << " with LRT "<< rank_loglr[0].second << "," ;
             }
         }
         else break;

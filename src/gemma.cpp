@@ -1408,7 +1408,7 @@ void GEMMA::BatchRun (PARAM &cPar)
            // PrintVector(cPar.CompBuffSizeVec);
             //cout << "UnCompBufferSize = " << cPar.UnCompBufferSize << endl;
            //print(X_Genotype, 10, 10, cPar.CompBuffSizeVec, cPar.UnCompBufferSize);
-           print(X_Genotype, 10, 10);
+           //print(X_Genotype, 10, 10);
 
             gsl_matrix_free(G);
             gsl_matrix_free(W);
