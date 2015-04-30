@@ -3050,8 +3050,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     //gsl_matrix *Result_hyp=gsl_matrix_alloc (w_pace, 4);
     //gsl_matrix *Result_gamma=gsl_matrix_alloc (w_pace, s_max);
     
-    gsl_vector *Xb_mcmc = gsl_vector_alloc(ni_test);
-    gsl_vector_set_zero(Xb_mcmc);
+    //gsl_vector *Xb_mcmc = gsl_vector_alloc(ni_test);
+    //gsl_vector_set_zero(Xb_mcmc);
     
     gsl_vector *Xb_new=gsl_vector_alloc (ni_test);
     gsl_vector *Xb_old=gsl_vector_alloc (ni_test);
@@ -3427,9 +3427,9 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
         if (t<w_step) {continue;}
         else {
                 // add Xb_old to Xb_mcmc
-            if (rank_old.size()>0) {
-                gsl_vector_add(Xb_mcmc, Xb_old);
-            }
+           // if (rank_old.size()>0) {
+            //    gsl_vector_add(Xb_mcmc, Xb_old);
+           // }
             
             //save loglikelihood
                 gsl_vector_set (LnPost, (t-w_step), loglike_old);
@@ -3467,8 +3467,8 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     if (saveSNP) WriteIniSNP(rank_old, snp_pos);
     
     //save Xb_mcmc
-    gsl_vector_scale(Xb_mcmc, 1.0/((double)s_step));
-    WriteVector(Xb_mcmc, ".Xbtemp");
+    //gsl_vector_scale(Xb_mcmc, 1.0/((double)s_step));
+    //WriteVector(Xb_mcmc, ".Xbtemp");
     //WriteVector(z, ".yscale");
     
     //Save temp EM results
@@ -3488,7 +3488,7 @@ void BSLMM::MCMC_Test (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector_free(Xb_new);	
     gsl_vector_free(Xb_old);
     
-    gsl_vector_free(Xb_mcmc);
+    //gsl_vector_free(Xb_mcmc);
     
     gsl_matrix_free(Xgamma_old);
     gsl_matrix_free(XtX_old);

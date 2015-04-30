@@ -1,4 +1,4 @@
-#include "VcfFileReader.h"
+//#include "VcfFileReader.h"
 #include "StringBasics.h"
 #include "StringHash.h"
 #include "MemoryAllocators.h"

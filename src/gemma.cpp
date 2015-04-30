@@ -59,20 +59,20 @@ using namespace std;
 
 
 GEMMA::GEMMA(void):	
-version("0.96_newmodel 15:15pm"), date("02/24/2015"), year("2015")
+version("EM_MCMC 1:58pm"), date("04/30/2015"), year("2015")
 {}
 
 void GEMMA::PrintHeader (void)
 {
 	cout<<endl;
 	cout<<"*********************************************************"<<endl;
-	cout<<"  Genome-wide Efficient Mixed Model Association (GEMMA) "<<endl;
+	cout<<"  Genome-wide Efficient Bayesian Association (GEBA) "<<endl;
 	cout<<"  Version "<<version<<", "<<date<<"                              "<<endl;
 	cout<<"  Visit                                                 "<<endl;
-	cout<<"     http://stephenslab.uchicago.edu/software.html      "<<endl;
+	cout<<"     https://github.com/yjingj/...      "<<endl;
 	cout<<"     http://home.uchicago.edu/~xz7/software.html        "<<endl;
 	cout<<"  For Possible Updates                                  "<<endl;
-	cout<<"  (C) "<<year<<" Xiang Zhou                                   "<<endl;
+	cout<<"  (C) "<<year<<" Xiang Zhou, Jingjing Yang              "<<endl;
 	cout<<"  GNU General Public License                            "<<endl;
 	cout<<"  For Help, Type ./gemma -h                             "<<endl;
 	cout<<"*********************************************************"<<endl;
