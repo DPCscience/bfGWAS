@@ -454,7 +454,7 @@ bool ReadFile_vcf_pheno (const string &file_vcf_pheno, vector<vector<bool> > &in
 		pheno.push_back(pheno_row);
         numPheno++;
 	}
-    cout << "Load numPheno = " << numPheno << "\n";
+    //cout << "Load numPheno = " << numPheno << "\n";
     
 	infile.close();
 	infile.clear();
@@ -973,8 +973,8 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     }
     //cout << "genotype vector:\n";
     // PrintVector(genotype, 10);
-    cout << "VCF tab_count = " << tab_count << endl;
-    cout << "ns_test = " << ns_test << endl;
+    //cout << "VCF tab_count = " << tab_count << endl;
+    //cout << "ns_test = " << ns_test << endl;
     cout << "vcf read first time success ... \n";
     // cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
     
@@ -2107,7 +2107,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
         }
     }
    // cout << "ctest_snp = " << c_snp << "; ns_test = " << ns_test << endl;
-     cout << "SNPmean size = " << SNPmean.size() << endl;
+     //cout << "SNPmean size = " << SNPmean.size() << endl;
 
     if (calc_K==true) {
         gsl_matrix_scale (K, 1.0/(double)ns_test);

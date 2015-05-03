@@ -24,7 +24,8 @@
 #include <map>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-
+#include <gsl/gsl_sort_vector_double.h>
+ 
 #ifdef FORCE_FLOAT
 #include "param_float.h"
 #else
@@ -72,7 +73,7 @@ public:
     };
     
     //multiple function related parameters
-    size_t n_type;
+    size_t n_type, mcmc_save_pace, mcmc_save_size;
     vector<size_t> mFunc; // # of variants of each variant type
     double e, e_shape, e_rate; //hyper parameter in the prior gamma distribution
     double vscale;
@@ -226,7 +227,6 @@ public:
     void NormRes(gsl_vector * z_res);
     
     //MCMC sub-functions
-    //void MCMC (uchar **X_Genotype, gsl_vector *z);
 
     void MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, gsl_vector *z_hat);
     
@@ -273,8 +273,8 @@ public:
     double ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat,  uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma);
     void WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w);
+
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
-    void MCMC_Test (uchar **X, const gsl_vector *y, bool original_method);
     
     // added function for newmodel
     void CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos);
@@ -314,6 +314,8 @@ public:
     void setHyp(double htemp, double theta_temp, double subvar_temp);
     void getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma);
+    void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, gsl_matrix *Sample_sumbeta2);
+    void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr, const vector<double> &Z_scores, const vector<double> &SE_beta, const vector<double> pval_lrt);
     void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_snp);

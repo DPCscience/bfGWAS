@@ -613,13 +613,14 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 }
 
 //calculate Z-Scores and SE(beta) 
-void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, vector<double> &Z_scores, vector<double> &SE_beta, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, vector<double> &Z_scores, vector<double> &SE_beta, vector<double> &pval_lrt, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
 {
     size_t n_type = snp_pos[0].indicator_func.size();
     Gvec.assign(n_type, 0.0);
     XtX_diagvec.clear();
     Z_scores.clear(); //saved by position
     SE_beta.clear();
+    pval_lrt.clear();
     
     gsl_vector *xvec = gsl_vector_alloc(ni_test);
 	double yty, xty, xtx, log_lr, beta_est, se_beta;
@@ -642,6 +643,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
         // calculate likelihood ratio test statistic values        
         log_lr=((double)ni_test)*(log(yty)-log(yty-xty*xty/xtx));
         pos_loglr.push_back(make_pair(i,log_lr) );
+        pval_lrt.push_back(gsl_cdf_chisq_Q (log_lr, 1));
         
         for (size_t j=0; j<n_type; j++) {
             if (snp_pos[i].indicator_func[j]) {

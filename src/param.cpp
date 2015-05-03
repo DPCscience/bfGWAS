@@ -979,7 +979,7 @@ void PARAM::ProcessCvtPhen()
 	//convert indicator_pheno to indicator_idv
 	int k=1;
 	indicator_idv.clear();
-    cout << "indicator_pheno.size = " << indicator_pheno.size() << "\n";
+    //cout << "indicator_pheno.size = " << indicator_pheno.size() << "\n";
     
 	for (size_t i=0; i<indicator_pheno.size(); i++) {
 		k=1;
@@ -988,7 +988,7 @@ void PARAM::ProcessCvtPhen()
 		}
 		indicator_idv.push_back(k);
 	}
-    cout << "indicator_indv.size = " << indicator_idv.size() << "\n";
+    //cout << "indicator_indv.size = " << indicator_idv.size() << "\n";
 	
 	//remove individuals with missing covariates
 	if ((indicator_cvt).size()!=0) {

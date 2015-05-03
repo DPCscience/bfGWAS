@@ -1421,7 +1421,7 @@ void GEMMA::BatchRun (PARAM &cPar)
          
            // cout << "start bslmm.mcmc ...\n";
             time_start=clock();
-            cBslmm.MCMC_Test(X_Genotype, y, 1);
+            cBslmm.MCMC(X_Genotype, y, 1);
             //cBslmm.MCMC(X_Genotype, y, 1);
             cPar.time_opt=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
             cBslmm.CopyToParam(cPar);
@@ -1559,8 +1559,8 @@ void GEMMA::WriteLog (int argc, char ** argv, PARAM &cPar)
 	} else {
 		outfile<<"## number of analyzed individuals = "<<cPar.ni_test<<endl;
 	}
-	outfile<<"## number of covariates = "<<cPar.n_cvt<<endl;
-	outfile<<"## number of phenotypes = "<<cPar.n_ph<<endl;
+	//outfile<<"## number of covariates = "<<cPar.n_cvt<<endl;
+	//outfile<<"## number of phenotypes = "<<cPar.n_ph<<endl;
 	if (cPar.a_mode==43) {
 		outfile<<"## number of observed data = "<<cPar.np_obs<<endl;
 		outfile<<"## number of missing data = "<<cPar.np_miss<<endl;
@@ -1718,7 +1718,7 @@ void GEMMA::WriteLog (int argc, char ** argv, PARAM &cPar)
 	
 	
 	if (cPar.a_mode==11 || cPar.a_mode==12 || cPar.a_mode==13) {
-		outfile<<"## estimated mean = "<<cPar.pheno_mean<<endl;
+		outfile<<"## Phenotype mean = "<<cPar.pheno_mean<<endl;
 	}
 	
 	if (cPar.a_mode==11 || cPar.a_mode==13) {	
