@@ -435,7 +435,7 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
     ofstream outfile (file_str.c_str(), ofstream::out);
     if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
     
-    //outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "maf" << "\t" << "Func_code"<< "\t" <<"beta"<<"\t"<<"gamma" << "\t" <<"Zscore" << "\t" << "SE_beta" << "\t" << "pval_Zsocre"  << "LRT" << "\t" << "rank" << endl;
+    //outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "maf" << "\t" << "Func_code"<< "\t" <<"beta"<<"\t"<<"gamma" << "\t" <<"Zscore" << "\t" << "SE_beta" << "\t" << "LRT" << "\t" << "pval_lrt"  << "\t" << "rank" << endl;
     
     size_t pos;
     vector< pair<string , double> > pi_vec;
@@ -1168,7 +1168,10 @@ double BSLMM::CalcPveLM (const gsl_matrix *UtXgamma, const gsl_vector *Uty, cons
 	return pve;
 }
 
-
+bool comp_sigma (pair<double, size_t> a, pair<double, size_t> b)
+{
+    return (a.first < b.first);
+}
 
 bool comp_lr (pair<size_t, double> a, pair<size_t, double> b)
 {
@@ -2927,7 +2930,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
     return logp;
 }
 
-void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, gsl_matrix *Sample_sumbeta2){
+void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, vector< pair<double, size_t> > &sample_sigma0, vector< pair<double, size_t> > &sample_sigma1){
     
     double em_logpost = 0.0, logpost_max =  gsl_vector_max(LnPost);
     //cout << "logpost_max = " << logpost_max << endl;
@@ -2941,7 +2944,7 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matri
     double low_idx, upper_idx;
     modf((double)(Sample_m->size1) * 0.025, &low_idx);
     modf((double)(Sample_m->size1) * 0.975, &upper_idx);
-    //cout << "low_idx = " << low_idx << "; upper_idx = " << upper_idx << endl;
+    cout << "low_idx = " << low_idx << "; upper_idx = " << upper_idx << endl;
 
     //save E(file_out, GV, rv, lnpost, G0, G1, m0_low, m0_mean, m0_high, m1_low, m1_mean, m1_high, beta2_0_low, beta2_0_avg, beta2_0_high, beta2_1_low, beta2_1_avg,beta2_1_low,n0, n1)
     string file_hyp;
@@ -2956,18 +2959,48 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matri
 
     outfile_hyp << scientific << setprecision(6) << (GV / (double)s_step) << "\t" << rv << "\t" << em_logpost << "\t" << Gvec[0] << "\t" << Gvec[1] << "\t";
 
+    modf((double)(s_step) * 0.025, &low_idx);
+    modf((double)(s_step) * 0.975, &upper_idx);
     for(size_t j=0; j < n_type; j++){
         gsl_vector_view sample_m_vec = gsl_matrix_column(Sample_m, j);
-        gsl_vector_view sample_sumbeta2_vec = gsl_matrix_column(Sample_sumbeta2, j);
         //sort mcmc samples 
         gsl_sort_vector(&sample_m_vec.vector);
-        gsl_sort_vector(&sample_sumbeta2_vec.vector);
-
-        outfile_hyp << gsl_vector_get(&sample_m_vec.vector, (size_t)low_idx) << "\t" << (em_gamma[1] / (double)s_step)<< "\t" << gsl_vector_get(&sample_m_vec.vector, (size_t)upper_idx) << "\t";
-        outfile_hyp << gsl_vector_get(&sample_sumbeta2_vec.vector, (size_t)low_idx) << "\t" << (sumbeta2[0]/(double)s_step)<< "\t" << gsl_vector_get(&sample_sumbeta2_vec.vector, (size_t)upper_idx) << "\t";
+        outfile_hyp << gsl_vector_get(&sample_m_vec.vector, (size_t)low_idx) << "\t" << (em_gamma[j] / (double)s_step)<< "\t" << gsl_vector_get(&sample_m_vec.vector, (size_t)upper_idx) << "\t";
     }
 
-    outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << endl;
+    if(sample_sigma0.size()>0){
+        double sigma_mean0 = 0.0, m0_mean=0.0;
+        stable_sort (sample_sigma0.begin(), sample_sigma0.end(), comp_sigma);
+        for(size_t j=0; j < sample_sigma0.size(); j++){
+            sigma_mean0 += sample_sigma0[j].first ;
+            m0_mean += (double)sample_sigma0[j].second;
+        }
+        sigma_mean0 /= (double)sample_sigma0.size();
+        m0_mean /= (double)sample_sigma0.size();
+        modf((double)(sample_sigma0.size()) * 0.025, &low_idx);
+        modf((double)(sample_sigma0.size()) * 0.975, &upper_idx);
+        outfile_hyp << sample_sigma0[(size_t)low_idx].first   << "\t" <<sample_sigma0[(size_t)low_idx].second   << "\t" << sigma_mean0 << "\t"<< m0_mean << "\t" << sample_sigma0[(size_t)upper_idx].first << "\t"<< sample_sigma0[(size_t)upper_idx].second << "\t";
+    }
+    else{
+        outfile_hyp << 0  << "\t" << 0  << "\t" << 0 << "\t"<< 0 << "\t" << 0 << "\t"<< 0 << "\t"; }
+    
+    if(sample_sigma1.size()>0){
+        stable_sort (sample_sigma1.begin(), sample_sigma1.end(), comp_sigma);
+        modf((double)(sample_sigma1.size()) * 0.025, &low_idx);
+        modf((double)(sample_sigma1.size()) * 0.975, &upper_idx); 
+        double sigma_mean1 = 0.0, m1_mean = 0.0;
+        for(size_t j=0; j < sample_sigma1.size(); j++){
+            sigma_mean1 += sample_sigma1[j].first ;
+            m1_mean += (double)sample_sigma1[j].second;
+        }
+        sigma_mean1 /= double(sample_sigma1.size());
+        m1_mean /= double(sample_sigma1.size());
+        outfile_hyp << sample_sigma1[(size_t)low_idx].first   << "\t" <<sample_sigma1[(size_t)low_idx].second   << "\t"<< sigma_mean1 << "\t"<< m1_mean << "\t" << sample_sigma1[(size_t)upper_idx].first << "\t"<< sample_sigma1[(size_t)upper_idx].second << "\t";
+    }
+    else{
+        outfile_hyp << 0  << "\t" << 0  << "\t" << 0 << "\t"<< 0 << "\t" << 0 << "\t"<< 0 << "\t"; }
+
+    outfile_hyp << mFunc[0] << "\t" << mFunc[1] << endl;
 
     outfile_hyp.clear();
     outfile_hyp.close();
@@ -3144,19 +3177,9 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector *LnPost = gsl_vector_alloc(s_step); //save logPost...
 
     // save mcmc samples for m0, m1, sum_sigma2_0, sum_sigma2_1
-    if(s_step > 10000) {
-        mcmc_save_pace = s_step / 10000;
-        mcmc_save_size = 10000;
-    }else{
-        mcmc_save_pace = 1;
-        mcmc_save_size = s_step;
-    }
-    cout << "save mcmc sample pace = " << mcmc_save_pace << "; save mcmc sample size = " << mcmc_save_size <<  endl;
-    gsl_matrix *Sample_m = gsl_matrix_alloc(mcmc_save_size, n_type);
-    gsl_matrix *Sample_sumbeta2 = gsl_matrix_alloc(mcmc_save_size, n_type);
-
+    gsl_matrix *Sample_m = gsl_matrix_alloc(s_step, n_type);
+    vector< pair<double, size_t> > sample_sigma0, sample_sigma1;
     vector<double> em_gamma(n_type, 0.0); //save sum of m0, m1
-    vector<double> sumbeta2_temp(n_type, 0.0); // save sumbeta2 for one mcmc iteration
     GV = 0.0; 
     sumbeta2.assign(n_type, 0.0);
     
@@ -3518,17 +3541,12 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         //Save data
         if (t<w_step) {continue;}
         else {
-                // add Xb_old to Xb_mcmc
-           // if (rank_old.size()>0) {
-            //    gsl_vector_add(Xb_mcmc, Xb_old);
-           // }
             //save loglikelihood
-                gsl_vector_set (LnPost, (t-w_step), loglike_old);
-                GV += cHyp_old.pve;
-
-        //save sumbeta2_temp for one mcmc iteration
-                sumbeta2_temp.assign(n_type, 0.0);
+            gsl_vector_set (LnPost, k_save_sample, loglike_old);
+            GV += cHyp_old.pve;
+            
             if (cHyp_old.n_gamma > 0){
+                sumbeta2.assign(n_type, 0.0);
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
                     // beta_g saved by position
                     pos=SNPrank_vec[rank_old[i]].first;
@@ -3537,25 +3555,24 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                     beta_g[pos].second += 1.0;
                     for (size_t j=0; j < n_type; j++) {
                         if (snp_pos[SNPrank_vec[rank_old[i]].second].indicator_func[j]) {
-                            sumbeta2_temp[j] += betai * betai;
+                            sumbeta2[j] += betai * betai;
                             break;
                         }
                     }
                 }
-                for(size_t j=0; j < n_type; j++){
-                	sumbeta2[j] += sumbeta2_temp[j];
-                	em_gamma[j] += (double)cHyp_old.m_gamma[j];
-                }
+                if(cHyp_old.m_gamma[0]>0)
+                    sample_sigma0.push_back(make_pair(sumbeta2[0] /(double)cHyp_old.m_gamma[0], cHyp_old.m_gamma[0] ));
+                if(cHyp_old.m_gamma[1]>0)
+                    sample_sigma1.push_back(make_pair(sumbeta2[1] /(double)cHyp_old.m_gamma[1], cHyp_old.m_gamma[1] ));
               }
 
-            if((t-w_step)%mcmc_save_pace == 0){
-                for(size_t j=0; j < n_type; j++){
-                    gsl_matrix_set(Sample_m, k_save_sample, j, cHyp_old.m_gamma[j]);
-                    gsl_matrix_set(Sample_sumbeta2, k_save_sample, j, sumbeta2_temp[j]);
-                }
-                    k_save_sample++;
-                }
+            for(size_t j=0; j < n_type; j++){
+                gsl_matrix_set(Sample_m, k_save_sample, j, (double)cHyp_old.m_gamma[j]);
+                if(cHyp_old.m_gamma[j] > 0) 
+                    em_gamma[j] += (double)cHyp_old.m_gamma[j];
             }
+            k_save_sample++;
+        }
     }
     
     cout<< "MCMC completed ... " << endl << endl;
@@ -3563,8 +3580,8 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "gamma acceptance percentage = " << accept_percent << endl ;
     cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
     cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); 
-    cout << "loglike: " << loglike_old << endl;
-    cout << "k_save_sample = " << k_save_sample << endl;*/
+    cout << "loglike: " << loglike_old << endl;*/
+    cout << "k_save_sample = " << k_save_sample << endl;
 
     //save Xb_mcmc
     //gsl_vector_scale(Xb_mcmc, 1.0/((double)s_step));
@@ -3572,7 +3589,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     //WriteVector(z, ".yscale");
     
     //Save temp EM results
-    WriteHyptemp(LnPost, em_gamma, Sample_m, Sample_sumbeta2);
+    WriteHyptemp(LnPost, em_gamma, Sample_m, sample_sigma0, sample_sigma1);
     //save all marker information
     if (saveSNP) {
         //WriteIniSNP(rank_old, snp_pos);
@@ -3583,7 +3600,6 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
    // gsl_matrix_free(Result_hyp);
    // gsl_matrix_free(Result_gamma);
     gsl_matrix_free(Sample_m);
-    gsl_matrix_free(Sample_sumbeta2);
     
     gsl_vector_free(sigma_subvec_old);
     gsl_vector_free(sigma_subvec_new);

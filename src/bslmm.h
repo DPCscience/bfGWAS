@@ -73,7 +73,7 @@ public:
     };
     
     //multiple function related parameters
-    size_t n_type, mcmc_save_pace, mcmc_save_size;
+    size_t n_type;
     vector<size_t> mFunc; // # of variants of each variant type
     double e, e_shape, e_rate; //hyper parameter in the prior gamma distribution
     double vscale;
@@ -314,7 +314,7 @@ public:
     void setHyp(double htemp, double theta_temp, double subvar_temp);
     void getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma);
-    void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, gsl_matrix *Sample_sumbeta2);
+    void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, vector< pair<double, size_t> > &sample_sigma0, vector< pair<double, size_t> > &sample_sigma1);
     void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr, const vector<double> &Z_scores, const vector<double> &SE_beta, const vector<double> pval_lrt);
     void WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr);
     void WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
