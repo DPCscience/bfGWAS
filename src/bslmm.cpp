@@ -2938,15 +2938,6 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matri
     em_logpost = log(em_logpost) + logpost_max;
     //cout << "logpost = " << em_logpost << endl;
 
-    //sort mcmc samples of m0,m1, sumbeta2_0, sumbeta2_1
-    gsl_vector_view sample_m0 = gsl_matrix_column(Sample_m, 0);
-    gsl_vector_view sample_m1 = gsl_matrix_column(Sample_m, 1);
-    gsl_vector_view sample_sumbeta2_0 = gsl_matrix_column(Sample_sumbeta2, 0);
-    gsl_vector_view sample_sumbeta2_1 = gsl_matrix_column(Sample_sumbeta2, 1);
-    gsl_sort_vector(&sample_m0.vector);
-    gsl_sort_vector(&sample_m1.vector);
-    gsl_sort_vector(&sample_sumbeta2_0.vector);
-    gsl_sort_vector(&sample_sumbeta2_1.vector);
     double low_idx, upper_idx;
     modf((double)(Sample_m->size1) * 0.025, &low_idx);
     modf((double)(Sample_m->size1) * 0.975, &upper_idx);
@@ -2965,15 +2956,18 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matri
 
     outfile_hyp << scientific << setprecision(6) << (GV / (double)s_step) << "\t" << rv << "\t" << em_logpost << "\t" << Gvec[0] << "\t" << Gvec[1] << "\t";
 
-    outfile_hyp << gsl_vector_get(&sample_m0.vector, (size_t)low_idx) << "\t" << (em_gamma[0] / (double)s_step)<< "\t" << gsl_vector_get(&sample_m0.vector, (size_t)upper_idx) << "\t";
+    for(size_t j=0; j < n_type; j++){
+        gsl_vector_view sample_m_vec = gsl_matrix_column(Sample_m, j);
+        gsl_vector_view sample_sumbeta2_vec = gsl_matrix_column(Sample_sumbeta2, j);
+        //sort mcmc samples 
+        gsl_sort_vector(&sample_m_vec.vector);
+        gsl_sort_vector(&sample_sumbeta2_vec.vector);
 
-    outfile_hyp << gsl_vector_get(&sample_m1.vector, (size_t)low_idx) << "\t" << (em_gamma[1] / (double)s_step)<< "\t" << gsl_vector_get(&sample_m1.vector, (size_t)upper_idx) << "\t";
+        outfile_hyp << gsl_vector_get(&sample_m_vec.vector, (size_t)low_idx) << "\t" << (em_gamma[1] / (double)s_step)<< "\t" << gsl_vector_get(&sample_m_vec.vector, (size_t)upper_idx) << "\t";
+        outfile_hyp << gsl_vector_get(&sample_sumbeta2_vec.vector, (size_t)low_idx) << "\t" << (sumbeta2[0]/(double)s_step)<< "\t" << gsl_vector_get(&sample_sumbeta2_vec.vector, (size_t)upper_idx) << "\t";
+    }
 
-    outfile_hyp << gsl_vector_get(&sample_sumbeta2_0.vector, (size_t)low_idx) << "\t" << (sumbeta2[0]/(double)s_step)<< "\t" << gsl_vector_get(&sample_sumbeta2_0.vector, (size_t)upper_idx) << "\t";
-
-    outfile_hyp << gsl_vector_get(&sample_sumbeta2_1.vector, (size_t)low_idx) << "\t" << (sumbeta2[1]/(double)s_step)<< "\t" << gsl_vector_get(&sample_sumbeta2_1.vector, (size_t)upper_idx) << "\t";
-
-    outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << "\t" << endl;
+    outfile_hyp << mFunc[0] << "\t"  << mFunc[1] << endl;
 
     outfile_hyp.clear();
     outfile_hyp.close();
@@ -3163,7 +3157,6 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
 
     vector<double> em_gamma(n_type, 0.0); //save sum of m0, m1
     vector<double> sumbeta2_temp(n_type, 0.0); // save sumbeta2 for one mcmc iteration
-    vector<double> sum_m_temp(n_type, 0.0); 
     GV = 0.0; 
     sumbeta2.assign(n_type, 0.0);
     
@@ -3532,7 +3525,9 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             //save loglikelihood
                 gsl_vector_set (LnPost, (t-w_step), loglike_old);
                 GV += cHyp_old.pve;
+
         //save sumbeta2_temp for one mcmc iteration
+                sumbeta2_temp.assign(n_type, 0.0);
             if (cHyp_old.n_gamma > 0){
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
                     // beta_g saved by position
@@ -3550,18 +3545,15 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                 for(size_t j=0; j < n_type; j++){
                 	sumbeta2[j] += sumbeta2_temp[j];
                 	em_gamma[j] += (double)cHyp_old.m_gamma[j];
-                	sum_m_temp[j] += (double)cHyp_old.m_gamma[j];
                 }
               }
 
             if((t-w_step)%mcmc_save_pace == 0){
                 for(size_t j=0; j < n_type; j++){
-                    gsl_matrix_set(Sample_m, k_save_sample, j, sum_m_temp[j]/((double)mcmc_save_pace));
-                    gsl_matrix_set(Sample_sumbeta2, k_save_sample, j, sumbeta2_temp[j]/((double)mcmc_save_pace));
+                    gsl_matrix_set(Sample_m, k_save_sample, j, cHyp_old.m_gamma[j]);
+                    gsl_matrix_set(Sample_sumbeta2, k_save_sample, j, sumbeta2_temp[j]);
                 }
                     k_save_sample++;
-                    sumbeta2_temp.assign(n_type, 0.0);
-                    sum_m_temp.assign(n_type, 0.0);
                 }
             }
     }
