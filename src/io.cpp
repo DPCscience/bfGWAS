@@ -316,7 +316,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
 	                if (nch == NULL) func_type.assign(pch);
 	                else func_type.assign(pch, nch-pch);
 	                func_code = mapFunc2Code[func_type];
-	                //if(snp_i < 10)  cout << func_type << " with code " << func_code << endl;
+	                if(snp_i < 10)  cout << func_type << " with code " << func_code << endl;
 	                if(!snpInfo[snp_i].indicator_func[func_code])
 	                {
 	                    snpInfo[snp_i].indicator_func[func_code] = 1;
