@@ -832,6 +832,27 @@ void BSLMM::CalcPgamma (double *p_gamma)
     return;
 }
 
+void BSLMM::CalcPgamma (double *p_gamma, size_t p_gamma_top)
+{
+    if(p_gamma_top < 50){
+        p_gamma_top=100;
+    } else if(p_gamma_top > 300){
+        p_gamma_top=300;
+    }
+
+    double p, q;
+    p = 0.9 / double(p_gamma_top);
+    q = 0.1 / ((double)(ns_test-p_gamma_top));
+    
+    for (size_t i=0; i<ns_test; ++i) {
+        if(i < p_gamma_top) p_gamma[i] = p;
+            else p_gamma[i] = q;
+    }
+    
+    return;
+}
+
+
 //currently used
 void BSLMM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
 {
@@ -2930,6 +2951,35 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
     return logp;
 }
 
+void BSLMM::WriteSampleM(gsl_matrix *Sample_m){
+    string file_sample_m0, file_sample_m1;
+    file_sample_m0 = "./output/" + file_out;
+    file_sample_m0 += ".sample_m0";
+
+    file_sample_m1 = "./output/" + file_out;
+    file_sample_m1 += ".sample_m1";
+
+    ofstream outfile_m0, outfile_m1;
+
+    outfile_m0.open (file_sample_m0.c_str(), ofstream::out);
+    if (!outfile_m0) {cout<<"error writing file: "<<file_sample_m0<<endl; return;}
+
+    outfile_m1.open (file_sample_m1.c_str(), ofstream::out);
+    if (!outfile_m1) {cout<<"error writing file: "<<file_sample_m1<<endl; return;}
+
+    for(size_t i=0; i < Sample_m->size1; i++){
+        if(i % 10 == 0){
+            outfile_m0 << gsl_matrix_get(Sample_m, i, 0) << endl;
+            outfile_m1 << gsl_matrix_get(Sample_m, i, 1) << endl;
+        }
+    }
+
+    outfile_m0.clear();
+    outfile_m0.close();
+    outfile_m1.clear();
+    outfile_m1.close();
+}
+
 void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, vector< pair<double, size_t> > &sample_sigma0, vector< pair<double, size_t> > &sample_sigma1){
     
     double em_logpost = 0.0, logpost_max =  gsl_vector_max(LnPost);
@@ -2945,6 +2995,8 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matri
     modf((double)(Sample_m->size1) * 0.025, &low_idx);
     modf((double)(Sample_m->size1) * 0.975, &upper_idx);
     cout << "low_idx = " << low_idx << "; upper_idx = " << upper_idx << endl;
+
+    WriteSampleM(Sample_m); // write sample m0, m1 to file
 
     //save E(file_out, GV, rv, lnpost, G0, G1, m0_low, m0_mean, m0_high, m1_low, m1_mean, m1_high, beta2_0_low, beta2_0_avg, beta2_0_high, beta2_1_low, beta2_1_avg,beta2_1_low,n0, n1)
     string file_hyp;
@@ -3177,8 +3229,10 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_vector *LnPost = gsl_vector_alloc(s_step); //save logPost...
 
     // save mcmc samples for m0, m1, sum_sigma2_0, sum_sigma2_1
-    gsl_matrix *Sample_m = gsl_matrix_alloc(s_step, n_type);
-    vector< pair<double, size_t> > sample_sigma0, sample_sigma1;
+     gsl_matrix *Sample_m = gsl_matrix_alloc(s_step, n_type);
+     vector< pair<double, size_t> > sample_sigma0, sample_sigma1;
+    // vector<double> sample_m0, sample_m1, sample_s0, sample_s1;
+
     vector<double> em_gamma(n_type, 0.0); //save sum of m0, m1
     GV = 0.0; 
     sumbeta2.assign(n_type, 0.0);
@@ -3293,7 +3347,16 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     gsl_r = gsl_rng_alloc(gslType);
     gsl_rng_set(gsl_r, randseed);
     double *p_gamma = new double[ns_test];
-    CalcPgamma (p_gamma); // calculate discrete distribution for gamma
+
+    size_t p_gamma_top=0;
+    for(size_t i=0; i < pval_lrt.size(); i++){
+        if (pval_lrt[i] < 5e-8) p_gamma_top++;
+    }
+    cout << "# of markers with p_lrt < 5e-8 : " << p_gamma_top << endl;
+
+    // CalcPgamma (p_gamma); // calculate discrete distribution for gamma
+    CalcPgamma (p_gamma, p_gamma_top);
+
     gsl_t=gsl_ran_discrete_preproc (ns_test, p_gamma); // set up proposal function for gamma
     
     //Initial parameters
@@ -3529,14 +3592,14 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         }
         
          //if (t % 10 == 0 && t > w_step) {
-         /*if (t % w_pace == 0 && t > w_step) {
+         if (t % w_pace == 0 && t > w_step) {
              accept_percent = (double)n_accept/(double)((t+1) * n_mh);
              cout << "cHyp_old.n_gamma= " << cHyp_old.n_gamma << endl;
             cout << "gamma acceptance percentage = " <<setprecision(6) << accept_percent << endl ;
              cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
              cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
              cout << "loglike: " << loglike_old << endl;
-        }*/
+        }
         
         //Save data
         if (t<w_step) {continue;}
@@ -3576,11 +3639,11 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     }
     
     cout<< "MCMC completed ... " << endl << endl;
-    /*accept_percent = (double)n_accept/(double)(total_step * n_mh);
+    accept_percent = (double)n_accept/(double)(total_step * n_mh);
     cout << "gamma acceptance percentage = " << accept_percent << endl ;
     cout << "m_gamma: " << cHyp_old.m_gamma[0] << ", " << cHyp_old.m_gamma[1]<< endl;
     cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); 
-    cout << "loglike: " << loglike_old << endl;*/
+    cout << "loglike: " << loglike_old << endl;
     cout << "k_save_sample = " << k_save_sample << endl;
 
     //save Xb_mcmc

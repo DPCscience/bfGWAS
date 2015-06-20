@@ -187,6 +187,7 @@ public:
 	
 	//Subfunctions inside MCMC
 	void CalcPgamma (double *p_gamma);
+    void CalcPgamma (double *p_gamma, size_t p_gamma_top);
     
 	double CalcPveLM (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const double sigma_a2);
     
@@ -328,6 +329,8 @@ public:
     void WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos);
     void WriteFGWAS_InputFile(const vector<SNPPOS> &snp_pos, const vector<double> &Z_scores, const vector<double> &SE_beta);
 
+    void WriteSampleM(gsl_matrix *Sample_m);
+
 };
 
 void PrintVector(const gsl_vector * x);
@@ -341,6 +344,8 @@ void PrintMatrix(const gsl_matrix * X, const size_t nrow, const size_t ncol);
 
 void expVector(vector<double> &expvec, vector<double> &logvec);
 void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec);
+
+
 #endif
 
 
