@@ -233,6 +233,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     string func_type;
     int func_code;
     
+    // Load function_code file first, create a hash map between func_type and code
     igzstream infile_code (file_func_code.c_str(), igzstream::in);
     if (!infile_code) {cout<<"error opening annotation file: "<<file_func_code<<endl; return false;}
     while (!safeGetline(infile_code, line).eof()) {
@@ -256,6 +257,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     infile_code.close();
     infile_code.clear();
     
+    // Load annotation file...
     igzstream infile (file_anno.c_str(), igzstream::in);
     if (!infile) {cout<<"error opening annotation file: "<<file_anno<<endl; return false;}
     
@@ -272,6 +274,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
         }
         else {
           if (!indicator_snp[snp_i]) {
+          	// SNP is excluded from analysis
               pch=(char *)line.c_str();
               nch = strchr(pch, '\t');
               rs.assign(pch, nch-pch);
@@ -311,6 +314,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             snpInfo[snp_i].indicator_func.assign(n_type, 0);
             //if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
             if( isalpha(pch[0]) || isdigit(pch[0]) ){
+            	//pch[0] is a letter or number
             	while (pch != NULL) {
 	                nch = strchr(pch, ',');
 	                if (nch == NULL) func_type.assign(pch);
@@ -354,8 +358,8 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
         }
     }
     cout << "n_type = " << n_type ;
-    cout << "; mFunc0 = " << mFunc[0] << "; mFunc1 = " << mFunc[1] << endl;
-   // cout << "total snp number = " << snp_i << endl;
+    cout << "; mFunc: "; PrintVector(mFunc);
+    cout << "total snp number = " << snp_i << endl;
     
     infile.close();
     infile.clear();	

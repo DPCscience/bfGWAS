@@ -37,5 +37,7 @@ double CalcHWE (const size_t n_hom1, const size_t n_hom2, const size_t n_ab);
 void Kronecker(const gsl_matrix *K, const gsl_matrix *V, gsl_matrix *H);
 void KroneckerSym(const gsl_matrix *K, const gsl_matrix *V, gsl_matrix *H);
 
+double VectorSum (const vector<double> &v);
+double VectorMean (const vector<double> &v);
 
 #endif

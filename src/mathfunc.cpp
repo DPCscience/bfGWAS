@@ -46,6 +46,22 @@
 
 using namespace std;
 
+//calculate variance of a vector
+
+double VectorSum (const vector<double> &v)
+{
+	double m=0.0;
+	for (size_t i=0; i<v.size(); ++i) {
+		m+=v[i];
+	}
+	return m;
+}
+
+double VectorMean (const vector<double> &v)
+{
+	return VectorSum(v)/(double)v.size();
+}
+
 
 
 //calculate variance of a vector

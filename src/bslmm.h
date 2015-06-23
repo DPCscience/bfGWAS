@@ -312,7 +312,7 @@ public:
     double CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag, double &loglike);
     
     //EM-BlockMCMC related
-    void setHyp(double htemp, double theta_temp, double subvar_temp);
+    void setHyp(double theta_temp, double subvar_temp);
     void getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos);
     void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma);
     void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, vector< pair<double, size_t> > &sample_sigma0, vector< pair<double, size_t> > &sample_sigma1);
