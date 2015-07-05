@@ -71,10 +71,12 @@ void BSLMM::CopyFromParam (PARAM &cPar)
     vscale = cPar.vscale;
     FIXHYP = cPar.FIXHYP;
     saveSNP = cPar.saveSNP;
+    saveLD = cPar.saveLD;
     iniType = cPar.iniType;
     iniSNPfile = cPar.iniSNPfile;
     hypfile = cPar.hypfile;
     SNPmean = cPar.SNPmean;
+
     
     UnCompBufferSize = cPar.UnCompBufferSize;
     CompBuffSizeVec = cPar.CompBuffSizeVec;
@@ -242,7 +244,7 @@ void BSLMM::WriteMatrix(const gsl_matrix * X, const string filename){
 	
     for(size_t i=0; i<X->size1; ++i){
         for(size_t j = 0; j < X->size2; ++j){
-            outfile << scientific << setprecision(6) << gsl_matrix_get(X, i, j) << "\t" ;
+            outfile << scientific << setprecision(6) << gsl_matrix_get(X, i, j) << " " ;
         }
         outfile << endl;
     }
@@ -3288,12 +3290,22 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
  //calculate trace_G or Gvec
     trace_G = VectorSum(Gvec) / double(ns_test);
     cout << "trace_G = " << trace_G << endl;
-    cout << "Avg trace_G vec : " ;
+
     for(size_t i=0; i < n_type; i++){
         Gvec[i] /= mFunc[i];
-        cout <<  Gvec[0] << ", ";
-    }  
-    cout << endl;  
+    } 
+    cout << "Avg trace_G vec : " ; PrintVector(Gvec); 
+
+    //calculat LD matrix and save in the output
+    if(saveLD){
+        cout << "start calculating LD matrix ... \n";
+        gsl_matrix *LD = gsl_matrix_alloc(ns_test, ns_test);
+        CalcLD(X, LD);
+        cout << "start saving LD matrix ... \n";
+        WriteMatrix(LD, ".LD");
+        gsl_matrix_free(LD);
+    }
+    // end of calculate LD matrix
     
     stable_sort(snp_pos.begin(), snp_pos.end(), comp_snp); // order snp_pos by chr/bp
     stable_sort (pos_loglr.begin(), pos_loglr.end(), comp_lr); // sort log likelihood ratio
@@ -3688,7 +3700,42 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
 }
 // end of current version
 
+//calculat LD correlation matrix
+void BSLMM::CalcLD(uchar **X, gsl_matrix * LD){
 
+    gsl_vector *xvec_i = gsl_vector_alloc(ni_test);
+    gsl_vector *xvec_j = gsl_vector_alloc(ni_test);
+    double xtx_ij, cor_ij;
+
+    cout << "set SNPsd as : \n"; 
+    if(SNPsd.size() != ns_test){
+        SNPsd.clear();
+        for (size_t i=0; i<ns_test; ++i) {
+            SNPsd.push_back(sqrt(XtX_diagvec[i]));
+        }
+    }
+    PrintVector(SNPsd, 20);
+
+    for (size_t i=0; i<ns_test; ++i) {
+
+        gsl_matrix_set(LD, i, i, 1);
+        getGTgslVec(X, xvec_i, i, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
+
+        for(size_t j=(i+1); j < ns_test; ++j){
+            getGTgslVec(X, xvec_j, j, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
+            gsl_blas_ddot(xvec_i, xvec_j, &xtx_ij);
+            cor_ij = xtx_ij / (SNPsd[i] * SNPsd[j]);
+            gsl_matrix_set(LD, i, j, cor_ij);
+            gsl_matrix_set(LD, j, i, cor_ij);
+        }
+    }
+
+    gsl_vector_free(xvec_i);
+    gsl_vector_free(xvec_j);
+    SNPsd.clear();
+
+    return;
+}
 
 
 //calculate pve and pge, and calculate z_hat for case-control data

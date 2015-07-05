@@ -81,6 +81,7 @@ public:
     int iniType;
     bool FIXHYP;
     bool saveSNP;
+    bool saveLD;
     string iniSNPfile;
     string hypfile;
     vector< pair<size_t, size_t> > SNPorder_vec; //<pos, rank>
@@ -330,6 +331,7 @@ public:
     void WriteFGWAS_InputFile(const vector<SNPPOS> &snp_pos, const vector<double> &Z_scores, const vector<double> &SE_beta);
 
     void WriteSampleM(gsl_matrix *Sample_m);
+    void CalcLD(uchar **X, gsl_matrix * LD);
 
 };
 

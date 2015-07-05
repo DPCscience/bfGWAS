@@ -92,6 +92,8 @@ bool ReadFile_vcfs (const string &file_vcfs, vector<bool> &indicator_idv, vector
 //for new model
 bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc);
 
+void SetMAFCode (const double &maf, string &func_type);
+
 #endif
 
 

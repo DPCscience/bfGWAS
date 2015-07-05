@@ -151,6 +151,7 @@ public:
     string iniSNPfile;
     string hypfile;
     double rv;
+    bool saveLD;
     
     
 	// IO related parameters

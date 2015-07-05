@@ -223,6 +223,16 @@ bool ReadFile_anno (const string &file_anno, map<string, string> &mapRS2chr, map
 	return true;
 }
 
+void SetMAFCode (const double &maf, string &func_type){
+	if( maf >= 0.005 && maf < 0.01) func_type+="-maf-range1";
+    else if ( maf >= 0.01 && maf < 0.05) func_type+="-maf-range2";
+    else if ( maf >= 0.05 && maf < 0.1) func_type+="-maf-range3";
+    else if ( maf >= 0.1 && maf < 0.2) func_type+="-maf-range4";
+    else if ( maf >= 0.2 && maf < 0.3) func_type+="-maf-range5";
+    else if ( maf >= 0.3 && maf < 0.4) func_type+="-maf-range6";
+    else if ( maf >= 0.4 ) func_type+="-maf-range7";
+}
+
 //Read function annotation file
 bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc)
 {
@@ -250,7 +260,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             nch = strchr(pch, '\t');
             func_type.assign(pch, nch-pch);
             func_code = strtol(nch, NULL, 0);
-            //cout << func_type << ":" << func_code << endl;
+            cout << func_type << ":" << func_code << endl;
             mapFunc2Code[func_type] = func_code;
         }
     }
@@ -267,6 +277,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     string chr;
     int snp_nfunc;
     size_t snp_i = 0;
+    double maf_temp;
     
     while (!safeGetline(infile, line).eof()) {
         if (line[0] == '#' || (line[0] == 'I' && line[1] == 'D')) {
@@ -312,6 +323,10 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             //if(snp_i < 10) cout << "pch[0] = " << pch[0];
             snp_nfunc = 0;
             snpInfo[snp_i].indicator_func.assign(n_type, 0);
+            maf_temp = snpInfo[snp_i].maf;
+            //if (snp_i < 5)  cout << "maf_temp = " << maf_temp <<endl;
+
+        	if(maf_temp > 0.5) maf_temp = 1.0 - maf_temp;
             //if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
             if( isalpha(pch[0]) || isdigit(pch[0]) ){
             	//pch[0] is a letter or number
@@ -319,6 +334,10 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
 	                nch = strchr(pch, ',');
 	                if (nch == NULL) func_type.assign(pch);
 	                else func_type.assign(pch, nch-pch);
+
+	                // consider MAF range
+	                // if((func_type.compare("others") == 0) || (func_type.compare("nonsyn") == 0) ) SetMAFCode(maf_temp, func_type);
+
 	                func_code = mapFunc2Code[func_type];
 	                if(snp_i < 10)  cout << func_type << " with code " << func_code << endl;
 	                if(!snpInfo[snp_i].indicator_func[func_code])
@@ -331,8 +350,11 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
         	}
         	else{
         		func_type.assign("NA");
+        		// consider MAF range
+        		// SetMAFCode(maf_temp, func_type);
+
         		func_code = mapFunc2Code[func_type];
-        		//if(snp_i < 10)  cout << "NA" << " with code " << func_code << endl;
+        		if(snp_i < 10)  cout << "NA" << " with code " << func_code << endl;
         		if(!snpInfo[snp_i].indicator_func[func_code])
 	                {
 	                    snpInfo[snp_i].indicator_func[func_code] = 1;
@@ -366,6 +388,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     
     return true;
 }
+
 
 
 //read one column of phenotype
@@ -805,7 +828,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
                    }
                    pch = (nch == NULL) ? NULL : nch+1;
                }
-               //cout << "Parse for VCF sample IDs \n";
+               cout << "Parse for VCF sample IDs with size " << SampleVcfPos.size() << "\n";
             }
             continue;
         }
@@ -933,7 +956,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             exit(-1);
         }
         maf/=2.0*(double)(ni_test-n_miss);
-        //cout << "maf = " << maf << "\n";
+        // cout << "maf = " << maf << "\n";
         
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, indicator_func_temp, weight_temp, 0.0};
         snpInfo.push_back(sInfo); //save marker information
