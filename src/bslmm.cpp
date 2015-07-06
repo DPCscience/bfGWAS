@@ -824,33 +824,48 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 void BSLMM::CalcPgamma (double *p_gamma)
 {
     double p, q;
-    p = 0.9 / 300.0;
-    q = 0.1 / ((double)(ns_test-300));
-    
-    for (size_t i=0; i<ns_test; ++i) {
-        if(i < 300) p_gamma[i] = p;
-        else p_gamma[i] = q;
+    size_t topMarkers=300;
+    if((ns_test-topMarkers) < 0) {
+        topMarkers=ns_test;
+        p = 1.0 / (double)ns_test;
+        for (size_t i=0; i<ns_test; ++i) {
+            p_gamma[i] = p;
+        }
+    } else{
+        p = 0.9 / (double)topMarkers;
+        q = 0.1 / ((double)(ns_test-topMarkers));
+        for (size_t i=0; i<ns_test; ++i) {
+          if(i < topMarkers) p_gamma[i] = p;
+            else p_gamma[i] = q;
+        }
     }
+    
     return;
 }
 
 void BSLMM::CalcPgamma (double *p_gamma, size_t p_gamma_top)
 {
+    double p, q;
+
     if(p_gamma_top < 50){
         p_gamma_top=100;
     } else if(p_gamma_top > 300){
         p_gamma_top=300;
     }
 
-    double p, q;
+  if((ns_test-p_gamma_top) < 0){
+        p = 1.0 / double(ns_test);
+        for (size_t i=0; i<ns_test; ++i) {
+            p_gamma[i] = p;
+        }
+  } else{
     p = 0.9 / double(p_gamma_top);
     q = 0.1 / ((double)(ns_test-p_gamma_top));
-    
     for (size_t i=0; i<ns_test; ++i) {
         if(i < p_gamma_top) p_gamma[i] = p;
             else p_gamma[i] = q;
     }
-    
+  }
     return;
 }
 
@@ -1519,8 +1534,11 @@ void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
         cout << "Start with Step-wise SNPs. \n";
     vector<pair<size_t, double> > rank_loglr;
     size_t posr, radd;
+
+    size_t topMarkers=500;
+    if(ns_test<500){topMarkers = ns_test;}
         
-    for (size_t i=1; i<500; ++i) {
+    for (size_t i=1; i<topMarkers; ++i) {
         rank_loglr.push_back(make_pair(i, pos_loglr[i].second));
     }
     cout << endl;
