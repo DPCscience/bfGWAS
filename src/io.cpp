@@ -29,6 +29,7 @@
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h> 
+#include <ctype.h>
 
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
@@ -753,7 +754,7 @@ bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd, const 
 } */
 
 // Read VCF genotype file, the first time,
-bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, string &GTfield, const map<string, size_t> &PhenoID2Ind, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos)
+bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, string &GTfield, map<string, size_t> &PhenoID2Ind, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos)
 {
     if (GTfield.empty()) {
         GTfield = "GT"; //defalt load GT Data
@@ -785,7 +786,8 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     
     string rs; long int b_pos = 0; string chr;
     string major; string minor; double cM=-9;
-    string s;
+    string s, pheno_id;
+    size_t pheno_index;
     
     double maf, geno, geno_old;
     size_t n_miss, n_0, n_1, n_2;
@@ -793,6 +795,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
     
     size_t ni_total = indicator_idv.size();
     size_t c_idv=0; //count individual number in each record
+    size_t ctest_idv=0;
     //cout << "ni_total = indicator_idv.size() =" << indicator_idv.size() << endl;
     
     ns_test=0; // variable defined in param.h
@@ -833,13 +836,14 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             continue;
         }
     else{
-        c_idv=0; n_0=0; n_1=0; n_2=0;
+        c_idv=0; ctest_idv = 0; n_0=0; n_1=0; n_2=0;
         maf=0; n_miss=0; flag_poly=0; geno_old=-9;
         
         pch= (char *)line.c_str();
         
         for (tab_count=0; pch != NULL; tab_count++) {
             nch=strchr(pch, '\t'); //point to the position of next '\t'
+            
             if (tab_count<5) {
                 if (nch == NULL) { s.assign( pch );}
                 else s.assign( pch, nch-pch ); // field string s
@@ -874,6 +878,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             
             else if ((tab_count == 8) && (c_idv == 0))
             {
+            	cout << "; ni_test = " <<ni_test << "; n_miss start = " << n_miss << "\n";
                 // parse FORMAT field
                 if (pch[0] == GTfield[0] && pch[1] == GTfield[1] && ((nch==pch+2)||pch[2]==':') ) {
                     GTpos=0; //GT start in the first position
@@ -907,13 +912,20 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
                     }
                 }
             }
-            else if ( tab_count == SampleVcfPos[c_idv] )
+            else if ( tab_count == SampleVcfPos[ctest_idv] )
                 {
-                  if ( !indicator_idv[c_idv] ) {
-                      c_idv++; continue;
+                	pheno_id = VcfSampleID[c_idv];
+                	pheno_index = PhenoID2Ind[pheno_id];
+                  if ( !indicator_idv[pheno_index] ) {
+                  	   cerr << "error: pheno Ind is 0 ... " << endl;
+                  	   exit(-1);
+                      //c_idv++; continue;
                   }
                   else{
                     p = pch; // make p reach to the key index
+                    //cout << "GTpos : " << GTpos << endl;
+                    //cout << p << endl;
+
                     if (GTpos>0) {
                         for (int i=0; (i<GTpos) && (p!=NULL); ++i) {
                             n = strchr(p, ':');
@@ -921,49 +933,85 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
                         }
                     }
                     
-                    if ((p==NULL) || ((p[0]=='.') && (p[2]=='.')) ) {
+                    // pgeno=p;
+                    // n = strchr (p, '\t'); // pop out first GC/EC field
+                    // cout <<"after parse for EC: " << (n - pgeno) << endl;
+
+                    if (p==NULL) {
                         geno = -9;//missing
-                        genotype_miss[c_idv]=1; n_miss++; c_idv++; continue;
+                        genotype_miss[ctest_idv]=1; n_miss++; c_idv++; ctest_idv++; continue;
                     }
                     else if ( (p[1] == '/') || (p[1] == '|') ) {
                         //read bi-allelic GT
-                        if (p[0]=='.') {
+
+                        if((p[0]=='.') && (p[2]=='.')){
+                        	//cout << "pheno sample " << VcfSampleID[c_idv] <<"\t" << c_idv << endl;
+                        	//cout << p[0] << p[1] << p[2] << p[3] << p[4] << endl;
+                        	geno = -9;//missing;
+                        	genotype_miss[ctest_idv]=1; 
+                        	n_miss++; c_idv++; ctest_idv++;
+                        	pch = (nch == NULL) ? NULL : nch+1;
+                        	continue;
+                        }
+                        else if ( (p[0]=='.') && (p[2]!='.')) {
                             geno = (double)(p[2] -'0');
                         }
-                        else if (p[2]=='.') {
+                        else if ((p[0]!='.') && p[2]=='.') {
                             geno = (double)(p[0] -'0');
                         }
                         else geno = (double)((p[0] - '0') + (p[2]- '0'));
                     }
                     else {
-                        //read dosage data
-                        geno = strtod(p, NULL);
+                        //read dosage data 
+                        if( (p[0]=='.') && ( (p[1] == '\t') || (p[1] == ':') ) ){
+                        	// cout << pgeno[0] << p[1] << p[2] << p[3] << p[4] << endl;
+                        	geno = -9;
+                        	genotype_miss[ctest_idv]=1; 
+                        	n_miss++; c_idv++; ctest_idv++;
+                        	pch = (nch == NULL) ? NULL : nch+1;
+                        	continue;                        	
+                        }else{
+                        	geno = strtod(p, NULL);
+                        }
+                        
                     }
-                    if (geno>=0 && geno<=0.5) {n_0++;}
-                    if (geno>0.5 && geno<1.5) {n_1++;}
-                    if (geno>=1.5 && geno<=2.0) {n_2++;}
-                    gsl_vector_set (genotype, c_idv, geno);
+                    // cout << "geno = " << geno << endl;
+                    // if(n_miss > 600) exit(-1);
+
+                    if (geno>=0 && geno<=0.5) {n_0++; maf+=geno;}
+                    if (geno>0.5 && geno<1.5) {n_1++; maf+=geno;}
+                    if (geno>=1.5 && geno<=2.0) {n_2++; maf+=geno;}
+
+                    gsl_vector_set (genotype, ctest_idv, geno);
+
                     if (flag_poly==0) {geno_old=geno; flag_poly=2;}
                     if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
-                    maf+=geno;
+
+                    ctest_idv++;
                     c_idv++;
                   }
                 }
+                else if(tab_count >= 10){
+                  	c_idv++;
+                  }
             pch = (nch == NULL) ? NULL : nch+1;
         }
-        if (c_idv != ni_total) {
-            cerr << "record sample number " << c_idv << " dose not equal to ni_total " << ni_total << "\n";
+
+	cout << "Total sample number " << c_idv << "; analyzed sample number " << ctest_idv << "\n";
+        if (ctest_idv != ni_test) {
+            cerr << "record sample number " << ctest_idv << " dose not equal to ni_total " << ni_test << "\n";
             exit(-1);
         }
         maf/=2.0*(double)(ni_test-n_miss);
-        // cout << "maf = " << maf << "\n";
+        cout << "maf = " << maf << "; ni_test = " <<ni_test << "; n_miss = " << n_miss << "\n";
+        // exit(-1);
         
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, indicator_func_temp, weight_temp, 0.0};
         snpInfo.push_back(sInfo); //save marker information
         
-        
+        // filter by missing rate
         if ( (double)n_miss/(double)ni_test > miss_level) {indicator_snp.push_back(0); continue;}
-        //cout << "pass missness criteron...\n";
+        // cout << "pass missness criteron...\n";
         
         if ( (n_0+n_1)==0 || (n_1+n_2)==0 || (n_2+n_0)==0) {indicator_snp.push_back(0); continue;}
         
@@ -1370,7 +1418,9 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, const g
 		if (mapRS2bp.count(rs)==0) {chr="-9"; b_pos=-9;cM=-9;}
 		else {b_pos=mapRS2bp[rs]; chr=mapRS2chr[rs]; cM=mapRS2cM[rs];}		
 				
-		maf=0; n_miss=0; flag_poly=0; geno_old=-9;
+		maf=0; n_miss=0; 
+		flag_poly=0; 
+		geno_old=-9;
 		n_0=0; n_1=0; n_2=0; c_idv=0;
         
         gsl_vector_set_zero (genotype_miss);
@@ -1949,7 +1999,7 @@ bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_
 
 
 //Read VCF genotype file, the second time, recode genotype and calculate K
-bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector<double> &SNPmean, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos, bool Compress_Flag)
+bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar ** UtX, const uint ni_test, const uint ns_test, gsl_matrix *K, const bool calc_K, string &GTfield, vector<double> &SNPmean, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos, map<string, size_t> &PhenoID2Ind, const vector<string> &VcfSampleID, bool Compress_Flag)
 {
     if (GTfield.empty()) {
         GTfield = "GT"; //defalt load GT Data
@@ -1988,7 +2038,8 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
     char *pch, *p, *nch=NULL, *n;
     size_t tab_count;
     int GTpos=0, k=0;
-    string line;
+    string line, pheno_id;
+    size_t pheno_index;
     
     while(!safeGetline(infile, line).eof())
     {
@@ -2005,6 +2056,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
             pch= (char *)line.c_str();
             for (tab_count=0; pch != NULL; tab_count++) {
                 nch=strchr(pch, '\t'); //point to the position of next '\t'
+
                 if ((tab_count == 8) && (c_idv == 0))
                 {
                     // parse FORMAT field
@@ -2040,10 +2092,15 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
                         }
                     }
                 }
-                else if ( tab_count == SampleVcfPos[c_idv] )
+                else if ( tab_count == SampleVcfPos[ctest_idv] )
                 {
-                    if ( !indicator_idv[c_idv] ) {
-                        c_idv++; continue;
+                	
+                	pheno_id = VcfSampleID[c_idv];
+                	pheno_index = PhenoID2Ind[pheno_id];
+                    if ( !indicator_idv[pheno_index] ) {
+                    	cerr << "error: pheno is not in sample ... "<< endl;
+                    	exit(-1);
+                        //continue;
                     }
                     else{
                         p = pch; // make p reach to the key index
@@ -2053,30 +2110,51 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
                                 p = (n == NULL) ? NULL : n+1;
                             }
                         }
-                        
-                        if ((p==NULL) || ((p[0]=='.') && (p[2]=='.')) ) {
+
+                        if (p==NULL) {
                             geno = -9;//missing
-                            genotype_miss[ctest_idv]=1; n_miss++; c_idv++; continue;
+                            genotype_miss[ctest_idv]=1; n_miss++; c_idv++; ctest_idv++; continue;
                         }
                         else if ( (p[1] == '/') || (p[1] == '|') ) {
-                            //read bi-allelic GT
-                            if (p[0]=='.') {
-                                geno = (double)(p[2] -'0');
-                            }
-                            else if (p[2]=='.') {
-                                geno = (double)(p[0] -'0');
-                            }
-                            else geno = (double)((p[0] - '0') + (p[2]- '0'));
-                        }
-                        else {
-                            //read dosage data
-                            geno = strtod(p, NULL);
-                        }
+                        //read bi-allelic GT
+                        	if( (p[0]=='.') && (p[2]=='.')){
+                        		geno = -9;//missing
+                            	genotype_miss[ctest_idv]=1; 
+                            	n_miss++; c_idv++; ctest_idv++;
+                            	pch = (nch == NULL) ? NULL : nch+1;
+                            	continue;
+                        	}
+                        	else if ( (p[0]=='.') && (p[2]!='.')) {
+                            	geno = (double)(p[2] -'0');
+                        	}
+                        	else if ((p[0]!='.') && p[2]=='.') {
+                           		geno = (double)(p[0] -'0');
+                        	}
+                        	else geno = (double)((p[0] - '0') + (p[2]- '0'));
+                    	}
+                    	else {
+                        	//read dosage data
+                        	if( (p[0]=='.') && ( (p[1] == '\t') || (p[1] == ':') ) ){
+                        		geno = -9;
+                        		genotype_miss[ctest_idv]=1; 
+                        		n_miss++; c_idv++; ctest_idv++;
+                        		pch = (nch == NULL) ? NULL : nch+1;
+                        		continue;                        		
+                        	}else if (isdigit(p[0])){
+                        		geno = strtod(p, NULL);
+                        	}else{
+                        		cerr << "dosage data is not a digit ... " << endl;
+                        		exit(-1);
+                        	}                        
+                    	}
+
                         gsl_vector_set (genotype, ctest_idv, geno);
-                        geno_mean += geno;
+                        if( (geno >= 0.0) && (geno <= 2.0)) {geno_mean += geno;}
+                        ctest_idv++; // increase analyzed phenotype #
                         c_idv++;
-                        ctest_idv++;
                     }
+                }else if (tab_count >= 10 ){
+                	c_idv++; 
                 }
                 pch = (nch == NULL) ? NULL : nch+1;
             }

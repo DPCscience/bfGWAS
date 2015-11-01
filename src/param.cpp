@@ -790,7 +790,7 @@ void PARAM::ReadGenotypes (uchar **UtX, gsl_matrix *K, const bool calc_K) {
 	}
 	
     else if(!file_vcf.empty()){
-        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, GTfield, SNPmean, CompBuffSizeVec, SampleVcfPos, Compress_Flag)==false )
+        if ( ReadFile_vcf (file_vcf, indicator_idv, indicator_snp, UtX, ni_test, ns_test, K, calc_K, GTfield, SNPmean, CompBuffSizeVec, SampleVcfPos, PhenoID2Ind, VcfSampleID, Compress_Flag)==false )
         {error=true;} // revised
     }
     
@@ -948,7 +948,7 @@ void PARAM::CheckCvt ()
 void PARAM::ReorderPheno(gsl_vector *y)
 {
     if (VcfSampleID.size() < ni_test) {
-        cerr << "VCF sample size < ni_test: " << ni_test << endl;
+        cerr << "VCF sample size" <<  VcfSampleID.size() << "< ni_test: " << ni_test << endl;
         exit(-1);
     }
     
@@ -956,13 +956,15 @@ void PARAM::ReorderPheno(gsl_vector *y)
     string id;
     size_t c_ind=0;
     gsl_vector *ytemp=gsl_vector_alloc (ni_test);
+    VcfSampleID_test.clear();
     
     for (size_t i=0; i < VcfSampleID.size(); i++) {
         id = VcfSampleID[i];
-        if (PhenoID2Ind.count(id) > 0 ) {
-            if (indicator_idv[c_ind]) {
+        if ( PhenoID2Ind.count(id) > 0 ) {
+            if (indicator_idv[PhenoID2Ind[id]]) {
                 pheno = gsl_vector_get(y, PhenoID2Ind[id]);
                 gsl_vector_set(ytemp, c_ind, pheno);
+                VcfSampleID_test.push_back(id);
             }
             c_ind++;
         }

@@ -64,6 +64,8 @@ using namespace std;
 
 void BSLMM::CopyFromParam (PARAM &cPar) 
 {
+    VcfSampleID_test = cPar.VcfSampleID_test;
+
     rv = cPar.rv;
     n_type = cPar.n_type;
     mFunc = cPar.mFunc;
@@ -527,17 +529,18 @@ void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
     ofstream outfile (file_str.c_str(), ofstream::out);
     if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
     
-   /* outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "Func_code"<< "\t" << "maf"  << "\t";
-    
+    //write header with VcfSampleID_test 
+    outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"pos"<<"\t" << "func"<< "\t" << "maf"  << "\t";
     for (size_t i=0; i<ni_test; i++) {
         if (i ==(ni_test-1)) {
-            outfile << "Sample"<<i << endl;
+            outfile << VcfSampleID_test[i] << endl;
         }
-        else outfile << "Sample"<<i << "\t";
-    } */
+        else outfile << VcfSampleID_test[i] << "\t";
+    } 
 
     size_t pos;
     string rs;
+    double geno_j;
     
     for (size_t i=0; i<ns_test; ++i) {
         
@@ -557,10 +560,16 @@ void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
         outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
         
         for (size_t j=0; j < ni_test; j++) {
+            
+            geno_j = UcharTable[X[pos][j]].second;
+            if (geno_j == 0.0) geno_j = 0;
+            else if (geno_j == 2.0) geno_j = 2;
+            else if (geno_j == 1.0) geno_j = 1;
+
             if (j == (ni_test-1))
-                outfile << fixed << setprecision(2)  << UcharTable[X[pos][j]].second << endl;
+                outfile << fixed << setprecision(2)  << geno_j << endl;
             else
-                outfile << fixed << setprecision(2) << UcharTable[X[pos][j]].second << "\t";
+                outfile << fixed << setprecision(2) << geno_j << "\t";
         }
     }
     
@@ -2564,16 +2573,18 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
         if(flag_gamma==1)  {//add a snp;
            // cout << "add a snp" << endl;
            
-            if (rank_old.size() > 0) {
+            /*if (rank_old.size() > 0) {
                 do {
                     r_add=gsl_ran_discrete (gsl_r, gsl_t);
-                } while ((mapRank2in.count(r_add)!=0) || (ColinearTest(X, Xgamma_old, XtX_old, r_add, rank_old.size())));
+                } while ((mapRank2in.count(r_add)!=0) \
+                    //|| (ColinearTest(X, Xgamma_old, XtX_old, r_add, rank_old.size()))
+                    );
             }
-            else {
+            else {*/
                 do {
                     r_add=gsl_ran_discrete (gsl_r, gsl_t);
                 } while ((mapRank2in.count(r_add)!=0));
-            }
+            //}
             
             double prob_total=1.0;
             for (size_t ii=0; ii<cHyp_new.n_gamma; ++ii) {
@@ -2658,14 +2669,14 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             r_add = SNPorder_vec[(size_t)o_add].second;
             
             //cout << "XtX from set Xgamma: \n"; PrintMatrix(XtX_gamma, s_size, s_size);
-            if ((s_size>0) &&  (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) ) {
+            /*if ((s_size>0) &&  (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) ) {
                 flag_gamma=-1;
                 //cout << "Failed colinear test in switch" << endl;
                 mapRank2in[r_remove]=1;
                 rank_new.push_back(r_remove);
                 break;
             }
-            else{
+            else{*/
             //construct gsl_s, JY
             //cout << "o_add = " << o_add <<  "; r_add = "<<r_add << endl;
             gsl_a = MakeProposal(o_add, p_BFa, X, z_res, mapRank2in);
@@ -2688,7 +2699,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             
             mapRank2in[r_add]=1;
             rank_new.push_back(r_add);
-            }
+            //}
             
             gsl_matrix_free(Xgamma_temp);
             gsl_matrix_free(XtX_gamma);
@@ -2740,16 +2751,18 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
         if(flag_gamma==1)  {//add a snp;
             // cout << "add a snp" << endl;
             
-            if (rank_old.size() > 0) {
+          /*  if (rank_old.size() > 0) {
                 do {
                     r_add=gsl_ran_discrete (gsl_r, gsl_t);
-                } while ((mapRank2in.count(r_add)!=0) || (ColinearTest(X, Xgamma_old, XtX_old, r_add, rank_old.size())));
+                } while ((mapRank2in.count(r_add)!=0) \
+                    || (ColinearTest(X, Xgamma_old, XtX_old, r_add, rank_old.size()))
+                    );
             }
-            else {
+            else {*/
                 do {
                     r_add=gsl_ran_discrete (gsl_r, gsl_t);
                 } while ((mapRank2in.count(r_add)!=0));
-            }
+           // }
             
             double prob_total=1.0;
             for (size_t ii=0; ii<cHyp_new.n_gamma; ++ii) {
@@ -2848,11 +2861,11 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
             //cout << "XtX from set Xgamma: \n"; PrintMatrix(XtX_gamma, s_size, s_size);
             if (s_size>0) {
                 
-                if (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) {
+                /*if (ColinearTest(X, Xgamma_temp, XtX_gamma, r_add, s_size)) {
                     flag_gamma=-1;
                     //cout << "Failed colinear test in switch" << endl;
                 }
-                else{
+                else{*/
                     gsl_a = MakeProposal(o_add, p_BFa, X, z_res, mapRank2in);
                     
                     double prob_total_remove=1.0;
@@ -2879,7 +2892,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
                     rank_new.push_back(r_add);
                     
                     gsl_ran_discrete_free(gsl_a);
-                }
+                //}
             }
             else{
                 //construct gsl_s, JY
@@ -3352,9 +3365,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         SNPorder_vec.push_back(make_pair(snp_pos[i].pos, mapOrder2Rank[i]));
         SNPrank_vec.push_back(make_pair(pos_loglr[i].first, mapRank2Order[i]));
     }
-    //cout << "Write genotype txt file after snp_pos is ordered ... \n";
-    //WriteGenotypeFile(X, snp_pos);
-    //exit(-1);
+    
     
     //end of Jingjing's edit
     
@@ -3676,15 +3687,20 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cout << "loglike: " << loglike_old << endl;
     cout << "k_save_sample = " << k_save_sample << endl;
     
-    //Save temp EM results
-    WriteHyptemp(LnPost, em_gamma);
-
     //save all marker information
     if (saveSNP) {
+        //cout << "Write genotype txt file after snp_pos is ordered ... \n";
+        WriteGenotypeFile(X, snp_pos);
+        exit(-1);
+
         //WriteIniSNP(rank_old, snp_pos);
-        WriteParamtemp(beta_g, snp_pos, pos_loglr, Z_scores, SE_beta, pval_lrt);
+        //WriteParamtemp(beta_g, snp_pos, pos_loglr, Z_scores, SE_beta, pval_lrt);
         //WriteFGWAS_InputFile(snp_pos, Z_scores, SE_beta);
     }
+
+    //Save temp EM results
+    WriteHyptemp(LnPost, em_gamma);
+    WriteParamtemp(beta_g, snp_pos, pos_loglr, Z_scores, SE_beta, pval_lrt);
     
    // gsl_matrix_free(Result_hyp);
    // gsl_matrix_free(Result_gamma);

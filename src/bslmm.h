@@ -109,6 +109,7 @@ public:
 	size_t d_pace;
     vector<pair<long long int, double> > UcharTable;
     vector<string> InputSampleID; //size = ni_total
+    vector<string> VcfSampleID_test; // sample id for ni_test in order of X[i][j]
 	
 	string file_bfile;
 	string file_geno;
@@ -155,6 +156,7 @@ public:
 	double time_Omega;		//time spent on optimization iterations
 	double time_Proposal;        //time spent on constructing the proposal distribution for gamma (i.e. lmm or lm analysis)
 	vector<bool> indicator_idv;				//indicator for individuals (phenotypes), 0 missing, 1 available for analysis
+
 	vector<bool> indicator_snp;				//sequence indicator for SNPs: 0 ignored because of (a) maf, (b) miss, (c) non-poly; 1 available for analysis
 	
 	vector<SNPINFO> snpInfo;		//record SNP information

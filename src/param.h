@@ -162,6 +162,7 @@ public:
     map<string, size_t>  PhenoID2Ind;
     vector<size_t> SampleVcfPos;
     vector<string> VcfSampleID; // size=total sample #
+    vector<string> VcfSampleID_test; // sample id for ni_test in order of X[i][j]
     vector<string> InputSampleID; //size = ni_total
     vector<pair<long long int, double> > UcharTable;
     vector<double> SNPmean;
