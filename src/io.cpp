@@ -878,7 +878,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             
             else if ((tab_count == 8) && (c_idv == 0))
             {
-            	cout << "; ni_test = " <<ni_test << "; n_miss start = " << n_miss << "\n";
+            	// cout << "; ni_test = " <<ni_test << "; n_miss start = " << n_miss << "\n";
                 // parse FORMAT field
                 if (pch[0] == GTfield[0] && pch[1] == GTfield[1] && ((nch==pch+2)||pch[2]==':') ) {
                     GTpos=0; //GT start in the first position
@@ -1003,7 +1003,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             exit(-1);
         }
         maf/=2.0*(double)(ni_test-n_miss);
-        cout << "maf = " << maf << "; ni_test = " <<ni_test << "; n_miss = " << n_miss << "\n";
+        //cout << "maf = " << maf << "; ni_test = " <<ni_test << "; n_miss = " << n_miss << "\n";
         // exit(-1);
         
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, indicator_func_temp, weight_temp, 0.0};
