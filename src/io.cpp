@@ -997,7 +997,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, const gsl
             pch = (nch == NULL) ? NULL : nch+1;
         }
 
-	cout << "Total sample number " << c_idv << "; analyzed sample number " << ctest_idv << "\n";
+	//cout << "Total sample number " << c_idv << "; analyzed sample number " << ctest_idv << "\n";
         if (ctest_idv != ni_test) {
             cerr << "record sample number " << ctest_idv << " dose not equal to ni_total " << ni_test << "\n";
             exit(-1);
