@@ -1389,13 +1389,16 @@ void GEMMA::BatchRun (PARAM &cPar)
 		
 		//set covariates matrix W and phenotype vector y		
 		//an intercept should be included in W, 
+		cout << "copy phenotype success ... "<< endl;
 		cPar.CopyCvtPhen (W, y, 0);
         
         // reorder y for reading vcf files
+        cout << "Reorder y for reading vcf files ... "<< endl;
         if((!cPar.file_vcf.empty()) || (!cPar.file_vcfs.empty()))
             cPar.ReorderPheno(y);
         
         //center y, even for case/control data
+        cout << "Center phenotype ... "<< endl;
         cPar.pheno_mean=CenterVector(y);
         cout << "pheno_mean = " << cPar.pheno_mean << "\n";
         //PrintVector(y);

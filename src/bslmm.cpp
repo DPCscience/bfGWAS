@@ -3636,10 +3636,10 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
          //if (t % 10 == 0 && t > w_step) {
          if (t % w_pace == 0 && t > w_step) {
              accept_percent = (double)n_accept/(double)((t+1) * n_mh);
-             cout << "cHyp_old.n_gamma= " << cHyp_old.n_gamma << endl;
+             //cout << "cHyp_old.n_gamma= " << cHyp_old.n_gamma << endl;
              cout << "gamma acceptance percentage = " << setprecision(6) << accept_percent << endl ;
              cout << "m_gamma: " << endl; PrintVector(cHyp_old.m_gamma);
-             cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
+             //cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
              cout << "loglike: " << loglike_old << endl;
         }
         

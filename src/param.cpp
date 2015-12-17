@@ -958,18 +958,23 @@ void PARAM::ReorderPheno(gsl_vector *y)
     gsl_vector *ytemp=gsl_vector_alloc (ni_test);
     VcfSampleID_test.clear();
     
+    cout << "Total SNP samples: " << VcfSampleID.size() << endl;
+	cout << "PhenoID2Ind.size() = " << PhenoID2Ind.size() << " within ReorderPheno() function ... " << endl;
+
     for (size_t i=0; i < VcfSampleID.size(); i++) {
         id = VcfSampleID[i];
+        //if (i < 10) cout << id << ", count ="<< PhenoID2Ind.count(id) << ";    "; 
+
         if ( PhenoID2Ind.count(id) > 0 ) {
-            if (indicator_idv[PhenoID2Ind[id]]) {
-                pheno = gsl_vector_get(y, PhenoID2Ind[id]);
+            if (indicator_idv[PhenoID2Ind.at(id)]) {
+                pheno = gsl_vector_get(y, PhenoID2Ind.at(id));
                 gsl_vector_set(ytemp, c_ind, pheno);
                 VcfSampleID_test.push_back(id);
             }
             c_ind++;
         }
     }
-    cout << "reorder y, final c_ind = " << c_ind << endl;
+    cout << "\n reorder y, final c_ind = " << c_ind << endl;
     gsl_vector_memcpy(y, ytemp);
     gsl_vector_free(ytemp);
 }
@@ -1010,6 +1015,7 @@ void PARAM::ProcessCvtPhen()
         else PhenoID2Ind[InputSampleID[i]] = ULONG_MAX;
     }
     cout << "Create PhenoID2Ind map; ni_test = " << ni_test << "\n";
+    cout << "PhenoID2Ind map length = " << PhenoID2Ind.size() << "\n";
 	
 	if (ni_test==0) {
 		error=true;
@@ -1069,6 +1075,7 @@ void PARAM::CopyCvtPhen (gsl_matrix *W, gsl_vector *y, size_t flag)
 			if (indicator_cvt[i]==0) {continue;}
 		}
 		
+
 		gsl_vector_set (y, ci_test, (pheno)[i][0]);
 		
 		for (size_t j=0; j<n_cvt; ++j) {
