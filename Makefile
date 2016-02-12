@@ -18,7 +18,7 @@ WITH_LAPACK = 1
 FORCE_32BIT = 
 FORCE_DYNAMIC = 
 FORCE_FLOAT = 
-DIST_NAME = gemma-0.96_11
+DIST_NAME = SFBA_MCMC
 
 # --------------------------------------------------------------------
 # Edit below this line with caution
@@ -39,10 +39,10 @@ else
 LIBS = -lgsl -lgslcblas -pthread -lz -lm ./libStatGen/libStatGen.a
 endif
 
-OUTPUT = $(BIN_DIR)/gemma_emblock_multgroup
+OUTPUT = $(BIN_DIR)/Estep_mcmc
 
 ifdef FORCE_FLOAT
-OUTPUT = $(BIN_DIR)/gemmaf
+OUTPUT = $(BIN_DIR)/Estep_mcmc_f
 endif
 
 SOURCES = $(SRC_DIR)/main.cpp
