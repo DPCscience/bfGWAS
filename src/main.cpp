@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "param.h"
-#include "gemma.h"
+#include "sfba.h"
 
 using namespace std;
 
@@ -34,25 +34,25 @@ typedef short int int16;
 
 int main(int argc, char * argv[])
 { 	
-	SFBA cGemma;	
+	SFBA cSfba;	
 	PARAM cPar;
 
 	if (argc <= 1) {
-		cGemma.PrintHeader(); 
+		cSfba.PrintHeader(); 
 		return EXIT_SUCCESS;
 	}
 	if (argc==2 && argv[1][0] == '-' && argv[1][1] == 'h') {
-		cGemma.PrintHelp(0);
+		cSfba.PrintHelp(0);
 		return EXIT_SUCCESS;
 	}
 	if (argc==3 && argv[1][0] == '-' && argv[1][1] == 'h') {
 		string str;
 		str.assign(argv[2]);
-		cGemma.PrintHelp(atoi(str.c_str()));
+		cSfba.PrintHelp(atoi(str.c_str()));
 		return EXIT_SUCCESS;
 	}
 	if (argc==2 && argv[1][0] == '-' && argv[1][1] == 'l') {
-		cGemma.PrintLicense();
+		cSfba.PrintLicense();
 		return EXIT_SUCCESS;
 	}
 	
@@ -61,7 +61,7 @@ int main(int argc, char * argv[])
 		mkdir("output", S_IRWXU|S_IRGRP|S_IROTH);
 	}	
 	
-	cGemma.Assign(argc, argv, cPar); 
+	cSfba.Assign(argc, argv, cPar); 
 		
 	if (cPar.error==true) {return EXIT_FAILURE;}
 	     
@@ -71,11 +71,11 @@ int main(int argc, char * argv[])
 	
 	if (cPar.error==true) {return EXIT_FAILURE;}
 	
-	cGemma.BatchRun(cPar);
+	cSfba.BatchRun(cPar);
 	
 	if (cPar.error==true) {return EXIT_FAILURE;}
 	
-	cGemma.WriteLog(argc, argv, cPar);
+	cSfba.WriteLog(argc, argv, cPar);
 	
     return EXIT_SUCCESS;                                                          
 }

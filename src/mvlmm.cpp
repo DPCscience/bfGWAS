@@ -44,13 +44,10 @@
 #include "lapack.h"
 #include "gzstream.h"
 
-#ifdef FORCE_FLOAT
-#include "lmm_float.h"
-#include "mvlmm_float.h"
-#else
+
 #include "lmm.h"
 #include "mvlmm.h"
-#endif
+
 
 
 

@@ -1,6 +1,6 @@
 /*
-	Genome-wide Efficient Mixed Model Association (GEMMA)
-    Copyright (C) 2011  Xiang Zhou
+    Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC)
+    Copyright (C) 2016  Jingjing Yang
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+    
 #ifndef __IO_H__                
 #define __IO_H__
 
@@ -26,11 +26,8 @@
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
 
-#ifdef FORCE_FLOAT
-#include "param_float.h"
-#else
 #include "param.h"
-#endif
+
 
 typedef unsigned char uchar;
 typedef unsigned short uint16;

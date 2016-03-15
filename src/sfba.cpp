@@ -33,9 +33,9 @@
 
 #include "lapack.h"  //for functions EigenDecomp
 #include "io.h"
-#include "gemma.h"
+#include "sfba.h"
 #include "lm.h"
-#include "bslmm.h"
+#include "bvsrm.h"
 #include "lmm.h"
 #include "mvlmm.h"
 #include "prdt.h"
@@ -96,12 +96,9 @@ void SFBA::PrintLicense (void)
 		<<"THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE "
 		<<"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."<<endl;
 	cout<<endl;
-	
-	
-	
+
 	return;
 }
-
 
 
 void SFBA::PrintHelp(size_t option)

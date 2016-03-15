@@ -22,14 +22,9 @@
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
 
-
-#ifdef FORCE_FLOAT
-#include "param_float.h"
-#include "io_float.h"
-#else
 #include "param.h"
 #include "io.h"
-#endif
+
 
 using namespace std;
 

@@ -1,6 +1,6 @@
 /*
-    Genome-wide Efficient Mixed Model Association (GEMMA)
-    Copyright (C) 2011  Xiang Zhou
+	Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC)
+    Copyright (C) 2016  Jingjing Yang
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,12 +44,8 @@
 #include "io.h"
 #include "lapack.h"
 #include "gzstream.h"
-
-#ifdef FORCE_FLOAT
-#include "lmm_float.h"
-#else
 #include "lmm.h"
-#endif
+
 
 
 using namespace std;

@@ -46,8 +46,8 @@ LIBS_LNX_S_LAPACK = /usr/lib/lapack/liblapack.a -lgfortran  /usr/lib/atlas-base/
 # Options
 
 
-  SOURCES += $(SRC_DIR)/param.cpp $(SRC_DIR)/gemma.cpp $(SRC_DIR)/io.cpp $(SRC_DIR)/lm.cpp $(SRC_DIR)/lmm.cpp  $(SRC_DIR)/mvlmm.cpp $(SRC_DIR)/bslmm.cpp $(SRC_DIR)/prdt.cpp $(SRC_DIR)/mathfunc.cpp $(SRC_DIR)/gzstream.cpp $(SRC_DIR)/ReadVCF.cpp $(SRC_DIR)/compress.cpp
-  HDR += $(SRC_DIR)/param.h $(SRC_DIR)/gemma.h $(SRC_DIR)/io.h $(SRC_DIR)/lm.h $(SRC_DIR)/lmm.h  $(SRC_DIR)/mvlmm.h $(SRC_DIR)/bslmm.h $(SRC_DIR)/prdt.h $(SRC_DIR)/mathfunc.h $(SRC_DIR)/gzstream.h $(SRC_DIR)/ReadVCF.h $(SRC_DIR)/compress.h
+  SOURCES += $(SRC_DIR)/param.cpp $(SRC_DIR)/sfba.cpp $(SRC_DIR)/io.cpp $(SRC_DIR)/lm.cpp $(SRC_DIR)/lmm.cpp  $(SRC_DIR)/mvlmm.cpp $(SRC_DIR)/bvsrm.cpp $(SRC_DIR)/prdt.cpp $(SRC_DIR)/mathfunc.cpp $(SRC_DIR)/gzstream.cpp $(SRC_DIR)/ReadVCF.cpp $(SRC_DIR)/compress.cpp
+  HDR += $(SRC_DIR)/param.h $(SRC_DIR)/sfba.h $(SRC_DIR)/io.h $(SRC_DIR)/lm.h $(SRC_DIR)/lmm.h  $(SRC_DIR)/mvlmm.h $(SRC_DIR)/bvsrm.h $(SRC_DIR)/prdt.h $(SRC_DIR)/mathfunc.h $(SRC_DIR)/gzstream.h $(SRC_DIR)/ReadVCF.h $(SRC_DIR)/compress.h
 
 
 ifdef WITH_LAPACK
