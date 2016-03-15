@@ -31,7 +31,7 @@ Example usage: ./generate_makefile_EMMCMC.pl -h
 =item B<-help>
 
   -w         work directory : location of all output files
-  -t         gemma tool directory
+  -t         SFBA software directory
   --vd       vcf file directory
   --ad       annotation file directory
   --ac       annotation code file
@@ -102,7 +102,7 @@ my $initype="3";
 my $rv="1";
 my $pp="1e-7";
 my $abgamma="0.1";
-my $gemma="gemma_emblock_multgroup";
+my $software="Estep_mcmc"; # C++ software (binary executible file) name
 my $saveSNP="0";
 
 my $maxmem = "3000";
@@ -128,7 +128,7 @@ if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug, 'm'=>\$man,
                 'pp:s'=>\$pp, 'abgamma:s'=>\$abgamma, 
                 'mem:s'=>\$maxmem, 'saveSNP:s'=>\$saveSNP,
                 'time:s'=>\$time, 'f:s'=>\$filelist, 'em:i'=>\$EM, 'rs:s'=>\$rs,
-                'l:s'=>\$launchMethod, 'mf:s'=>\$makeFile, 'nice:s'=>\$nice, 'gemma:s'=>\$gemma, 'j:s' =>\$jobid, 'xnode:s'=>\$xnode, 
+                'l:s'=>\$launchMethod, 'mf:s'=>\$makeFile, 'nice:s'=>\$nice, 'software:s'=>\$software, 'j:s' =>\$jobid, 'xnode:s'=>\$xnode, 
                 'wnode:s'=>\$wnode, 'part:s'=>\$part)
   || !defined($wkDir) || scalar(@ARGV)!=0)
 {
@@ -237,7 +237,7 @@ for(my $j=0; $j< @filehead; ++$j)
         $premcmcOK .= "$wkDir/OUT/$line.$i.OK ";
         $tgt = "$wkDir/OUT/$line.$i.OK";
         $dep = "$wkDir/pre_em.OK";
-        @cmd = "$toolDir/$gemma -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+        @cmd = "$toolDir/$software -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         makeJob($launchMethod, $tgt, $dep, $wkDir, @cmd);
     }
 
@@ -271,9 +271,9 @@ for $i (1..$EM){
         $tgt = "$wkDir/OUT/$line.$i.OK";
         $dep = "$wkDir/R$ipre.OK";
         if($i < $EM){
-            @cmd = "$toolDir/gemma\_emblock\_multgroup -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+            @cmd = "$toolDir/$software -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
             } elsif ($i == $EM){
-            @cmd = "$toolDir/gemma\_emblock\_multgroup -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+            @cmd = "$toolDir/$software -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
             }
         makeJob($launchMethod, $tgt, $dep, $wkDir, @cmd);
     }

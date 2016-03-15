@@ -1,6 +1,6 @@
 /*
-	Genome-wide Efficient Mixed Model Association (GEMMA)
-    Copyright (C) 2011  Xiang Zhou
+	Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC)
+    Copyright (C) 2016  Jingjing Yang
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,17 +32,6 @@
 #include "gsl/gsl_cdf.h"
 
 #include "lapack.h"  //for functions EigenDecomp
-
-#ifdef FORCE_FLOAT
-#include "io_float.h"   //for function ReadFile_kin
-#include "gemma_float.h"
-#include "lm_float.h"  //for LM class
-#include "bslmm_float.h"  //for BSLMM class
-#include "lmm_float.h"  //for LMM class, and functions CalcLambda, CalcPve, CalcVgVe
-#include "mvlmm_float.h"  //for MVLMM class
-#include "prdt_float.h"	//for PRDT class
-#include "mathfunc_float.h"	//for a few functions
-#else
 #include "io.h"
 #include "gemma.h"
 #include "lm.h"
@@ -51,30 +40,26 @@
 #include "mvlmm.h"
 #include "prdt.h"
 #include "mathfunc.h"
-#endif
-
 
 using namespace std;
 
 
-
-GEMMA::GEMMA(void):	
-version("EM_MCMC 1:58pm"), date("04/30/2015"), year("2015")
+SFBA::SFBA(void):	
+version("Mstep_mcmc 1:58pm"), date("03/15/2016"), year("2016")
 {}
 
-void GEMMA::PrintHeader (void)
+void SFBA::PrintHeader (void)
 {
 	cout<<endl;
 	cout<<"*********************************************************"<<endl;
-	cout<<"  Genome-wide Efficient Bayesian Association (GEBA) "<<endl;
+	cout<<"  Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC) "<<endl;
 	cout<<"  Version "<<version<<", "<<date<<"                              "<<endl;
 	cout<<"  Visit                                                 "<<endl;
-	cout<<"     https://github.com/yjingj/...      "<<endl;
-	cout<<"     http://home.uchicago.edu/~xz7/software.html        "<<endl;
+	cout<<"     https://github.com/yjingj/SFBA      "<<endl;
 	cout<<"  For Possible Updates                                  "<<endl;
-	cout<<"  (C) "<<year<<" Xiang Zhou, Jingjing Yang              "<<endl;
+	cout<<"  (C) "<<year<<" Jingjing Yang              "<<endl;
 	cout<<"  GNU General Public License                            "<<endl;
-	cout<<"  For Help, Type ./gemma -h                             "<<endl;
+	cout<<"  For Help, Type ./SFBA -h                             "<<endl;
 	cout<<"*********************************************************"<<endl;
 	cout<<endl;
 	
@@ -82,7 +67,7 @@ void GEMMA::PrintHeader (void)
 }
 
 
-void GEMMA::PrintLicense (void)
+void SFBA::PrintLicense (void)
 {
 	cout<<endl;
 	cout<<"The Software Is Distributed Under GNU General Public License, But May Also Require The Following Notifications."<<endl;
@@ -119,26 +104,22 @@ void GEMMA::PrintLicense (void)
 
 
 
-void GEMMA::PrintHelp(size_t option)
+void SFBA::PrintHelp(size_t option)
 {
 	if (option==0) {
 		cout<<endl; 
-		cout<<" GEMMA version "<<version<<", released on "<<date<<endl;
-		cout<<" implemented by Xiang Zhou"<<endl; 
+		cout<<" SFBA_MCMC version "<<version<<", released on "<<date<<endl;
+		cout<<" implemented by Jingjing Yang"<<endl; 
 		cout<<endl;
-		cout<<" type ./gemma -h [num] for detailed helps"<<endl;
+		cout<<" type ./Estep_mcmc -h [num] for detailed helps"<<endl;
 		cout<<" options: " << endl;
 		cout<<" 1: quick guide"<<endl;
 		cout<<" 2: file I/O related"<<endl;
-		cout<<" 3: SNP QC"<<endl;
+		cout<<" 3: variant QC"<<endl;
 		cout<<" 4: calculate relatedness matrix"<<endl;
 		cout<<" 5: perform eigen decomposition"<<endl;
-		cout<<" 6: fit a linear model"<<endl;
-		cout<<" 7: fit a linear mixed model"<<endl;
-		cout<<" 8: fit a multivariate linear mixed model"<<endl;
-		cout<<" 9: fit a Bayesian sparse linear mixed model"<<endl;
-		cout<<" 10: obtain predicted values"<<endl;
-		cout<<" 11: note"<<endl;
+		cout<<" 6: fit a BVSR model"<<endl;
+		cout<<" 7: note"<<endl;
 		cout<<endl;
 	}	
 	
@@ -353,7 +334,7 @@ void GEMMA::PrintHelp(size_t option)
 
 
 
-void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
+void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
 {
 	string str;
 
@@ -892,7 +873,7 @@ void GEMMA::Assign(int argc, char ** argv, PARAM &cPar)
 
 
 
-void GEMMA::BatchRun (PARAM &cPar) 
+void SFBA::BatchRun (PARAM &cPar) 
 {
 	clock_t time_begin, time_start;
     
@@ -1533,7 +1514,7 @@ void GEMMA::BatchRun (PARAM &cPar)
 
 
 
-void GEMMA::WriteLog (int argc, char ** argv, PARAM &cPar) 
+void SFBA::WriteLog (int argc, char ** argv, PARAM &cPar) 
 {
 	string file_str;
 	file_str="./output/"+cPar.file_out;

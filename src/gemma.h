@@ -1,6 +1,6 @@
 /*
-	Genome-wide Efficient Mixed Model Association (GEMMA)
-    Copyright (C) 2011  Xiang Zhou
+	Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC)
+    Copyright (C) 2016  Jingjing Yang
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,21 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __GEMMA_H__                
-#define __GEMMA_H__
+#ifndef __SFBA_H__                
+#define __SFBA_H__
 
-#ifdef FORCE_FLOAT
-#include "param_float.h"
-#else
 #include "param.h"
 #include "VcfFileReader.h"
-#endif
-
 #include "ReadVCF.h"
 
 using namespace std;
 
-class GEMMA {
+class SFBA {
 
 public:			
 	//parameters
@@ -39,7 +34,7 @@ public:
 	string year;
 	
 	//constructor
-	GEMMA(void);
+	SFBA(void);
 	
 	//functions
 	void PrintHeader (void);
