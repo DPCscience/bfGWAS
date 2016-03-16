@@ -61,7 +61,6 @@ void LM::CopyFromParam (PARAM &cPar)
 	file_bfile=cPar.file_bfile;
 	file_geno=cPar.file_geno;
 	file_out=cPar.file_out;
-	file_gene=cPar.file_gene;
 	
 	time_opt=0.0;
 	
@@ -70,9 +69,6 @@ void LM::CopyFromParam (PARAM &cPar)
 	ni_test=cPar.ni_test;
 	ns_test=cPar.ns_test;
 	n_cvt=cPar.n_cvt;
-	
-	ng_total=cPar.ng_total;
-	ng_test=0;
 	
 	indicator_idv=cPar.indicator_idv;	
 	indicator_snp=cPar.indicator_snp;	
@@ -84,10 +80,7 @@ void LM::CopyFromParam (PARAM &cPar)
 
 void LM::CopyToParam (PARAM &cPar) 
 {
-	cPar.time_opt=time_opt;	
-	
-	cPar.ng_test=ng_test;
-	
+	cPar.time_opt=time_opt;		
 	return;
 }
 
@@ -101,34 +94,7 @@ void LM::WriteFiles ()
 
 	ofstream outfile (file_str.c_str(), ofstream::out);
 	if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
-
-	if (!file_gene.empty()) {
-		outfile<<"geneID"<<"\t";
-		
-		if (a_mode==51) {
-			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_wald"<<endl;
-		} else if (a_mode==52) {
-			outfile<<"p_lrt"<<endl;
-		} else if (a_mode==53) {
-			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_score"<<endl;
-		} else if (a_mode==54) {
-			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_wald"<<"\t"<<"p_lrt"<<"\t"<<"p_score"<<endl;
-		} else {}
-				
-		for (vector<SUMSTAT>::size_type t=0; t<sumStat.size(); ++t) {	
-			outfile<<snpInfo[t].rs_number<<"\t";
-			
-			if (a_mode==51) {
-				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_wald <<endl;
-			} else if (a_mode==52) {
-				outfile<<scientific<<setprecision(6)<<"\t"<<sumStat[t].p_lrt<<endl;
-			} else if (a_mode==53) {
-				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_score<<endl;
-			} else if (a_mode==54) {
-				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_wald <<"\t"<<sumStat[t].p_lrt<<"\t"<<sumStat[t].p_score<<endl;
-			} else {}
-		}	
-	}  else {
+	
 		outfile<<"chr"<<"\t"<<"rs"<<"\t"<<"ps"<<"\t"<<"n_miss"<<"\t"<<"allele1"<<"\t"<<"allele0"<<"\t"<<"af"<<"\t";
 		
 		if (a_mode==51) {
@@ -158,7 +124,6 @@ void LM::WriteFiles ()
 			} else {}
 			t++;
 		}
-	}
 	
 		
 	outfile.close();
@@ -231,95 +196,6 @@ void LmCalcP (const size_t test_mode, const double yPwy, const double xPwy, cons
 	
 	return;
 }
-
-
-
-
-void LM::AnalyzeGene (const gsl_matrix *W, const gsl_vector *x) 
-{
-	ifstream infile (file_gene.c_str(), ifstream::in);
-	if (!infile) {cout<<"error reading gene expression file:"<<file_gene<<endl; return;}
-	
-	clock_t time_start=clock();
-	
-	string line;
-	char *ch_ptr;
-	
-	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
-	int c_phen;
-	string rs; //gene id
-	double d;
-	
-	//calculate some basic quantities
-	double yPwy, xPwy, xPwx;
-	double df=(double)W->size1-(double)W->size2-1.0;
-
-	gsl_vector *y=gsl_vector_alloc (W->size1);
-
-	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
-	gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);	
-	gsl_vector *Wty=gsl_vector_alloc (W->size2);
-	gsl_vector *Wtx=gsl_vector_alloc (W->size2);
-	gsl_permutation * pmt=gsl_permutation_alloc (W->size2);
-
-	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, W, W, 0.0, WtW);
-	int sig;
-	LUDecomp (WtW, pmt, &sig);
-	LUInvert (WtW, pmt, WtWi);
-
-	gsl_blas_dgemv (CblasTrans, 1.0, W, x, 0.0, Wtx);
-	CalcvPv(WtWi, Wtx, x, xPwx);
-		
-	//header
-	getline(infile, line);
-	
-	for (size_t t=0; t<ng_total; t++) {
-		getline(infile, line);
-		if (t%d_pace==0 || t==ng_total-1) {ProgressBar ("Performing Analysis ", t, ng_total-1);}
-		ch_ptr=strtok ((char *)line.c_str(), " , \t");
-		rs=ch_ptr;
-		
-		c_phen=0; 
-		for (size_t i=0; i<indicator_idv.size(); ++i) {
-			ch_ptr=strtok (NULL, " , \t");
-			if (indicator_idv[i]==0) {continue;}
-			
-			d=atof(ch_ptr); 			
-			gsl_vector_set(y, c_phen, d);
-			
-			c_phen++;
-		}
-				
-		//calculate statistics		
-		time_start=clock();	
-	
-		gsl_blas_dgemv(CblasTrans, 1.0, W, y, 0.0, Wty);
-		CalcvPv(WtWi, Wtx, Wty, x, y, xPwy, yPwy);
-		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);	
-	
-		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
-		
-		//store summary data
-		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score};
-		sumStat.push_back(SNPs);
-	}
-	cout<<endl;
-	
-	gsl_vector_free(y);
-
-	gsl_matrix_free(WtW);
-	gsl_matrix_free(WtWi);
-	gsl_vector_free(Wty);
-	gsl_vector_free(Wtx);
-	gsl_permutation_free(pmt);
-	
-	infile.close();
-	infile.clear();
-	
-	return;
-}
-
-
 
 
 void LM::AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y)

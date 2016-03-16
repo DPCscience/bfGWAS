@@ -42,10 +42,8 @@
 
 
 #include "lapack.h"
-
 #include "param.h"
 #include "bvsrm.h"
-#include "lmm.h"
 #include "lm.h"
 #include "mathfunc.h"
 
@@ -55,7 +53,7 @@ using namespace std;
 
 
 
-void BSLMM::CopyFromParam (PARAM &cPar) 
+void BVSRM::CopyFromParam (PARAM &cPar) 
 {
     VcfSampleID_test = cPar.VcfSampleID_test;
 
@@ -96,8 +94,6 @@ void BSLMM::CopyFromParam (PARAM &cPar)
 	
 	l_min=cPar.h_min;	
 	l_max=cPar.h_max;  
-	n_region=cPar.n_region;	
-	pve_null=cPar.pve_null;
 	pheno_mean=cPar.pheno_mean;
 	
 	time_UtZ=0.0;
@@ -119,10 +115,7 @@ void BSLMM::CopyFromParam (PARAM &cPar)
 	s_max=cPar.s_max;
 	w_step=cPar.w_step;
 	s_step=cPar.s_step;
-	r_pace=cPar.r_pace;
-	w_pace=cPar.w_pace;
 	n_mh=cPar.n_mh;
-	geo_mean=cPar.geo_mean;
 	randseed=cPar.randseed;
 	trace_G=cPar.trace_G;
 	
@@ -130,7 +123,6 @@ void BSLMM::CopyFromParam (PARAM &cPar)
 	ns_total=cPar.ns_total;
 	ni_test=cPar.ni_test;
 	ns_test=cPar.ns_test;
-	n_cvt=cPar.n_cvt;
 	
 	indicator_idv=cPar.indicator_idv;
 	indicator_snp=cPar.indicator_snp;
@@ -140,9 +132,8 @@ void BSLMM::CopyFromParam (PARAM &cPar)
 }
 
 
-void BSLMM::CopyToParam (PARAM &cPar) 
+void BVSRM::CopyToParam (PARAM &cPar) 
 {
-	cPar.time_UtZ=time_UtZ;
 	cPar.time_Omega=time_Omega;
 	cPar.time_Proposal=time_Proposal;
 	cPar.cHyp_initial=cHyp_initial;
@@ -173,7 +164,7 @@ bool comp_pi (pair<string, double> a, pair<string, double> b)
 }
 
 //JY add to write initial significant SNP id out
-void BSLMM::WriteIniRank (const vector<string> &iniRank)
+void BVSRM::WriteIniRank (const vector<string> &iniRank)
 {
 	string file_str;
 	file_str="./output/"+file_out;
@@ -193,7 +184,7 @@ void BSLMM::WriteIniRank (const vector<string> &iniRank)
 	return;
 }
 
-void BSLMM::WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_snp)
+void BVSRM::WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_snp)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -212,7 +203,7 @@ void BSLMM::WriteIniSNP (const vector< pair<string, double> > &pivec, size_t n_s
     return;
 }
 
-void BSLMM::WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+void BVSRM::WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -231,7 +222,7 @@ void BSLMM::WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_p
     return;
 }
 
-void BSLMM::WriteMatrix(const gsl_matrix * X, const string filename){
+void BVSRM::WriteMatrix(const gsl_matrix * X, const string filename){
     string file_str = "./output/"+file_out;
     file_str += filename;
     ofstream outfile (file_str.c_str(), ofstream::out);
@@ -249,7 +240,7 @@ void BSLMM::WriteMatrix(const gsl_matrix * X, const string filename){
     return;
 } //write gsl_matrix X with filename = ***.txt
 
-void BSLMM::WriteVector(const gsl_vector * X, const string filename){
+void BVSRM::WriteVector(const gsl_vector * X, const string filename){
     string file_str = "./output/"+file_out;
     file_str += filename;
     ofstream outfile (file_str.c_str(), ofstream::out);
@@ -323,7 +314,7 @@ void PrintVector(const  uchar *x, const size_t length){
 
 // JY add function to write function
 
-void BSLMM::WriteBV (const gsl_vector *bv) 
+void BVSRM::WriteBV (const gsl_vector *bv) 
 {
 	string file_str;
 	file_str="./output/"+file_out;
@@ -348,7 +339,7 @@ void BSLMM::WriteBV (const gsl_vector *bv)
 	return;
 }
 
-void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
+void BVSRM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -423,7 +414,7 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
     outfile.close();
 }
 
-void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr, const vector<double> &Z_scores, const vector<double> &SE_beta, const vector<double> pval_lrt)
+void BVSRM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr, const vector<double> &Z_scores, const vector<double> &SE_beta, const vector<double> pval_lrt)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -478,7 +469,7 @@ void BSLMM::WriteParamtemp(vector<pair<double, double> > &beta_g, const vector<S
     outfile.close();
 }
 
-void BSLMM::WriteFGWAS_InputFile(const vector<SNPPOS> &snp_pos, const vector<double> &Z_scores, const vector<double> &SE_beta)
+void BVSRM::WriteFGWAS_InputFile(const vector<SNPPOS> &snp_pos, const vector<double> &Z_scores, const vector<double> &SE_beta)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -513,7 +504,7 @@ void BSLMM::WriteFGWAS_InputFile(const vector<SNPPOS> &snp_pos, const vector<dou
 }
 
 
-void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
+void BVSRM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -572,7 +563,7 @@ void BSLMM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
 
 
 
-void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
+void BVSRM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
 	string file_str;
 	file_str="./output/"+file_out;
@@ -627,7 +618,7 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
 }
 
 
-void BSLMM::WriteParam (const gsl_vector *alpha) 
+void BVSRM::WriteParam (const gsl_vector *alpha) 
 {
 	string file_str;
 	file_str="./output/"+file_out;
@@ -656,7 +647,7 @@ void BSLMM::WriteParam (const gsl_vector *alpha)
 	return;
 }
 
-void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col)
+void BVSRM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col)
 {
     string file_gamma, file_hyp;
     file_gamma="./output/"+file_out;
@@ -714,7 +705,7 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 
 
 
-void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const gsl_matrix *Result_theta, const gsl_matrix *Result_sigma, const size_t w_col)
+void BVSRM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const gsl_matrix *Result_theta, const gsl_matrix *Result_sigma, const size_t w_col)
 {
 	string file_gamma, file_hyp, file_theta, file_sigma;
 	file_gamma="./output/"+file_out;
@@ -823,7 +814,7 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
 }*/
 
 // used for EM-block
-void BSLMM::CalcPgamma (double *p_gamma)
+void BVSRM::CalcPgamma (double *p_gamma)
 {
     double p, q;
     size_t topMarkers=300;
@@ -845,7 +836,7 @@ void BSLMM::CalcPgamma (double *p_gamma)
     return;
 }
 
-void BSLMM::CalcPgamma (double *p_gamma, size_t p_gamma_top)
+void BVSRM::CalcPgamma (double *p_gamma, size_t p_gamma_top)
 {
     double p, q;
 
@@ -873,7 +864,7 @@ void BSLMM::CalcPgamma (double *p_gamma, size_t p_gamma_top)
 
 
 //currently used
-void BSLMM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
+void BVSRM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
 {
 	size_t pos;
 	for (size_t i=0; i<rank.size(); ++i) {
@@ -885,7 +876,7 @@ void BSLMM::SetXgamma (gsl_matrix *Xgamma, uchar **X, vector<size_t> &rank)
 }
 
 //currently used
-void BSLMM::SetXgamma (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, const vector<size_t> &rank_new, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
+void BVSRM::SetXgamma (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, const vector<size_t> &rank_new, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
 {
     double d;
     // cout << "X_add set start" << endl;
@@ -1063,7 +1054,7 @@ void BSLMM::SetXgamma (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX
 
 
 //currently used in propose gamma
-void BSLMM::SetXgammaDel (const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const vector<size_t> &rank_old, size_t col_id, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
+void BVSRM::SetXgammaDel (const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const vector<size_t> &rank_old, size_t col_id, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
 {
     double d;
     size_t s_size = rank_old.size();
@@ -1135,7 +1126,7 @@ void BSLMM::SetXgammaDel (const gsl_matrix *X_old, const gsl_matrix *XtX_old, co
 
 }
 
-void BSLMM::SetXgammaAdd (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, size_t ranki, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
+void BVSRM::SetXgammaAdd (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const gsl_vector *y, const vector<size_t> &rank_old, size_t ranki, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
 {
     double xty;
     size_t s_size = rank_old.size();
@@ -1176,7 +1167,7 @@ void BSLMM::SetXgammaAdd (uchar **X, const gsl_matrix *X_old, const gsl_matrix *
 
 //end of currently used
 
-double BSLMM::CalcPveLM (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const double sigma_a2) 
+double BVSRM::CalcPveLM (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const double sigma_a2) 
 {
 	double pve, var_y;	
 	
@@ -1356,7 +1347,7 @@ vector<pair<size_t, double> > rank_loglr;
  } */
 
 
-void BSLMM::setHyp(double theta_temp, double subvar_temp){
+void BVSRM::setHyp(double theta_temp, double subvar_temp){
         
     // Without specifying initial values   
     cout << "rv from command line = " << rv << endl;
@@ -1414,7 +1405,7 @@ void BSLMM::setHyp(double theta_temp, double subvar_temp){
 
 
 //InitialMCMC currently used
-void BSLMM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
+void BVSRM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank, class HYPBSLMM &cHyp, vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos)
 
 {
     //double q_genome=gsl_cdf_chisq_Qinv(0.05/(double)ns_test, 1);
@@ -1736,7 +1727,7 @@ void BSLMM::InitialMCMC (const gsl_matrix *UtX, const gsl_vector *Uty, vector<si
 }*/
 
 
-double BSLMM::CalcPosterior (const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *Utu, gsl_vector *alpha_prime, class HYPBSLMM &cHyp)
+double BVSRM::CalcPosterior (const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *Utu, gsl_vector *alpha_prime, class HYPBSLMM &cHyp)
 {
 	double sigma_b2=cHyp.h*(1.0-cHyp.rho)/(trace_G*(1-cHyp.h));
 	
@@ -1795,7 +1786,7 @@ double BSLMM::CalcPosterior (const gsl_vector *Uty, const gsl_vector *K_eval, gs
 }
 
 
-double BSLMM::CalcPosterior (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *UtXb, gsl_vector *Utu, gsl_vector *alpha_prime, gsl_vector *beta, class HYPBSLMM &cHyp)
+double BVSRM::CalcPosterior (const gsl_matrix *UtXgamma, const gsl_vector *Uty, const gsl_vector *K_eval, gsl_vector *UtXb, gsl_vector *Utu, gsl_vector *alpha_prime, gsl_vector *beta, class HYPBSLMM &cHyp)
 {
 	clock_t time_start;	
 	
@@ -1935,7 +1926,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *UtXgamma, const gsl_vector *Uty, 
 }*/
 
 // for the new model
-double BSLMM::CalcPosterior (const double yty, class HYPBSLMM &cHyp)
+double BVSRM::CalcPosterior (const double yty, class HYPBSLMM &cHyp)
 {
     double logpost=0.0;
     
@@ -1963,7 +1954,7 @@ void expVector(vector<double> &expvec, vector<double> &logvec){
     }
 }
 
-void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos){
+void BVSRM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vector<SNPPOS> &snp_pos){
     double pi_temp, p = 1.0 / double(ns_test);
     gsl_vector_set_all(pi_vec, p);
    // cout << "theta vec: "; PrintVector(theta);
@@ -1999,7 +1990,7 @@ void BSLMM::CalcPivec(const vector<double> &theta, gsl_vector *pi_vec, const vec
     }
 }
 
-void BSLMM::CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const vector<SNPPOS> &snp_pos){
+void BVSRM::CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const vector<SNPPOS> &snp_pos){
     
     double sigma_temp;
     gsl_vector_set_zero(sigma_vec);
@@ -2019,7 +2010,7 @@ void BSLMM::CalcSvec(const vector<double> &subvar, gsl_vector *sigma_vec, const 
 }
 
 
-void BSLMM::getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, const vector<size_t> &rank)
+void BVSRM::getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, const vector<size_t> &rank)
 {
     size_t order_i;
     for (size_t i=0; i < rank.size(); i++) {
@@ -2029,7 +2020,7 @@ void BSLMM::getSubVec(gsl_vector *sigma_subvec, const gsl_vector * sigma_vec, co
 }
 
 //calculate subvar vector given log_theta, h and rho
-void BSLMM::setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec)
+void BVSRM::setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec)
 {
     for (size_t i=0; i < n_type; i++) {
         
@@ -2046,7 +2037,7 @@ void BSLMM::setSubvar(class HYPBSLMM &cHyp, const vector<double> &Gvec)
     }
 }
 
-void BSLMM::setSubvar(class HYPBSLMM &cHyp)
+void BVSRM::setSubvar(class HYPBSLMM &cHyp)
 {
     for (size_t i=0; i < n_type; i++) {
         cHyp.subvar[i] = cHyp.h * cHyp.rho_vec[i] / (1.0 - cHyp.h);
@@ -2054,7 +2045,7 @@ void BSLMM::setSubvar(class HYPBSLMM &cHyp)
 }
 
 //set sigma_subvec vectoer.
-void BSLMM::getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+void BVSRM::getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     size_t order_i;
     
@@ -2070,7 +2061,7 @@ void BSLMM::getSubVec(gsl_vector *sigma_subvec, class HYPBSLMM &cHyp, const vect
 }
 
 //Used for EM-Block
-void BSLMM::getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+void BVSRM::getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     size_t order_i;
     
@@ -2088,7 +2079,7 @@ void BSLMM::getSubVec(gsl_vector *sigma_subvec, const vector<size_t> &rank, cons
 //set sigma_subvec and mgamma vectoer and trace vector Gvec
 
 //used in EM-block
-void BSLMM::set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+void BVSRM::set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     size_t order_i;
     
@@ -2105,7 +2096,7 @@ void BSLMM::set_mgamma(class HYPBSLMM &cHyp, const vector<size_t> &rank, const v
     }
 }
 
-void BSLMM::setGvec(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos, const gsl_matrix * XtX, vector<double> &Gvec)
+void BVSRM::setGvec(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos, const gsl_matrix * XtX, vector<double> &Gvec)
 {
     size_t order_i;
 
@@ -2125,7 +2116,7 @@ void BSLMM::setGvec(class HYPBSLMM &cHyp, const vector<size_t> &rank, const vect
 }
 
 
-void BSLMM::CalcSvec(const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
+void BVSRM::CalcSvec(const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos){
     
     if (cHyp.n_gamma != rank.size()) {
         cerr << "Error: cHyp.n_gamma not equal to the size of rank\n";
@@ -2141,7 +2132,7 @@ void BSLMM::CalcSvec(const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, const ve
     }
 }
 
-double BSLMM::CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const vector<SNPPOS> &snp_pos){
+double BVSRM::CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const vector<SNPPOS> &snp_pos){
     double sigma_temp = 0.0;
     for (size_t j=0; j < n_type; j++)
     {
@@ -2156,7 +2147,7 @@ double BSLMM::CalcSigma(const class HYPBSLMM &cHyp, const size_t &order_i, const
 }
 
 // Calculate prior P(subvar_j)
-double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp, size_t j)
+double BVSRM::CalcPsubvar (const class HYPBSLMM &cHyp, size_t j)
 {
     double logp_var;
     logp_var = (e_shape - 1.0) * log(cHyp.subvar[j]) - e_rate * (cHyp.subvar[j]);
@@ -2164,13 +2155,13 @@ double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp, size_t j)
 }
 
 // Calculate prior P(theta_j)
-double BSLMM::CalcPtheta (const class HYPBSLMM &cHyp, size_t j)
+double BVSRM::CalcPtheta (const class HYPBSLMM &cHyp, size_t j)
 {
     return (-cHyp.log_theta[j]);
 }
 
 // Calculate prior P(1/subvar) , gamma(shape, rate)
-double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp)
+double BVSRM::CalcPsubvar (const class HYPBSLMM &cHyp)
 {
     double logp_var = 0.0, sum_logv = 0.0, sum_v = 0.0;
     for (size_t i=0; i<n_type; i++) {
@@ -2182,7 +2173,7 @@ double BSLMM::CalcPsubvar (const class HYPBSLMM &cHyp)
 }
 
 // Calculate prior P(theta)
-double BSLMM::CalcPtheta (const class HYPBSLMM &cHyp)
+double BVSRM::CalcPtheta (const class HYPBSLMM &cHyp)
 {
     double logp_theta = 0.0;
     for (size_t i=0; i<n_type; i++) {
@@ -2193,7 +2184,7 @@ double BSLMM::CalcPtheta (const class HYPBSLMM &cHyp)
 
 
 // Calculate P(gamma | theta)
-double BSLMM::CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank)
+double BVSRM::CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank)
 {
     double pi_rank=0.0, pi_nonrank=0.0;
     size_t order_i, s_size = rank.size();
@@ -2220,7 +2211,7 @@ double BSLMM::CalcLikegamma(const gsl_vector *pi_vec, const vector<size_t> &rank
 }*/
 
 //used in EM_BLock
-double BSLMM::CalcLikegamma(const class HYPBSLMM &cHyp)
+double BVSRM::CalcLikegamma(const class HYPBSLMM &cHyp)
 {
     double loglikegamma = 0.0;
     
@@ -2341,7 +2332,7 @@ void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec)
 } */
 
 // for the new model
-double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag, double &loglike)
+double BVSRM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, gsl_vector *Xb, gsl_vector *beta, class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag, double &loglike)
 {
     //conditioning on hyper parameters: subvar, log_theta
     double logpost=0.0;
@@ -2466,7 +2457,7 @@ double BSLMM::CalcPosterior (const gsl_matrix *Xgamma, const gsl_matrix *XtX, co
 
 // for the new model
 //calculate likelihood P(Y | gamma, subvar, theta)
-double BSLMM::CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag)
+double BVSRM::CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, const double yty, const class HYPBSLMM &cHyp, gsl_vector *sigma_vec, bool &Error_Flag)
 {
     //double sigma_a2=cHyp.h/( (1-cHyp.h)*exp(cHyp.logp)*(double)ns_test * trace_G);
     
@@ -2535,7 +2526,7 @@ double BSLMM::CalcLikelihood (const gsl_matrix *XtX, const gsl_vector *Xty, cons
 
 
 
-double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma)
+double BVSRM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma)
 {
     map<size_t, int> mapRank2in;
     double unif, logp = 0.0;
@@ -2715,7 +2706,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
 }
 
 //currently used
-double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma, gsl_matrix *Xgamma_new, gsl_matrix *XtX_new, gsl_vector *Xtz_new)
+double BVSRM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank_new, const double *p_gamma, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, uchar **X, const gsl_vector *z, const gsl_matrix *Xgamma_old, const gsl_matrix *XtX_old, const gsl_vector *Xtz_old, const double &ztz, int &flag_gamma, gsl_matrix *Xgamma_new, gsl_matrix *XtX_new, gsl_vector *Xtz_new)
 {
     map<size_t, int> mapRank2in;
     double unif, logp = 0.0;
@@ -2934,7 +2925,7 @@ double BSLMM::ProposeGamma (const vector<size_t> &rank_old, vector<size_t> &rank
     return logp;
 }
 
-void BSLMM::WriteSampleM(gsl_matrix *Sample_m){
+void BVSRM::WriteSampleM(gsl_matrix *Sample_m){
     string file_sample_m0, file_sample_m1;
     file_sample_m0 = "./output/" + file_out;
     file_sample_m0 += ".sample_m0";
@@ -2963,7 +2954,7 @@ void BSLMM::WriteSampleM(gsl_matrix *Sample_m){
     outfile_m1.close();
 }
 
-void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, vector< pair<double, size_t> > &sample_sigma0, vector< pair<double, size_t> > &sample_sigma1){
+void BVSRM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matrix *Sample_m, vector< pair<double, size_t> > &sample_sigma0, vector< pair<double, size_t> > &sample_sigma1){
     
     double em_logpost = 0.0, logpost_max =  gsl_vector_max(LnPost);
     //cout << "logpost_max = " << logpost_max << endl;
@@ -3043,7 +3034,7 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma, gsl_matri
 }
 
 
-void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
+void BVSRM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
     
     double em_logpost = 0.0, logpost_max =  gsl_vector_max(LnPost);
     //cout << "logpost_max = " << logpost_max << endl;
@@ -3134,7 +3125,7 @@ void BSLMM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
 } */
 
 
-void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
+void BVSRM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl_matrix *Result_gamma, const size_t w_col, const vector<SNPPOS> &snp_pos, const vector<pair<size_t, double> > &pos_loglr)
 {
     string file_gamma, file_hyp;
     file_gamma="./output/"+file_out;
@@ -3197,7 +3188,7 @@ void BSLMM::WriteResult (const int flag, const gsl_matrix *Result_hyp, const gsl
     return;
 }
 
-void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w)
+void BVSRM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector *alpha, const size_t w)
 {
     string file_str;
     file_str="./output/"+file_out;
@@ -3234,13 +3225,12 @@ void BSLMM::WriteParam (vector<pair<double, double> > &beta_g, const gsl_vector 
 
 
 //Current MCMC function
-void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
+void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     
     if (original_method) {
         cout << "Run Block MCMC...\n";
     }
     clock_t time_start;
-    double time_set=0, time_post=0;
     cout << "# of unique function types = " << n_type << endl;
     
     //new model related
@@ -3728,7 +3718,7 @@ void BSLMM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
 // end of current version
 
 //calculat LD correlation matrix
-void BSLMM::CalcLD(uchar **X, gsl_matrix * LD){
+void BVSRM::CalcLD(uchar **X, gsl_matrix * LD){
 
     gsl_vector *xvec_i = gsl_vector_alloc(ni_test);
     gsl_vector *xvec_j = gsl_vector_alloc(ni_test);
@@ -3766,7 +3756,7 @@ void BSLMM::CalcLD(uchar **X, gsl_matrix * LD){
 
 
 //calculate pve and pge, and calculate z_hat for case-control data
-void BSLMM::CalcCC_PVEnZ (const gsl_matrix *U, const gsl_vector *Utu, gsl_vector *z_hat, class HYPBSLMM &cHyp)
+void BVSRM::CalcCC_PVEnZ (const gsl_matrix *U, const gsl_vector *Utu, gsl_vector *z_hat, class HYPBSLMM &cHyp)
 {
 	double d;
 	
@@ -3783,7 +3773,7 @@ void BSLMM::CalcCC_PVEnZ (const gsl_matrix *U, const gsl_vector *Utu, gsl_vector
 
 
 //calculate pve and pge, and calculate z_hat for case-control data
-void BSLMM::CalcCC_PVEnZ (const gsl_matrix *U, const gsl_vector *UtXb, const gsl_vector *Utu, gsl_vector *z_hat, class HYPBSLMM &cHyp)
+void BVSRM::CalcCC_PVEnZ (const gsl_matrix *U, const gsl_vector *UtXb, const gsl_vector *Utu, gsl_vector *z_hat, class HYPBSLMM &cHyp)
 {
 	double d;
 	gsl_vector *UtXbU=gsl_vector_alloc (Utu->size);
@@ -3808,7 +3798,7 @@ void BSLMM::CalcCC_PVEnZ (const gsl_matrix *U, const gsl_vector *UtXb, const gsl
 }
 
 
-void BSLMM::SampleZ (const gsl_vector *y, const gsl_vector *z_hat, gsl_vector *z)
+void BVSRM::SampleZ (const gsl_vector *y, const gsl_vector *z_hat, gsl_vector *z)
 {
 	double d1, d2, z_rand=0.0;
 	for (size_t i=0; i<z->size; ++i) {
@@ -3872,7 +3862,7 @@ void BSLMM::SampleZ (const gsl_vector *y, const gsl_vector *z_hat, gsl_vector *z
 }*/
 
 //specific for two function types
-double BSLMM::ProposeHnRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+double BVSRM::ProposeHnRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
 {
     double h=cHyp_old.h, rho=cHyp_old.rho_vec[0];
     h_max = 0.99; h_min = 0.01;
@@ -3899,7 +3889,7 @@ double BSLMM::ProposeHnRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp
 	return 0.0;
 }
 
-double BSLMM::ProposeRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+double BVSRM::ProposeRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
 {
     double rho=cHyp_old.rho_vec[0];
     double rmax = 0.99, rmin = 0.01;
@@ -3918,7 +3908,7 @@ double BSLMM::ProposeRho (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_n
 }
 
 
-double BSLMM::CalcPrho(const class HYPBSLMM &cHyp)
+double BVSRM::CalcPrho(const class HYPBSLMM &cHyp)
 {
     //assume dirichlet prior for rho_vec
     double prho = 0.0;
@@ -3928,7 +3918,7 @@ double BSLMM::CalcPrho(const class HYPBSLMM &cHyp)
     return prho;
 }
 
-double BSLMM::CalcPh(const class HYPBSLMM &cHyp)
+double BVSRM::CalcPh(const class HYPBSLMM &cHyp)
 {
     //assume dirichlet prior for rho_vec
     double ph;
@@ -3937,7 +3927,7 @@ double BSLMM::CalcPh(const class HYPBSLMM &cHyp)
     return ph;
 }
 
-double BSLMM::ProposePi (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+double BVSRM::ProposePi (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
 {
 	double logp_old=cHyp_old.logp, logp_new=cHyp_old.logp;
 	double log_ratio = 0.0;
@@ -3971,7 +3961,7 @@ double BSLMM::ProposePi (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_ne
 	return log_ratio;
 }
 
-double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+double BVSRM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
 {
 	vector<double> logp_old = cHyp_old.log_theta, logp_new=cHyp_old.log_theta;
     double log_ratio = 0.0;
@@ -3996,7 +3986,7 @@ double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp
 	return log_ratio;
 }
 
-double BSLMM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
+double BVSRM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat)
 {
 	vector<double> subvar_old = cHyp_old.subvar, subvar_new=cHyp_old.subvar;
 	double log_ratio = 0.0;
@@ -4013,7 +4003,7 @@ double BSLMM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHy
 	return log_ratio;
 }
 
-double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *pi_vec_old, gsl_vector *pi_vec_new, const vector<SNPPOS> &snp_pos)
+double BVSRM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *pi_vec_old, gsl_vector *pi_vec_new, const vector<SNPPOS> &snp_pos)
 {
     double logp_old = cHyp_old.log_theta[j], logp_new=cHyp_old.log_theta[j];
     double log_ratio = 0.0;
@@ -4052,7 +4042,7 @@ double BSLMM::ProposeTheta (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp
     return log_ratio;
 }
 
-double BSLMM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *sigma_vec_new, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
+double BVSRM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new, const size_t &repeat, size_t j, gsl_vector *sigma_vec_new, const vector<size_t> &rank, const vector<SNPPOS> &snp_pos)
 {
     double subvar_old = cHyp_old.subvar[j], subvar_new=cHyp_old.subvar[j];
     double log_ratio = 0.0;
@@ -4090,7 +4080,7 @@ double BSLMM::ProposeSubvar (const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHy
 
 
 //JY edit start
-void BSLMM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_matrix *XtX, const gsl_vector *Xtz, gsl_vector *z_res, const size_t &s_size, const double &ztz){
+void BVSRM::CalcRes(const gsl_matrix *Xgamma, const gsl_vector *z, const gsl_matrix *XtX, const gsl_vector *Xtz, gsl_vector *z_res, const size_t &s_size, const double &ztz){
     
     gsl_matrix_const_view X_gsub=gsl_matrix_const_submatrix(Xgamma, 0, 0, Xgamma->size1, s_size);
     gsl_matrix_const_view XtX_gsub = gsl_matrix_const_submatrix(XtX, 0, 0, s_size, s_size);
@@ -4171,7 +4161,7 @@ bool comp_res (pair<size_t, double> a, pair<size_t, double> b)
 	return (a.second < b.second);
 }
 
-void BSLMM::NormRes(gsl_vector * z_res){
+void BVSRM::NormRes(gsl_vector * z_res){
     
     size_t vec_length = (z_res->size);
     size_t y_ind;
@@ -4197,7 +4187,7 @@ void BSLMM::NormRes(gsl_vector * z_res){
 }
 
 //calculate likelihood ratio statistic
-double BSLMM::CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec, size_t posj){
+double BVSRM::CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec, size_t posj){
     double LR;
     double xtz_res, ztz_res, xtx_vec = XtX_diagvec[posj];
     
@@ -4216,7 +4206,7 @@ double BSLMM::CalcLR(const gsl_vector *z_res, const gsl_vector *x_vec, size_t po
     return (LR);
 }
 
-gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, uchar **X, const gsl_vector *z_res, const map<size_t, int> &mapRank2in)
+gsl_ran_discrete_t * BVSRM::MakeProposal(const size_t &o, double *p_BF, uchar **X, const gsl_vector *z_res, const map<size_t, int> &mapRank2in)
 {
     gsl_vector *xvec = gsl_vector_alloc(ni_test);
     
@@ -4264,7 +4254,7 @@ gsl_ran_discrete_t * BSLMM::MakeProposal(const size_t &o, double *p_BF, uchar **
 
 // JY edit end
 
-void BSLMM::AddMarker(double &logp, map<size_t, int> &mapRank2in, class HYPBSLMM &cHyp_new, vector<size_t> &rank_new, const double *p_gamma){
+void BVSRM::AddMarker(double &logp, map<size_t, int> &mapRank2in, class HYPBSLMM &cHyp_new, vector<size_t> &rank_new, const double *p_gamma){
     
     size_t r_add, r;
 
@@ -4286,7 +4276,7 @@ void BSLMM::AddMarker(double &logp, map<size_t, int> &mapRank2in, class HYPBSLMM
     return;
 }
 
-void BSLMM::DelMarker(double &logp, map<size_t, int> &mapRank2in, class HYPBSLMM &cHyp_new, vector<size_t> &rank_new, const double *p_gamma)
+void BVSRM::DelMarker(double &logp, map<size_t, int> &mapRank2in, class HYPBSLMM &cHyp_new, vector<size_t> &rank_new, const double *p_gamma)
 {
     size_t r_remove, col_id, r;
 
@@ -4307,7 +4297,7 @@ void BSLMM::DelMarker(double &logp, map<size_t, int> &mapRank2in, class HYPBSLMM
     return;
 }
 
-void BSLMM::SwitchMarker(double &logp, map<size_t, int> &mapRank2in, LModel &model_old, LModel &model_new, uchar **X, gsl_vector *z, const double &ztz){
+void BVSRM::SwitchMarker(double &logp, map<size_t, int> &mapRank2in, LModel &model_old, LModel &model_new, uchar **X, gsl_vector *z, const double &ztz){
     
     size_t r_add, r_remove, col_id, r;
     long int o_add, o_remove;
@@ -4381,7 +4371,7 @@ void BSLMM::SwitchMarker(double &logp, map<size_t, int> &mapRank2in, LModel &mod
 
 }
 
-void BSLMM::AssignRank(map<size_t, int> &mapRank2in, vector<size_t> &rank_new, const vector<size_t> &rank_old, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new)
+void BVSRM::AssignRank(map<size_t, int> &mapRank2in, vector<size_t> &rank_new, const vector<size_t> &rank_old, const class HYPBSLMM &cHyp_old, class HYPBSLMM &cHyp_new)
 {
     size_t r;
     rank_new.clear();
@@ -4400,7 +4390,7 @@ void BSLMM::AssignRank(map<size_t, int> &mapRank2in, vector<size_t> &rank_new, c
 }
 
 
-bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix * XtX_temp, size_t r_add, size_t s_size)
+bool BVSRM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix * XtX_temp, size_t r_add, size_t s_size)
 {
     bool colinear = 0;
     double vreg;
@@ -4490,7 +4480,7 @@ bool BSLMM::ColinearTest(uchar ** X, const gsl_matrix * Xtemp, const gsl_matrix 
 }
 
 
-double BSLMM::ProposeGamma (LModel &model_old, LModel &model_new, const double *p_gamma, const size_t &repeat, uchar **X, gsl_vector *z, const double &ztz, int &flag_gamma)
+double BVSRM::ProposeGamma (LModel &model_old, LModel &model_new, const double *p_gamma, const size_t &repeat, uchar **X, gsl_vector *z, const double &ztz, int &flag_gamma)
 {
 	map<size_t, int> mapRank2in;
 	double unif, logp = 0.0;
@@ -4529,7 +4519,7 @@ double BSLMM::ProposeGamma (LModel &model_old, LModel &model_new, const double *
 
 
 
-void BSLMM::RidgeR(const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector *Uty, const gsl_vector *eval, const double lambda)
+void BVSRM::RidgeR(const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector *Uty, const gsl_vector *eval, const double lambda)
 {
 	gsl_vector *beta=gsl_vector_alloc (UtX->size2);
 	gsl_vector *H_eval=gsl_vector_alloc (Uty->size);
@@ -4560,7 +4550,7 @@ void BSLMM::RidgeR(const gsl_matrix *U, const gsl_matrix *UtX, const gsl_vector 
 
 
 //below fits MCMC for rho=1
-void BSLMM::CalcXtX (const gsl_matrix *X, const gsl_vector *y, const size_t s_size, gsl_matrix *XtX, gsl_vector *Xty)
+void BVSRM::CalcXtX (const gsl_matrix *X, const gsl_vector *y, const size_t s_size, gsl_matrix *XtX, gsl_vector *Xty)
 {
   time_t time_start=clock();	
   gsl_matrix_const_view X_sub=gsl_matrix_const_submatrix(X, 0, 0, X->size1, s_size);
@@ -4576,7 +4566,7 @@ void BSLMM::CalcXtX (const gsl_matrix *X, const gsl_vector *y, const size_t s_si
 }
 
 
-void BSLMM::SetXgamma (LModel &model_old, LModel &model_new, uchar **X, const gsl_vector *y)
+void BVSRM::SetXgamma (LModel &model_old, LModel &model_new, uchar **X, const gsl_vector *y)
 {
   double d;
    // cout << "X_add set start" << endl;
@@ -4724,7 +4714,7 @@ void BSLMM::SetXgamma (LModel &model_old, LModel &model_new, uchar **X, const gs
 }
 
 
-void BSLMM::LModel::InitialVar(size_t &ni_test, size_t &s_max)
+void BVSRM::LModel::InitialVar(size_t &ni_test, size_t &s_max)
 {
     Xgamma = gsl_matrix_alloc (ni_test, s_max);
     XtX = gsl_matrix_alloc (s_max, s_max);
@@ -4734,7 +4724,7 @@ void BSLMM::LModel::InitialVar(size_t &ni_test, size_t &s_max)
     return;
 }
 
-void BSLMM::LModel::getSubVar(size_t subsize)
+void BVSRM::LModel::getSubVar(size_t subsize)
 {
     Xgamma_sub=gsl_matrix_submatrix (Xgamma, 0, 0, Xgamma->size1, subsize);
     XtX_sub=gsl_matrix_submatrix (XtX, 0, 0, subsize, subsize);
@@ -4742,7 +4732,7 @@ void BSLMM::LModel::getSubVar(size_t subsize)
     beta_sub=gsl_vector_subvector (beta, 0, subsize);
 }
 
-void BSLMM::LModel::SetXgamma (uchar **X, map<size_t, size_t> &mapRank2pos, size_t &ns_test)
+void BVSRM::LModel::SetXgamma (uchar **X, map<size_t, size_t> &mapRank2pos, size_t &ns_test)
 {
     size_t pos;
     for (size_t i=0; i<rank.size(); ++i) {
@@ -4753,7 +4743,7 @@ void BSLMM::LModel::SetXgamma (uchar **X, map<size_t, size_t> &mapRank2pos, size
     return;
 }
 
-void BSLMM::LModel::AssignVar(uchar **X, gsl_vector *y, map<size_t, size_t> &mapRank2pos, size_t &ns_test)
+void BVSRM::LModel::AssignVar(uchar **X, gsl_vector *y, map<size_t, size_t> &mapRank2pos, size_t &ns_test)
 {
     SetXgamma(X, mapRank2pos, ns_test);
     getSubVar(rank.size());
@@ -4762,7 +4752,7 @@ void BSLMM::LModel::AssignVar(uchar **X, gsl_vector *y, map<size_t, size_t> &map
     
 }
 
-void BSLMM::LModel::Copy(LModel &model)
+void BVSRM::LModel::Copy(LModel &model)
 {
     cHyp = model.cHyp;
     gsl_vector_memcpy(Xbeta, model.Xbeta);
@@ -4783,7 +4773,7 @@ void BSLMM::LModel::Copy(LModel &model)
     }
 }
 
-void BSLMM::LModel::FreeMem()
+void BVSRM::LModel::FreeMem()
 {
     gsl_matrix_free(Xgamma);
     gsl_matrix_free(XtX);
@@ -4792,7 +4782,7 @@ void BSLMM::LModel::FreeMem()
     gsl_vector_free(Xbeta);
 }
 
-double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, const double &trace_G)
+double BVSRM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &ns_test, gsl_rng *gsl_r, int &a_mode, const double &trace_G)
 {
     double logpost=0.0;
     
@@ -4915,7 +4905,7 @@ double BSLMM::LModel::CalcPosterior (const double yty, size_t &ni_test, size_t &
 }
 
 //calculate pve and pge, and calculate z_hat for case-control data	
-void BSLMM::CalcCC_PVEnZ (gsl_vector *z_hat, class HYPBSLMM &cHyp) 
+void BVSRM::CalcCC_PVEnZ (gsl_vector *z_hat, class HYPBSLMM &cHyp) 
 {
   gsl_vector_set_zero(z_hat);
   cHyp.pve=0.0;
@@ -4925,7 +4915,7 @@ void BSLMM::CalcCC_PVEnZ (gsl_vector *z_hat, class HYPBSLMM &cHyp)
 
 
 //calculate pve and pge, and calculate z_hat for case-control data	
-void BSLMM::CalcCC_PVEnZ (const gsl_vector *Xb, gsl_vector *z_hat, class HYPBSLMM &cHyp) 
+void BVSRM::CalcCC_PVEnZ (const gsl_vector *Xb, gsl_vector *z_hat, class HYPBSLMM &cHyp) 
 {
 	double d;
 	
@@ -4940,7 +4930,7 @@ void BSLMM::CalcCC_PVEnZ (const gsl_vector *Xb, gsl_vector *z_hat, class HYPBSLM
 }
 
 
-void BSLMM::MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, gsl_vector *z_hat)
+void BVSRM::MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, gsl_vector *z_hat)
 {
     gsl_matrix_free(Result_hyp);
 	gsl_matrix_free(Result_gamma);
@@ -4948,7 +4938,7 @@ void BSLMM::MCMC_Free_WorkVar(gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, 
     return;
 }
 
-void BSLMM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
+void BVSRM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
 {
     size_t pos;
     string rs;
@@ -4988,7 +4978,7 @@ void BSLMM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
     
 }
 
-void BSLMM::InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos){
+void BVSRM::InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos){
     
     //with sorted vectors as input
     size_t pos;
@@ -5011,7 +5001,7 @@ void BSLMM::InitialMap(const vector<pair<size_t, double> > &pos_loglr, const vec
     return;
 }
 
-void BSLMM::CreateGammaProposal(const double *p_gamma){
+void BVSRM::CreateGammaProposal(const double *p_gamma){
 	//calculate proposal distribution for gamma (unnormalized), and set up gsl_r and gsl_t
 	gsl_rng_env_setup();
 	const gsl_rng_type * gslType;
@@ -5031,7 +5021,7 @@ void BSLMM::CreateGammaProposal(const double *p_gamma){
 }
 
 
-double BSLMM::MHPropose(uchar **X_Genotype, const double *p_gamma, gsl_vector *z, const double &ztz, LModel &model_old, LModel &model_new, int &flag_gamma, double &logPost_new, double &logPost_old)
+double BVSRM::MHPropose(uchar **X_Genotype, const double *p_gamma, gsl_vector *z, const double &ztz, LModel &model_old, LModel &model_new, int &flag_gamma, double &logPost_new, double &logPost_old)
 {
     int repeat=1;
     
@@ -5091,7 +5081,7 @@ double BSLMM::MHPropose(uchar **X_Genotype, const double *p_gamma, gsl_vector *z
 }
 
 
-void BSLMM::MHmove(const bool &accept, const int &flag_gamma, LModel &model_old, LModel &model_new, double &logPost_old, double &logPost_new)
+void BVSRM::MHmove(const bool &accept, const int &flag_gamma, LModel &model_old, LModel &model_new, double &logPost_old, double &logPost_new)
 {
     if (accept==1) {
         
@@ -5114,7 +5104,7 @@ void BSLMM::MHmove(const bool &accept, const int &flag_gamma, LModel &model_old,
     return;
 }
 
-void BSLMM::MHsave(const size_t &t, size_t &w, gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, LModel &model_old, vector<pair<double, double> > &beta_g, const double &mean_z, const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos, double &logPost_old)
+void BVSRM::MHsave(const size_t &t, size_t &w, gsl_matrix *Result_hyp, gsl_matrix *Result_gamma, LModel &model_old, vector<pair<double, double> > &beta_g, const double &mean_z, const vector<pair<size_t, double> > &pos_loglr, const vector<SNPPOS> &snp_pos, double &logPost_old)
 {
     size_t w_col, pos;
     

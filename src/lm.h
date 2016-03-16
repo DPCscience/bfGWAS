@@ -43,13 +43,10 @@ public:
 	string file_bfile;
 	string file_geno;
 	string file_out;
-	
-	string file_gene;
-	
+		
 	// Summary statistics
 	size_t ni_total, ni_test;	//number of individuals
 	size_t ns_total, ns_test;	//number of snps
-	size_t ng_total, ng_test;	//number of genes
 	size_t n_cvt;
 	double time_opt;		//time spent
 	
@@ -64,7 +61,6 @@ public:
 	// Main functions
 	void CopyFromParam (PARAM &cPar);
 	void CopyToParam (PARAM &cPar);
-	void AnalyzeGene (const gsl_matrix *W, const gsl_vector *x);
 	void AnalyzePlink (const gsl_matrix *W, const gsl_vector *y);
 	void AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y);
 	void WriteFiles ();

@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __BSLMM_H__                
-#define __BSLMM_H__
+#ifndef __BVSRM_H__                
+#define __BVSRM_H__
 
 #include <vector>
 #include <map>
@@ -34,7 +34,7 @@ using namespace std;
 
 
 
-class BSLMM {
+class BVSRM {
 
 public:
     
