@@ -174,7 +174,7 @@ void PARAM::ReadFiles (void)
         //CreatVcfHash(file_vcf, sampleID2vcfInd, file_sample);
         
         cout << "start reading pheno file, save Input Sample IDs...\n";
-        if (ReadFile_pheno (file_vcf_pheno, indicator_pheno, pheno, InputSampleID)==false)
+        if (ReadFile_pheno (file_vcf_pheno, indicator_idv, pheno, InputSampleID)==false)
             {error=true;}
         //Save all Pheno Sample IDs
         
@@ -205,7 +205,7 @@ void PARAM::ReadFiles (void)
 		}
 
 		//phenotype file before genotype file
-		if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, InputSampleID)==false) {error=true;}
+		if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false) {error=true;}
 
 		//post-process phenotypes, obtain ni_test, ni_total
 		ProcessPheno();
@@ -220,7 +220,7 @@ void PARAM::ReadFiles (void)
 	
 	//for ridge prediction, read phenotype only
 	if (file_geno.empty() && !file_pheno.empty()) {
-		if (ReadFile_pheno (file_pheno, indicator_pheno, pheno, InputSampleID)==false) {error=true;}	
+		if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false) {error=true;}	
 				
 		//post-process phenotypes, obtain ni_test, ni_total
 		ProcessPheno();
@@ -410,13 +410,20 @@ void PARAM::CalcKin (gsl_matrix *matrix_kin)  {
 	
 	gsl_matrix_set_zero (matrix_kin);
 	
-	if (!file_bfile.empty() ) {		
+	if ( !file_bfile.empty() ) {		
 		file_str=file_bfile+".bed";
 		if (PlinkKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
 	}
-	else {
+	else if( !file_geno.empty() ) {
 		file_str=file_geno;
 		if (BimbamKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
+	}
+	else if( !file_vcf.empty() ) {
+		file_str=file_vcf;
+		if (VCFKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
+	}
+	else{
+		cerr << "Need input genotype file: plink, bimbam, or VCF!" <<endl;
 	}
 	
 	return;
@@ -424,53 +431,7 @@ void PARAM::CalcKin (gsl_matrix *matrix_kin)  {
 		
 
 
-void PARAM::WriteMatrix (const gsl_matrix *matrix_U, const string suffix) 
-{
-	string file_str;
-	file_str="./output/"+file_out;
-	file_str+=".";
-	file_str+=suffix;
-	file_str+=".txt";	
-	
-	ofstream outfile (file_str.c_str(), ofstream::out);
-	if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
-	
-	outfile.precision(10);
-	
-	for (size_t i=0; i<matrix_U->size1; ++i) {
-		for (size_t j=0; j<matrix_U->size2; ++j) {
-			outfile<<gsl_matrix_get (matrix_U, i, j)<<"\t";
-		}
-		outfile<<endl;
-	}
-	
-	outfile.close();
-	outfile.clear();
-	return;
-}
 
-
-void PARAM::WriteVector (const gsl_vector *vector_D, const string suffix) 
-{
-	string file_str;
-	file_str="./output/"+file_out;
-	file_str+=".";
-	file_str+=suffix;
-	file_str+=".txt";
-	
-	ofstream outfile (file_str.c_str(), ofstream::out);
-	if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
-	
-	outfile.precision(10);
-	
-	for (size_t i=0; i<vector_D->size; ++i) {
-		outfile<<gsl_vector_get (vector_D, i)<<endl;
-	}
-	
-	outfile.close();
-	outfile.clear();
-	return;
-}
 
 /*
 void PARAM::CheckCvt () 

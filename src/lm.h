@@ -43,6 +43,7 @@ public:
 	string file_bfile;
 	string file_geno;
 	string file_out;
+	string file_vcf;
 		
 	// Summary statistics
 	size_t ni_total, ni_test;	//number of individuals
@@ -63,8 +64,10 @@ public:
 	void CopyToParam (PARAM &cPar);
 	void AnalyzePlink (const gsl_matrix *W, const gsl_vector *y);
 	void AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y);
+	void AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y); // NEED to be rewritten
 	void WriteFiles ();
 };
+
 void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, double &trace_G, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag);
 
 void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double>&XtX_diagvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable);

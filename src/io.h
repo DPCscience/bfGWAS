@@ -57,6 +57,8 @@ bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bo
 
 void ReadFile_kin (const string &file_kin, vector<bool> &indicator_idv, map<string, int> &mapID2num, const size_t k_mode, bool &error, gsl_matrix *G);
 
+bool VCFKin (const string &file_vcf, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin); //** NEED to be rewritten **
+
 bool BimbamKin (const string &file_geno, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
 
 bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
@@ -79,6 +81,9 @@ bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd, const 
 bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc);
 
 void SetMAFCode (const double &maf, string &func_type);
+
+void WriteMatrix(const gsl_matrix * X, const string file_str);
+void WriteVector(const gsl_vector * X, const string file_str);
 
 #endif
 

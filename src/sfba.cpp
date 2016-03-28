@@ -111,7 +111,7 @@ void SFBA::PrintHelp(size_t option)
 		cout<<" 2: file I/O related"<<endl;
 		cout<<" 3: variant QC"<<endl;
 		cout<<" 4: calculate relatedness matrix"<<endl;
-		cout<<" 5: fit a linear model"<<endl;
+		cout<<" 5: fit a single variate linear model"<<endl;
 		cout<<" 6: fit a BVSR model"<<endl;
 		cout<<" 7: note"<<endl;
 		cout<<endl;
@@ -121,15 +121,19 @@ void SFBA::PrintHelp(size_t option)
 		cout<<" QUICK GUIDE" << endl;
 		cout<<" Generate a relatedness matrix: "<<endl;
 		cout<<"         ./gemma -bfile [prefix] -gk [num] -o [prefix]"<<endl;
+		cout<<"         ./gemma -vcf [filename] -p [filename] -gk [num] -o [prefix]"<<endl;
 		cout<<"         ./gemma -g [filename] -p [filename] -gk [num] -o [prefix]"<<endl<<endl;
+
+		cout<<" Fit a linear model for single variant test: "<<endl<<endl;
+		cout<<"         ./gemma -bfile [prefix] -lm [num] -o [prefix]"<<endl;
+		cout<<"         ./gemma -vcf [filename] -p [filename] -lm [num] -o [prefix]"<<endl;
+		cout<<"         ./gemma -g [filename] -p [filename] -lm [num] -o [prefix]"<<endl<<endl;
 
 		cout<<" Fit a Bayesian variable selection regression model: "<<endl;
 		cout<<"         ./gemma -bfile [prefix] -bvsrm [num] -o [prefix]"<<endl;
-		cout<<"         ./gemma -g [filename] -p [filename] -a [filename] -bslmm [num] -o [prefix]"<<endl<<endl;
-
-		cout<<" Fit a linear model for single variant test: "<<endl;
-
-		cout<<endl<<endl;
+		cout<<"         ./gemma -vcf [filename] -p [filename] -a [filename] -bvsrm [num] -o [prefix]"<<endl;
+		cout<<"         ./gemma -g [filename] -p [filename] -a [filename] -bvsrm [num] -o [prefix]"<<endl;
+		cout<<endl;
 	}
 	
 	if (option==2) {
@@ -213,10 +217,9 @@ void SFBA::PrintHelp(size_t option)
 	}
 	
 	if (option==6) {
-		cout<<" JOINT ANALYSIS OPTIONS" << endl;
+		cout<<" FIT BVSR MODEL" << endl;
 		cout<<" -bvsrm	  [num]			 "<<" specify analysis options (default 1)."<<endl;
-		cout<<"          options: 1: BVSRM"<<endl;	
-		cout<<"                   2: standard ridge regression/GBLUP (no mcmc)"<<endl;	
+		cout<<"          options: 1: BVSRM"<<endl <<endl;	
 		
 		cout<<"   MCMC OPTIONS" << endl;
 		cout<<"   Prior" << endl;
@@ -450,6 +453,20 @@ void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
 			str.assign(argv[i]);
 			cPar.s_step=atoi(str.c_str());
 		}
+		else if (strcmp(argv[i], "-smin")==0) {
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+			++i;
+			str.clear();
+			str.assign(argv[i]);
+			cPar.s_min=atoi(str.c_str());
+		}
+		else if (strcmp(argv[i], "-smax")==0) {
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
+			++i;
+			str.clear();
+			str.assign(argv[i]);
+			cPar.s_max=atoi(str.c_str());
+		}
 		else if (strcmp(argv[i], "-hmin")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
@@ -618,9 +635,13 @@ void SFBA::BatchRun (PARAM &cPar)
 		if (cPar.error==true) {cout<<"error! fail to calculate relatedness matrix. "<<endl; return;}
 		
 		if (cPar.a_mode==21) {
-			cPar.WriteMatrix (G, "cXX");
+			string file_str = "./output/" + cPar.file_out;
+			file_str += ".cXX.txt";
+			WriteMatrix (G, file_str);
 		} else {
-			cPar.WriteMatrix (G, "sXX");
+			string file_str = "./output/" + cPar.file_out;
+			file_str += ".sXX.txt";
+			WriteMatrix (G, file_str);
 		}
 		
 		gsl_matrix_free (G);
@@ -642,8 +663,12 @@ void SFBA::BatchRun (PARAM &cPar)
 						
 			if (!cPar.file_bfile.empty()) {
 				cLm.AnalyzePlink (W, Y);
-			} else {
+			} 
+			else if( !cPar.file_geno.empty() ) {
 				cLm.AnalyzeBimbam (W, Y);
+			} 
+			else if( !cPar.file_vcf.empty() ) {
+				cLm.AnalyzeVCF(W, Y);
 			}
 			
 			cLm.WriteFiles();

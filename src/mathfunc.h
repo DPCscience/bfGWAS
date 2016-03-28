@@ -22,6 +22,10 @@
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
 
+typedef unsigned char uchar;
+typedef unsigned short uint16;
+typedef unsigned int uint;
+typedef short int int16;
 
 using namespace std;
 
@@ -39,5 +43,23 @@ void KroneckerSym(const gsl_matrix *K, const gsl_matrix *V, gsl_matrix *H);
 
 double VectorSum (const vector<double> &v);
 double VectorMean (const vector<double> &v);
+
+void PrintVector(const gsl_vector * x);
+void PrintVector(const vector <double> &x);
+void PrintVector(const vector <size_t> &x);
+void PrintVector(const double *x);
+void PrintVector(const vector <double> &x, const size_t s);
+void PrintVector(const uchar *x, const size_t length);
+void PrintVector(const gsl_vector * x, const size_t s);
+void PrintMatrix(const gsl_matrix * X, const size_t nrow, const size_t ncol);
+
+void expVector(vector<double> &expvec, vector<double> &logvec);
+void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec);
+
+bool comp_sigma (pair<double, size_t> a, pair<double, size_t> b);
+bool comp_lr (pair<size_t, double> a, pair<size_t, double> b);
+bool comp_res (pair<size_t, double> a, pair<size_t, double> b);
+
+void NormRes(gsl_vector * z_res);
 
 #endif

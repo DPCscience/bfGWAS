@@ -30,6 +30,7 @@
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h> 
+#include <algorithm>
 
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
@@ -315,9 +316,119 @@ double CalcHWE (const size_t n_hom1, const size_t n_hom2, const size_t n_ab)
 }
 
 
+void PrintVector(const gsl_vector * x){
+    for(size_t i=0; i < x->size; ++i){
+        cout<<setprecision(6) << gsl_vector_get(x, i) << ", ";
+    }
+    cout << endl; 
+}
+
+void PrintVector(const gsl_vector * x, const size_t s){
+    for(size_t i=0; i < s; ++i){
+        cout<<setprecision(6) << gsl_vector_get(x, i) << ", ";
+    }
+    cout << endl;
+}
+
+void PrintMatrix(const gsl_matrix * X, const size_t nrow, const size_t ncol){
+    for (size_t i=0; i<nrow; i++) {
+        gsl_vector_const_view row = gsl_matrix_const_subrow(X, i, 0, ncol);
+        PrintVector(&row.vector);
+    }
+}
+
+void PrintVector(const vector <double> &x){
+    for(size_t i=0; i<x.size(); ++i){
+        cout <<setprecision(6) << x[i] << ", ";
+    }
+    cout << endl; 
+}
+
+void PrintVector(const vector <double> &x, const size_t s){
+    for(size_t i=0; i<s; ++i){
+        cout <<setprecision(6) << x[i] << ", ";
+    }
+    cout << endl;
+}
+
+void PrintVector(const vector <size_t> &x){
+    for(size_t i=0; i<x.size(); ++i){
+        cout << x[i] << ", ";
+    }
+    cout << endl;
+}
+
+void PrintVector(const double *x){
+    for(size_t i=0; i<41; ++i){
+        cout <<setprecision(6) << x[i] << ", ";
+    }
+    cout << endl; 
+}
+
+void PrintVector(const  uchar *x, const size_t length){
+    for(size_t i=0; i<length; ++i){
+        cout << (int)x[i] << ", ";
+    }
+    cout << endl;
+}
+
+// exponentiate log_theta vector
+void expVector(vector<double> &expvec, vector<double> &logvec){
+    expvec.clear();
+    for (size_t i=0; i < logvec.size(); i++) {
+        expvec.push_back(exp(logvec[i]));
+    }
+}
+
+void CalcXVbeta(gsl_matrix *X, const gsl_vector * sigma_vec)
+{
+    for (size_t i=0; i < X->size1; i++) {
+        gsl_vector_view xvec = gsl_matrix_row(X, i);
+        gsl_vector_scale(&xvec.vector, gsl_vector_get(sigma_vec, i));
+    }
+}
+
+bool comp_sigma (pair<double, size_t> a, pair<double, size_t> b)
+{
+    return (a.first < b.first);
+}
+
+bool comp_lr (pair<size_t, double> a, pair<size_t, double> b)
+{
+	return (a.second > b.second);
+}
+
+bool comp_res (pair<size_t, double> a, pair<size_t, double> b)
+{
+	return (a.second < b.second);
+}
 
 
+// Inverse-Normalize vector z_res
+void NormRes(gsl_vector * z_res){
+    
+    size_t vec_length = (z_res->size);
+    size_t y_ind;
+    vector<pair<size_t, double> > y_res;
+    //vector<double> y_norm;
+    
+    for (size_t i=0; i<vec_length; ++i) {
+        y_res.push_back(make_pair(i, gsl_vector_get(z_res, i)));
+    }
+    std::random_shuffle(y_res.begin(), y_res.end());
+    std::stable_sort (y_res.begin(), y_res.end(), comp_res);
+    
+    double unit_p = 1.0/(vec_length+1);
+    double p_i = unit_p, qnorm;
+    for (size_t i=0; i<vec_length; ++i) {
+        qnorm = gsl_cdf_ugaussian_Pinv(p_i);
+        p_i += unit_p;
+        y_ind = y_res[i].first;
+        gsl_vector_set(z_res, y_ind, qnorm);
+    }
+   // cout << "normalize success" << endl;
+    return;
+}
 
 
-	
 

@@ -61,6 +61,7 @@ void LM::CopyFromParam (PARAM &cPar)
 	file_bfile=cPar.file_bfile;
 	file_geno=cPar.file_geno;
 	file_out=cPar.file_out;
+	file_vcf=cPar.file_vcf;
 	
 	time_opt=0.0;
 	
@@ -177,7 +178,6 @@ void CalcvPv(const gsl_matrix *WtWi, const gsl_vector *Wty, const gsl_vector *y,
 }
 
 
-
 //calculate p values and beta/se in a linear model
 void LmCalcP (const size_t test_mode, const double yPwy, const double xPwy, const double xPwx, const double df, const size_t n_size, double &beta, double &se, double &p_wald, double &p_lrt, double &p_score)
 {
@@ -196,6 +196,113 @@ void LmCalcP (const size_t test_mode, const double yPwy, const double xPwy, cons
 	
 	return;
 }
+
+
+//Begin of AnalyzeVCF 
+void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y)
+{
+	igzstream infile (file_vcf.c_str(), igzstream::in);
+	//	ifstream infile (file_geno.c_str(), ifstream::in);
+	if (!infile) {cout<<"error reading genotype file:"<<file_vcf<<endl; return;}
+	
+	clock_t time_start=clock();
+	
+	string line;
+	char *ch_ptr;
+	
+	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
+	int n_miss, c_phen;
+	double geno, x_mean;
+	
+	//calculate some basic quantities
+	double yPwy, xPwy, xPwx;
+	double df=(double)W->size1-(double)W->size2-1.0;
+
+	gsl_vector *x=gsl_vector_alloc (W->size1);
+	gsl_vector *x_miss=gsl_vector_alloc (W->size1);
+
+	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
+	gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);		
+	gsl_vector *Wty=gsl_vector_alloc (W->size2);
+	gsl_vector *Wtx=gsl_vector_alloc (W->size2);
+	gsl_permutation * pmt=gsl_permutation_alloc (W->size2);
+
+	gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, W, W, 0.0, WtW);
+	int sig;
+	LUDecomp (WtW, pmt, &sig);
+	LUInvert (WtW, pmt, WtWi);
+
+	gsl_blas_dgemv (CblasTrans, 1.0, W, y, 0.0, Wty);
+	CalcvPv(WtWi, Wty, y, yPwy);
+	
+	//start reading genotypes and analyze	
+	for (size_t t=0; t<indicator_snp.size(); ++t) {
+		//if (t>1) {break;}
+		getline(infile, line);
+		if (t%d_pace==0 || t==(ns_total-1)) {ProgressBar ("Reading SNPs  ", t, ns_total-1);}
+		if (indicator_snp[t]==0) {continue;}
+		
+		ch_ptr=strtok ((char *)line.c_str(), " , \t");
+		ch_ptr=strtok (NULL, " , \t");
+		ch_ptr=strtok (NULL, " , \t");
+		
+		x_mean=0.0; c_phen=0; n_miss=0;
+		gsl_vector_set_zero(x_miss);
+		for (size_t i=0; i<ni_total; ++i) {
+			ch_ptr=strtok (NULL, " , \t");
+			if (indicator_idv[i]==0) {continue;}
+			
+			if (strcmp(ch_ptr, "NA")==0) {gsl_vector_set(x_miss, c_phen, 0.0); n_miss++;}
+			else {
+				geno=atof(ch_ptr); 				
+				
+				gsl_vector_set(x, c_phen, geno); 
+				gsl_vector_set(x_miss, c_phen, 1.0); 
+				x_mean+=geno;
+			}
+			c_phen++;
+		}	
+		
+		x_mean/=(double)(ni_test-n_miss);
+		
+		for (size_t i=0; i<ni_test; ++i) {
+			if (gsl_vector_get (x_miss, i)==0) {gsl_vector_set(x, i, x_mean);}
+			geno=gsl_vector_get(x, i);
+			if (x_mean>1) {
+				gsl_vector_set(x, i, 2-geno);
+			}
+		}		
+		
+		//calculate statistics		
+		time_start=clock();		
+
+		gsl_blas_dgemv(CblasTrans, 1.0, W, x, 0.0, Wtx);		
+		CalcvPv(WtWi, Wty, Wtx, y, x, xPwy, xPwx);
+		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);
+		
+		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
+		
+		//store summary data
+		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score};
+		sumStat.push_back(SNPs);
+	}	
+	cout<<endl;
+
+	gsl_vector_free(x);
+	gsl_vector_free(x_miss);
+
+	gsl_matrix_free(WtW);
+	gsl_matrix_free(WtWi);
+	gsl_vector_free(Wty);
+	gsl_vector_free(Wtx);
+	gsl_permutation_free(pmt);
+	
+	infile.close();
+	infile.clear();
+	
+	return;
+}
+// end of AnalyzeVCF
 
 
 void LM::AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y)

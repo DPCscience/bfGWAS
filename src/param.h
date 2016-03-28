@@ -22,6 +22,10 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <iostream>     // std::cout, std::endl
+#include <iomanip>
+#include <limits>
+
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_matrix.h"
 
@@ -29,9 +33,7 @@
 #include "StringBasics.h"
 #include "StringHash.h"
 #include "MemoryAllocators.h"
-#include <iostream>     // std::cout, std::endl
-#include <iomanip>
-#include <limits>
+
 
 using namespace std;
 typedef unsigned char uchar;
@@ -265,8 +267,7 @@ public:
     
 	void CopyPheno (gsl_vector *y);
 	void CalcKin (gsl_matrix *matrix_kin);
-	void WriteMatrix (const gsl_matrix *matrix_U, const string suffix);
-	void WriteVector (const gsl_vector *vector_D, const string suffix);
+
     
 };
 
