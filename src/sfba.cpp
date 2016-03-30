@@ -580,6 +580,13 @@ void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
             str.assign(argv[i]);
             cPar.saveSNP=atoi(str.c_str());
         }
+        else if (strcmp(argv[i], "-saveGeno")==0) {
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveGeno=1; continue;}
+            ++i;
+            str.clear();
+            str.assign(argv[i]);
+            cPar.saveGeno=atoi(str.c_str());
+        }
         else if (strcmp(argv[i], "-saveLD")==0) {
             if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveLD=0; continue;}
             ++i;
@@ -621,6 +628,37 @@ void SFBA::BatchRun (PARAM &cPar)
 	cPar.CheckData();
 	if (cPar.error==true) {cout<<"error! fail to check data. "<<endl; return;}
     cout << "Pass check data ..." << endl;
+
+    //Save Genotype file 
+    if(cPar.saveGeno){
+
+		gsl_matrix *G=gsl_matrix_alloc (cPar.ni_test, cPar.ni_test);
+		gsl_vector *y=gsl_vector_alloc (cPar.ni_test); // phenotype
+		
+		//set phenotype vector y		
+		cout << "copy phenotype success ... "<< endl;
+		cPar.CopyPheno (y);
+        
+        // reorder y for reading vcf files
+        cout << "Reorder y for reading vcf files ... "<< endl;
+        cPar.ReorderPheno(y);
+
+        //read genotypes X 
+        clock_t time_readfile = clock();
+        uchar ** X_Genotype = new uchar*[cPar.ns_test];
+        cPar.ReadGenotypes (X_Genotype, G, false); 
+            
+        cout << "load genotype data cost " << (clock()-time_readfile)/(double(CLOCKS_PER_SEC)*60.0) << "mints\n";
+        
+           
+        cPar.WriteGenotypes(X_Genotype);
+
+        gsl_matrix_free(G);
+        gsl_vector_free(y);
+
+        cout << "writting genotype file success ... "<< endl; 
+        exit(1);
+    }
 
 	
 	//Generate Kinship matrix

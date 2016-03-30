@@ -239,8 +239,8 @@ void PARAM::CheckParam (void)
 	//check parameters
 	if (k_mode!=1 && k_mode!=2) {cout<<"error! unknown kinship/relatedness input mode: "<<k_mode<<endl; error=true;}
 
-	if (a_mode!=11 && a_mode!=12 && a_mode!=21 && a_mode!=22 && a_mode!=43 && a_mode!=51 && a_mode!=52 && a_mode!=53 && a_mode!=54)   
-	{cout<<"error! unknown analysis mode: "<<a_mode<<". make sure -gk or -lm or -bvsrm or -predict is sepcified correctly."<<endl; error=true;}
+	if (a_mode!=11 && a_mode!=12 && a_mode!=21 && a_mode!=22 && a_mode!=43 && a_mode!=51 && a_mode!=52 && a_mode!=53 && a_mode!=54 && !saveGeno)   
+	{cout<<"error! unknown analysis mode: "<<a_mode<<". make sure -saveGenoe -gk or -lm or -bvsrm or -predict is sepcified correctly."<<endl; error=true;}
 
 	if (miss_level>1) {cout<<"error! missing level needs to be between 0 and 1. current value = "<<miss_level<<endl; error=true;}
 	if (maf_level>0.5) {cout<<"error! maf level needs to be between 0 and 0.5. current value = "<<maf_level<<endl; error=true;}
@@ -401,6 +401,63 @@ void PARAM::ReadGenotypes (uchar **X, gsl_matrix *K, const bool calc_K) {
     
     return;
     
+}
+
+void PARAM::WriteGenotypes(uchar **X){
+
+	string file_str;
+    file_str="./output/"+file_out;
+    file_str+=".geno";
+
+    //cout << "create UcharTable ...\n";
+    CreateUcharTable(UcharTable);
+    
+    ofstream outfile (file_str.c_str(), ofstream::out);
+    if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
+
+    //write header with VcfSampleID_test 
+    //cout << "write header row."<< endl;
+    //cout << "ni_test = "<< ni_test << endl;
+
+    outfile<<"ID"<<"\t"<<"CHROM"<<"\t" <<"POS"<<"\t" << "REF"<< "\t" << "ALT"  << "\t";
+
+    for (size_t i=0; i<ni_test; i++) {
+    	//if(i < 10){ cout << VcfSampleID_test[i] <<endl; }
+        if (i ==(ni_test-1)) {
+            outfile << VcfSampleID_test[i] << endl;
+        }
+        else outfile << VcfSampleID_test[i] << "\t";
+    } 
+
+    size_t pos=0;
+    double geno_j;
+    
+    //cout << "write variant information."<<endl;
+    for (size_t i=0; i<ns_total; ++i) {
+
+    	if(!indicator_snp[i]){continue;}
+        
+    	// save the data 
+        outfile<< snpInfo[i].rs_number <<"\t"<< snpInfo[i].chr<<"\t" <<snpInfo[i].base_position << "\t" << snpInfo[i].a_major << "\t" << snpInfo[i].a_minor << "\t";
+ 
+        for (size_t j=0; j < ni_test; j++) {
+            
+            geno_j = UcharTable[X[pos][j]].second;
+            if (geno_j == 0.0) geno_j = 0;
+            else if (geno_j == 2.0) geno_j = 2;
+            else if (geno_j == 1.0) geno_j = 1;
+
+            if (j == (ni_test-1))
+                outfile << fixed << setprecision(2)  << geno_j << endl;
+            else
+                outfile << fixed << setprecision(2) << geno_j << "\t";
+        }
+        pos++;
+    }
+    
+    outfile.clear();
+    outfile.close();
+
 }
 
 

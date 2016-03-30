@@ -150,6 +150,7 @@ public:
     int iniType;
     bool FIXHYP;
     bool saveSNP;
+    bool saveGeno;
     string iniSNPfile;
     string hypfile;
     double rv;
@@ -260,6 +261,7 @@ public:
 	void CheckData ();	
 	void PrintSummary ();
 	void ReadGenotypes (uchar **X, gsl_matrix *K, const bool calc_K);
+	void WriteGenotypes(uchar **X);
     
 	//void CheckCvt ();
 	void ProcessPheno();
