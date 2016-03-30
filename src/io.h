@@ -45,7 +45,7 @@ bool ReadFile_snps (const string &file_snps, set<string> &setSnps);
 
 bool ReadFile_bim (const string &file_bim, vector<SNPINFO> &snpInfo);
 
-bool ReadFile_fam (const string &file_fam, vector<bool> &indicator_pheno, vector<double> &pheno, map<string, int> &PhenoID2Ind, vector<string> & InputSampleID);
+bool ReadFile_fam (const string &file_fam, vector<bool> &indicator_pheno, vector<double> &pheno, vector<string> & InputSampleID);
 
 bool ReadFile_anno (const string &file_bim, map<string, string> &mapRS2chr, map<string, long int> &mapRS2bp, map<string, double> &mapRS2cM);
 
@@ -53,7 +53,8 @@ bool ReadFile_pheno (const string &file_pheno, vector<bool> &indicator_pheno, ve
 
 bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, map<string, string> &mapRS2chr, map<string, long int> &mapRS2bp, map<string, double> &mapRS2cM, vector<SNPINFO> &snpInfo, size_t &ns_test);
 
-bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, const double &maf_level, const double &miss_level, const double &hwe_level, size_t &ns_test);
+// first time
+bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, const map<string, size_t> &PhenoID2Ind, size_t &ni_test, size_t &ni_total, const double &maf_level, const double &miss_level, const double &hwe_level, size_t &ns_test, size_t &ns_total);
 
 void ReadFile_kin (const string &file_kin, vector<bool> &indicator_idv, map<string, int> &mapID2num, const size_t k_mode, bool &error, gsl_matrix *G);
 
@@ -65,6 +66,7 @@ bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_
 
 bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test);
 
+// second time
 bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test, vector <size_t> &CompBuffSizeVec, bool Compress_Flag);
 
 

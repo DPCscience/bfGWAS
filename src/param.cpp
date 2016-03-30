@@ -138,93 +138,57 @@ void PARAM::ReadFiles (void)
 {
 	string file_str;
 	
-	
+	// read the set of to be analyzed SNP ids if given file_snps
 	if (!file_snps.empty()) {
 		if (ReadFile_snps (file_snps, setSnps)==false) {error=true;}
 	} else {
 		setSnps.clear();
 	}
 
-	//read genotype and phenotype file for plink format
+	//read bed/bim/fam files of plink format
 	if (!file_bfile.empty()) {
+		cout << "start reading plink bim/fam files ...\n";
 		file_str=file_bfile+".bim";
 		if (ReadFile_bim (file_str, snpInfo)==false) {error=true;}
         
 		file_str=file_bfile+".fam";
-		if (ReadFile_fam (file_str, indicator_pheno, pheno, mapID2num, InputSampleID)==false) {error=true;}
+		if (ReadFile_fam (file_str, indicator_pheno, pheno, InputSampleID)==false) {error=true;}
 		
-		//post-process phenotypes, obtain ni_test, ni_total
+		// obtain ni_test, ni_total, PhenoID2Ind before reading genotypes
 		ProcessPheno();
 		
+		cout << "start reading plink bed file first time ...\n";
 		file_str=file_bfile+".bed";
-		if (ReadFile_bed (file_str, setSnps, indicator_idv, indicator_snp, snpInfo, maf_level, miss_level, hwe_level, ns_test)==false) {error=true;}
-		
-        if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
-        }
-        		
-		ns_total=indicator_snp.size();
-	}
+		if (ReadFile_bed (file_str, setSnps, indicator_idv, indicator_snp, snpInfo, PhenoID2Ind, ni_test, ni_total, maf_level, miss_level, hwe_level, ns_test, ns_total)==false) {error=true;}
+    }else{
+    	if (!file_pheno.empty()){
+    		cout << "start reading pheno file ...\n";
+        	if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false)
+            	{error=true;}
+        	ProcessPheno(); 
+        	// obtain ni_test, ni_total, PhenoID2Ind before reading genotypes
+    	}
     
-    //read genotype and phenotype file for VCF format
-    if (!file_vcf.empty()) {
-        
-        //cout << "Create VCF sampleID to index hash table...\n";
-        //phenotype file before genotype file
-        //CreatVcfHash(file_vcf, sampleID2vcfInd, file_sample);
-        
-        cout << "start reading pheno file, save Input Sample IDs...\n";
-        if (ReadFile_pheno (file_vcf_pheno, indicator_idv, pheno, InputSampleID)==false)
-            {error=true;}
-        //Save all Pheno Sample IDs
-        
-        //post-process phenotypes, obtain ni_test, ni_total
-        ProcessPheno(); //create PhenoID2Ind map
-      
-        
-        cout << "start reading vcf file first time ...\n";
-        indicator_snp.clear();
-        snpInfo.clear();
-        if (ReadFile_vcf(file_vcf, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, snpInfo, ns_test, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
-            {error=true;}
-        
-        cout << "start reading anno file ... \n";
-        if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-            if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
-        }
-                
-        ns_total=indicator_snp.size();//save the total # of variants
-    }
-	
-    
-	//read genotype and phenotype file for bimbam format
-	if (!file_geno.empty()) {
-		//annotation file before genotype file
-		if (!file_anno.empty() ) {
-			if (ReadFile_anno (file_anno, mapRS2chr, mapRS2bp, mapRS2cM)==false) {error=true;}
-		}
+      	//read vcf file for genotypes
+      	if (!file_vcf.empty()) {
+        	cout << "start reading vcf file first time ...\n";
+        	indicator_snp.clear();
+        	snpInfo.clear();
+        	if (ReadFile_vcf(file_vcf, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, snpInfo, ns_test, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
+            	{error=true;}
+      	}else if (!file_geno.empty()) {
+	  		//read genotype file 
+	  		cout << "start reading genotype file first time ...\n";
+			if (ReadFile_geno (file_geno, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, mapRS2chr, mapRS2bp, mapRS2cM, snpInfo, ns_test)==false) {error=true;}
+	  	}
 
-		//phenotype file before genotype file
-		if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false) {error=true;}
-
-		//post-process phenotypes, obtain ni_test, ni_total
-		ProcessPheno();
-		
-
-		if (ReadFile_geno (file_geno, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, mapRS2chr, mapRS2bp, mapRS2cM, snpInfo, ns_test)==false) {error=true;}
-
-		//gsl_matrix_free(W);
-		
-		ns_total=indicator_snp.size();
+	  	ns_total=indicator_snp.size();// obtain total # of variants      
 	}
-	
-	//for ridge prediction, read phenotype only
-	if (file_geno.empty() && !file_pheno.empty()) {
-		if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false) {error=true;}	
-				
-		//post-process phenotypes, obtain ni_test, ni_total
-		ProcessPheno();
-	}
+
+    if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
+    	cout << "start reading annotation files ... \n";
+        if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
+    } 
 
 	return;
 }
@@ -574,7 +538,7 @@ void PARAM::ReorderPheno(gsl_vector *y)
 }
 
 
-//post-process phentoypes, covariates
+//post-process phentoypes, obtain ni_total, ni_test, PhenoIDInd
 void PARAM::ProcessPheno()
 {	
 	//obtain ni_total
