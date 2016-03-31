@@ -179,7 +179,6 @@ public:
     string file_func_code; //coded all unique variant function types
     string file_sample;
     string file_vcf;
-    string file_vcf_pheno;
     string GTfield;
     
 	string file_bfile;

@@ -174,15 +174,13 @@ void PARAM::ReadFiles (void)
         	cout << "start reading vcf file first time ...\n";
         	indicator_snp.clear();
         	snpInfo.clear();
-        	if (ReadFile_vcf(file_vcf, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, snpInfo, ns_test, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
+        	if (ReadFile_vcf(file_vcf, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, snpInfo, ns_test, ns_total, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
             	{error=true;}
       	}else if (!file_geno.empty()) {
 	  		//read genotype file 
 	  		cout << "start reading genotype file first time ...\n";
-			if (ReadFile_geno (file_geno, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, mapRS2chr, mapRS2bp, mapRS2cM, snpInfo, ns_test)==false) {error=true;}
+			if (ReadFile_geno (file_geno, setSnps, indicator_idv, indicator_snp, PhenoID2Ind, snpInfo, VcfSampleID, SampleVcfPos, maf_level, miss_level, hwe_level, ns_test, ns_total, ni_test, ni_total)==false) {error=true;}
 	  	}
-
-	  	ns_total=indicator_snp.size();// obtain total # of variants      
 	}
 
     if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
@@ -350,7 +348,7 @@ void PARAM::ReadGenotypes (uchar **X, gsl_matrix *K, const bool calc_K) {
     
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bed";
-		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test, CompBuffSizeVec, Compress_Flag)==false) {error=true;}
+		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test, ni_total, ns_total, CompBuffSizeVec, Compress_Flag)==false) {error=true;}
         //revised
 	}
 	
@@ -360,7 +358,7 @@ void PARAM::ReadGenotypes (uchar **X, gsl_matrix *K, const bool calc_K) {
     }
     
     else{
-        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test)==false) {error=true;} //to be revised
+        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test, ni_total, ns_total)==false) {error=true;} //to be revised
     }
     
     return;

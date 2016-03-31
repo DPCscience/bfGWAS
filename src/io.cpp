@@ -146,45 +146,6 @@ bool ReadFile_snps (const string &file_snps, set<string> &setSnps)
 }
 
 
-
-//Read bimbam annotation file
-bool ReadFile_anno (const string &file_anno, map<string, string> &mapRS2chr, map<string, long int> &mapRS2bp, map<string, double> &mapRS2cM)
-{
-	mapRS2chr.clear();
-	mapRS2bp.clear();
-	
-	igzstream infile (file_anno.c_str(), igzstream::in);
-	if (!infile) {cout<<"error opening annotation file: "<<file_anno<<endl; return false;}
-	
-	string line;
-	char *ch_ptr;
-	
-	string rs;
-	long int b_pos;
-	string chr;
-	double cM;
-	
-	while (!safeGetline(infile, line).eof()) {
-		ch_ptr=strtok ((char *)line.c_str(), " , \t");
-		rs=ch_ptr;
-		ch_ptr=strtok (NULL, " , \t");
-		if (strcmp(ch_ptr, "NA")==0) {b_pos=-9;} else {b_pos=atol(ch_ptr);}
-		ch_ptr=strtok (NULL, " , \t");
-		if (ch_ptr==NULL || strcmp(ch_ptr, "NA")==0) {chr="-9";} else {chr=ch_ptr;}
-		ch_ptr=strtok (NULL, " , \t");
-		if (ch_ptr==NULL || strcmp(ch_ptr, "NA")==0) {cM=-9;} else {cM=atof(ch_ptr);}
-		
-		mapRS2chr[rs]=chr;
-		mapRS2bp[rs]=b_pos;
-		mapRS2cM[rs]=cM;
-	}
-	
-	infile.close();
-	infile.clear();	
-	
-	return true;
-}
-
 void SetMAFCode (const double &maf, string &func_type){
 	if( maf >= 0.005 && maf < 0.01) func_type+="-maf-range1";
     else if ( maf >= 0.01 && maf < 0.05) func_type+="-maf-range2";
@@ -461,11 +422,8 @@ bool ReadFile_fam (const string &file_fam, vector<bool> &indicator_idv, vector<d
 	igzstream infile (file_fam.c_str(), igzstream::in);
 	if (!infile) {cout<<"error opening .fam file: "<<file_fam<<endl; return false;}
 
-	string line;
+	string line, id;
 	char *ch_ptr;
-
-	string id;
-	size_t c=0;
 	double p;
 	
 	while (!safeGetline(infile, line).eof()) {
@@ -541,7 +499,7 @@ bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd, const 
 } */
 
 // Read VCF genotype file, the first time,
-bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ni_test, string &GTfield, const map<string, size_t> &PhenoID2Ind, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos)
+bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, vector<SNPINFO> &snpInfo, size_t &ns_test, size_t &ns_total, size_t &ni_test, string &GTfield, const map<string, size_t> &PhenoID2Ind, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos)
 {
     if (GTfield.empty()) {
         GTfield = "GT"; //defalt load GT Data
@@ -549,8 +507,11 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
     int lkey = GTfield.size(); //length of the field-key string
     cout << "Load VCF file genotype field: " << GTfield << endl;
     
+    VcfSampleID.clear();
+    SampleVcfPos.clear(); // with length = ni_total
     indicator_snp.clear();
     snpInfo.clear();
+    ns_test=0; // variable defined in param.h
     
     igzstream infile(file_vcf.c_str(), igzstream::in);
     cout << "open vcf file ...\n";
@@ -558,38 +519,19 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
         std::cerr << "Unable to open " << file_vcf << "\n";
         exit(-1);
     }
-    
-    double v_x, v_w;
-    
-    string rs; long int b_pos = 0; string chr;
-    string major; string minor; double cM=-9;
-    string s, pheno_id;
-    size_t pheno_index;
-    
-    double maf, geno, geno_old;
-    size_t n_miss, n_0, n_1, n_2;
-    int flag_poly;  // flag polymophysum variant
-    
-    size_t c_idv=0; //count individual number in each record
-    size_t ctest_idv=0;
-    //cout << "ni_total = indicator_idv.size() =" << indicator_idv.size() << endl;
-    
-    size_t ni_total = indicator_idv.size();
-    ns_test=0; // variable defined in param.h
+        
+    long int b_pos = 0; string chr;
+    string rs, major; string minor, s, pheno_id, line; 
+    size_t pheno_index, n_miss, n_0, n_1, n_2, c_idv=0, ctest_idv=0, tab_count;
+    double maf, geno, geno_old, cM=-9;
+    int flag_poly, GTpos=0, k=0;  // flag polymophysum variant
+    char *pch, *p, *nch=NULL, *n;
 
     gsl_vector *genotype = gsl_vector_alloc(ni_test);
     vector<bool> genotype_miss(ni_test, 0);
-    
-    char *pch, *p, *nch=NULL, *n;
-    size_t tab_count;
-    int GTpos=0, k=0;
-    
-    string line;
-    VcfSampleID.clear();
-    SampleVcfPos.clear(); // with length = ni_total
     vector<bool> indicator_func_temp;
     vector<double> weight_temp;
-    
+
     //cout << "PhenoID2Ind.size() = " << PhenoID2Ind.size() << "Before first time load vcf file ... " << endl;
 
     // cout << "start reading record ... \n";
@@ -837,110 +779,167 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
         //if (ns_test < 5) {sInfo.printMarker(); PrintVector(genotype, 10);}
         }
     }
-    //cout << "genotype vector:\n";
+
+    ns_total = indicator_snp.size();
+
+    // cout << "genotype vector:\n";
     // PrintVector(genotype, 10);
     cout << "VCF tab_count = " << tab_count << endl;
-    //cout << "ns_test = " << ns_test << endl;
     cout << "vcf read first time success ... \n";
-    cout << "ns_test = " << ns_test << "indicator_snp.size = " << indicator_snp.size()<<"\n";
-    
+    cout << "ns_test = " << ns_test << "ns_total = " << ns_total<<"\n";
+     
     gsl_vector_free (genotype);
-    
     infile.clear();
     infile.close();
-    //inFile.clear();
 
     //cout << "PhenoID2Ind.size() = " << PhenoID2Ind.size() << "in the end of first vcf file loading... " << endl;
     return true;
 }
 
-
-//Read bimbam genotype file, the first time, to obtain #SNPs for analysis (ns_test) and total #SNP (ns_total)
-bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const double &maf_level, const double &miss_level, const double &hwe_level, map<string, string> &mapRS2chr, map<string, long int> &mapRS2bp, map<string, double> &mapRS2cM, vector<SNPINFO> &snpInfo, size_t &ns_test) {
-    
+//Read genotype file, the first time
+bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const map<string, size_t> &PhenoID2Ind, vector<SNPINFO> &snpInfo, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos, const double &maf_level, const double &miss_level, const double &hwe_level, size_t &ns_test, size_t &ns_total, const size_t &ni_test, const size_t &ni_total) 
+{
 	indicator_snp.clear();
 	snpInfo.clear();
+    ns_test = 0;
 	
 	igzstream infile (file_geno.c_str(), igzstream::in);
 	if (!infile) {cout<<"error reading genotype file:"<<file_geno<<endl; return false;}
 
 	gsl_vector *genotype=gsl_vector_alloc (indicator_idv.size());
-	gsl_vector *genotype_miss=gsl_vector_alloc (indicator_idv.size());
 	
-	double v_x, v_w;
-	size_t c_idv=0;
-	
-	string line;
-	char *ch_ptr;
-		
-	string rs;
+    char *pch, *nch=NULL;
 	long int b_pos;
-	string chr;
-	string major;
-	string minor;
-	double cM;
-  
-	double maf, geno, geno_old;
-	size_t n_miss;
-	size_t n_0, n_1, n_2;
+	string s, rs, line, chr, major, minor, pheno_id;
+	double cM=-9, maf, geno, geno_old;
+	size_t c_idv, ctest_idv, n_miss, n_0, n_1, n_2, tab_count, pheno_index;
 	int flag_poly;
-	
-	size_t ni_total=indicator_idv.size();
-	size_t ni_test=0;
-	for (size_t i=0; i<ni_total; ++i) {
-		ni_test+=indicator_idv[i];
-	}
-	ns_test=0;
-	
+
     vector<bool> indicator_func_temp;
     vector<double> weight_temp;
     
-	while (!safeGetline(infile, line).eof()) {		
-		ch_ptr=strtok ((char *)line.c_str(), " , \t");
-		rs=ch_ptr;
-		ch_ptr=strtok (NULL, " , \t");
-		minor=ch_ptr;
-		ch_ptr=strtok (NULL, " , \t");
-		major=ch_ptr;
-		
-		if (setSnps.size()!=0 && setSnps.count(rs)==0) {
-			SNPINFO sInfo={"-9", rs, -9, -9, minor, major, -9, -9, -9, indicator_func_temp, weight_temp, 0.0};
-			snpInfo.push_back(sInfo);
-			indicator_snp.push_back(0);
-			continue;
-		}
-				
-		if (mapRS2bp.count(rs)==0) {chr="-9"; b_pos=-9;cM=-9;}
-		else {b_pos=mapRS2bp[rs]; chr=mapRS2chr[rs]; cM=mapRS2cM[rs];}		
-				
-		maf=0; n_miss=0; 
-		flag_poly=0; 
-		geno_old=-9;
-		n_0=0; n_1=0; n_2=0; c_idv=0;
-        
-        gsl_vector_set_zero (genotype_miss);
-		for (size_t i=0; i<ni_total; ++i) {
-			ch_ptr=strtok (NULL, " , \t");
-			if (indicator_idv[i]==0) {continue;}		
+	while (!safeGetline(infile, line).eof()) {
 
-			if (strcmp(ch_ptr, "NA")==0) {gsl_vector_set (genotype_miss, c_idv, 1); n_miss++; c_idv++; continue;}
-			
-			geno=atof(ch_ptr);
-			if (geno>=0 && geno<=0.5) {n_0++;}
-			if (geno>0.5 && geno<1.5) {n_1++;}
-			if (geno>=1.5 && geno<=2.0) {n_2++;}
-			
-			gsl_vector_set (genotype, c_idv, geno); 
-			
-//			if (geno<0) {n_miss++; continue;}
-			
-			if (flag_poly==0) {geno_old=geno; flag_poly=2;}
-			if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
-			
-			maf+=geno;
-			
-			c_idv++;
-		}
+        pch= (char *)line.c_str();
+
+        // read first header line
+        if (strncmp(line.c_str(), "ID", 2) == 0) {
+            //parse for individual IDs, save VCFsampleID, create SampleVcfPos
+            for (tab_count=0; pch != NULL; tab_count++) {
+                nch=strchr(pch, '\t'); //point to the position of next '\t'
+                if (tab_count > 4) {
+                    if (nch == NULL) { s.assign( pch );}
+                    else s.assign( pch, nch-pch );
+                    VcfSampleID.push_back(s);
+                    if (PhenoID2Ind.count(s)>0) {
+                        //cout << "id = " << s << "tab_count = " << tab_count << ", ";
+                        SampleVcfPos.push_back(tab_count); //record tab_position
+                    }
+                }
+                pch = (nch == NULL) ? NULL : nch+1;
+            }
+            cout << "\n Parse first header line for sample IDs with size " << SampleVcfPos.size() << "\n";
+            continue;
+        }else{
+            nch=strchr(pch, '\t'); // ID first
+            if (nch == NULL) { s.assign( pch );}
+            else s.assign( pch, nch-pch ); // field string s
+
+            if (setSnps.size()!=0 && setSnps.count(s)==0) {
+                indicator_snp.push_back(0); continue;
+            }
+
+            pch = (nch == NULL) ? NULL : nch+1;
+
+            c_idv=0; ctest_idv = 0; n_0=0; n_1=0; n_2=0;
+            maf=0; n_miss=0; flag_poly=0; geno_old=-9;
+            vector<bool> genotype_miss(ni_test, 0);
+            
+            for (tab_count=1; pch != NULL; tab_count++) {
+
+                nch=strchr(pch, '\t'); //point to the position of next '\t'
+            
+                if (tab_count<5) {
+                    if (nch == NULL) { s.assign( pch );}
+                    else s.assign( pch, nch-pch ); // field string s
+
+                    switch (tab_count) {
+                        case 1:
+                            chr = s; 
+                            break;
+                        case 2:
+                            b_pos=atol(s.c_str()); break;
+                        case 3:
+                            major = s; break;
+                        case 4:
+                            minor = s; break;
+                        default:
+                            break;
+                    }
+                    pch = (nch == NULL) ? NULL : nch+1;  
+                }
+                else if ( tab_count == SampleVcfPos[ctest_idv] )
+                {
+                    pheno_id = VcfSampleID[c_idv];            
+                    if (PhenoID2Ind.count(pheno_id) > 0){
+                        pheno_index = PhenoID2Ind.at(pheno_id);
+                    } 
+                    else {
+                        cerr << "phenotype id dose not appear in the phenotype file! " << endl;
+                        exit(-1);
+                        continue;
+                    }
+
+                  if ( !indicator_idv[pheno_index] ) {
+                       cout << "phenotype of "<<rs<<"with id "<<pheno_id<<" is not analyzed."<< endl;
+                       pch = (nch == NULL) ? NULL : nch+1;
+                       c_idv++;  
+                       continue;
+                  } 
+                  else{
+                    // read genotype value
+                    if (pch == NULL) {
+                        geno = -9;//missing
+                        genotype_miss[ctest_idv]=1; n_miss++; c_idv++; ctest_idv++; 
+                        pch = (nch == NULL) ? NULL : nch+1;
+                        continue;
+                    }
+                    else {
+                        //read dosage data 
+                        if( (pch[0]=='N') && (pch[1] == 'A') ){
+                            geno = -9;
+                            genotype_miss[ctest_idv]=1; 
+                            n_miss++; c_idv++; ctest_idv++;
+                            pch = (nch == NULL) ? NULL : nch+1;
+                            continue;                           
+                        }else{
+                            if (nch == NULL) { s.assign( pch );}
+                            else s.assign( pch, nch-pch ); // field string s
+                            geno = atof(s.c_str());
+                        }  
+                    }
+                    // cout << "geno = " << geno << endl;
+                    // if(n_miss > 600) exit(-1);
+
+                    if (geno>=0 && geno<=0.5) {n_0++; maf+=geno;}
+                    if (geno>0.5 && geno<1.5) {n_1++; maf+=geno;}
+                    if (geno>=1.5 && geno<=2.0) {n_2++; maf+=geno;}
+
+                    gsl_vector_set (genotype, ctest_idv, geno);
+
+                    if (flag_poly==0) {geno_old=geno; flag_poly=2;}
+                    if (flag_poly==2 && geno!=geno_old) {flag_poly=1;}
+
+                    ctest_idv++;
+                    c_idv++;
+                  }
+                }
+            else if(tab_count >= 5){
+                    c_idv++;
+            }
+            pch = (nch == NULL) ? NULL : nch+1;
+        }
+
 		maf/=2.0*(double)(ni_test-n_miss);	
 		
 		SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, (int)n_miss, (double)n_miss/(double)ni_test, maf, indicator_func_temp, weight_temp, 0.0};
@@ -958,20 +957,22 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<
 			if (CalcHWE(n_0, n_2, n_1)<hwe_level) {indicator_snp.push_back(0); continue;}
 		}
 		
-		//filter SNP if it is correlated with W
+        // replace missing genotypes with sample mean.
 		for (size_t i=0; i<ni_test; ++i) {
-			if (gsl_vector_get(genotype_miss, i)==1)
+			if ( genotype_miss[i] )
             {
-                geno=maf*2.0; gsl_vector_set (genotype, i, geno);
+                geno=maf*2.0; 
+                gsl_vector_set (genotype, i, geno);
             }
 		}
 		
 		indicator_snp.push_back(1); 
 		ns_test++;
+      }
 	}
 	
+    ns_total = indicator_snp.size();
 	gsl_vector_free (genotype);
-	gsl_vector_free (genotype_miss);
 	
 	infile.close();
 	infile.clear();	
@@ -981,7 +982,7 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<
 
 
 //Read bed file, the first time
-bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, const map<string, size_t> &PhenoID2Ind, size_t &ni_test, size_t &ni_total, const double &maf_level, const double &miss_level, const double &hwe_level, size_t &ns_test, size_t &ns_total) 
+bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, const map<string, size_t> &PhenoID2Ind, const size_t &ni_test, const size_t &ni_total, const double &maf_level, const double &miss_level, const double &hwe_level, size_t &ns_test, size_t &ns_total) 
 {
 	indicator_snp.clear();
 	ns_total=snpInfo.size();
@@ -993,13 +994,13 @@ bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bo
 	ifstream infile (file_bed.c_str(), ios::binary);
 	if (!infile) {cout<<"error reading bed file:"<<file_bed<<endl; return false;}
     
-	double v_x, v_w, geno, geno_old;
-	size_t c_idv=0;
+	double geno, geno_old, maf;
+	size_t c_idv=0, n_miss, n_0, n_1, n_2, c, n_bit;
 	char ch[1];
 	bitset<8> b;
+    int flag_poly;
   	
 	//calculate n_bit and c, the number of bit for each snp
-	size_t n_bit;
 	if (ni_total%4==0) {n_bit=ni_total/4;}
 	else {n_bit=ni_total/4+1;}
     
@@ -1008,12 +1009,7 @@ bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bo
 		infile.read(ch,1);
 		b=ch[0];
 	}
-	
-	double maf, vtx;
-	size_t n_miss;
-	size_t n_0, n_1, n_2, c;
-    int flag_poly;
-	
+
 	//start reading snps and doing association test
 	for (size_t t=0; t<ns_total; ++t) {
 		infile.seekg(t*n_bit+3); //n_bit, and 3 is the number of magic numbers
@@ -1099,20 +1095,6 @@ bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bo
 	
 	return true;
 }
-
-      
-//Read bed file, the first time
-/* bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, const gsl_matrix *W, vector<bool> &indicator_idv, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, const double &maf_level, const double &miss_level, const double &hwe_level, const double &r2_level, size_t &ns_test)
-{
-	indicator_snp.clear();
-	size_t ns_total=snpInfo.size();
-	
-	ifstream infile (file_bed.c_str(), ios::binary);
-	if (!infile) {cout<<"error reading bed file:"<<file_bed<<endl; return false;}
-
-	gsl_vector *genotype=gsl_vector_alloc (W->size1);
-	gsl_vector *genotype_miss=gsl_vector_all
-*/
 
 
 void ReadFile_kin (const string &file_kin, vector<bool> &indicator_idv, map<string, int> &mapID2num, const size_t k_mode, bool &error, gsl_matrix *G)
@@ -1467,9 +1449,6 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
         GTfield = "GT"; //defalt load GT Data
     }
     int lkey = GTfield.size(); //length of the field-key string
-    
-    //size_t ni_total = indicator_idv.size();
-    //size_t ns_total = indicator_snp.size();
 
     // Open the VCF file.
     igzstream infile(file_vcf.c_str(), igzstream::in);
@@ -1713,7 +1692,7 @@ bool ReadFile_vcf (const string &file_vcf, vector<bool> &indicator_idv, vector<b
 
 
 //Read bimbam genotype file, the second time, recode "mean" genotype and calculate K
-bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test)
+bool ReadFile_geno (const string &file_geno, const vector<bool> &indicator_idv, const vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, const size_t ni_test, const size_t ns_test, const size_t ni_total, const size_t ns_total)
 {
 	igzstream infile (file_geno.c_str(), igzstream::in);
     //	ifstream infile (file_geno.c_str(), ifstream::in);
@@ -1728,9 +1707,6 @@ bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector
 	gsl_vector *genotype_miss=gsl_vector_alloc (ni_test);
 	double geno, geno_mean;
 	size_t n_miss;
-	
-	uint ni_total= indicator_idv.size();
-	uint ns_total= indicator_snp.size();
 	
 	size_t c_idv=0, c_snp=0;
 	
@@ -1748,7 +1724,9 @@ bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector
 			ch_ptr=strtok (NULL, " , \t");
 			if (indicator_idv[j]==0) {continue;}
 			
-			if (strcmp(ch_ptr, "NA")==0) {gsl_vector_set (genotype_miss, c_idv, 1); n_miss++;}
+			if (strcmp(ch_ptr, "NA")==0) {
+                gsl_vector_set (genotype_miss, c_idv, 1); n_miss++;
+            }
 			else {
 				geno=atof(ch_ptr);
 				gsl_vector_set (genotype, c_idv, geno);
@@ -1791,90 +1769,9 @@ bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector
 }
 
 
-/* bool ReadFile_geno (const string &file_geno, vector<bool> &indicator_idv, vector<bool> &indicator_snp, gsl_matrix *UtX, gsl_matrix *K, const bool calc_K)
- {
- igzstream infile (file_geno.c_str(), igzstream::in);
- //	ifstream infile (file_geno.c_str(), ifstream::in);
- if (!infile) {cout<<"error reading genotype file:"<<file_geno<<endl; return false;}
- 
- string line;
- char *ch_ptr;
- 
- if (calc_K==true) {gsl_matrix_set_zero (K);}
- 
- gsl_vector *genotype=gsl_vector_alloc (UtX->size1);
- gsl_vector *genotype_miss=gsl_vector_alloc (UtX->size1);
- double geno, geno_mean;
- size_t n_miss;
- 
- uint ni_total= indicator_idv.size();
- uint ns_total= indicator_snp.size();
- uint ni_test=UtX->size1;
- uint ns_test=UtX->size2;
- 
- int c_idv=0, c_snp=0;
- 
- for (uint i=0; i<ns_total; ++i) {
- !safeGetline(infile, line).eof();
- if (indicator_snp[i]==0) {continue;}
- 
- ch_ptr=strtok ((char *)line.c_str(), " , \t");
- ch_ptr=strtok (NULL, " , \t");
- ch_ptr=strtok (NULL, " , \t");
- 
- c_idv=0; geno_mean=0; n_miss=0;
- gsl_vector_set_zero (genotype_miss);
- for (uint j=0; j<ni_total; ++j) {
- ch_ptr=strtok (NULL, " , \t");
- if (indicator_idv[j]==0) {continue;}
- 
- if (strcmp(ch_ptr, "NA")==0) {gsl_vector_set (genotype_miss, c_idv, 1); n_miss++;}
- else {
- geno=atof(ch_ptr);
- gsl_vector_set (genotype, c_idv, geno);
- geno_mean+=geno;
- }
- c_idv++;
- }
- 
- geno_mean/=(double)(ni_test-n_miss);
- 
- for (size_t i=0; i<genotype->size; ++i) {
- if (gsl_vector_get (genotype_miss, i)==1) {geno=0;}
- else {geno=gsl_vector_get (genotype, i); geno-=geno_mean;}
- 
- gsl_vector_set (genotype, i, geno);
- gsl_matrix_set (UtX, i, c_snp, geno);
- }
- 
- if (calc_K==true) {gsl_blas_dsyr (CblasUpper, 1.0, genotype, K);}
- 
- c_snp++;
- }
- 
- if (calc_K==true) {
- gsl_matrix_scale (K, 1.0/(double)ns_test);
- 
- for (size_t i=0; i<genotype->size; ++i) {
- for (size_t j=0; j<i; ++j) {
- geno=gsl_matrix_get (K, j, i);
- gsl_matrix_set (K, i, j, geno);
- }
- }
- }
- 
- gsl_vector_free (genotype);
- gsl_vector_free (genotype_miss);
- 
- infile.clear();
- infile.close();
- 
- return true;
- } */
-
 
 //Read BED genotype file, the second time, recode "mean" genotype and calculate K
-bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, size_t ni_test, size_t ns_test, vector <size_t> &CompBuffSizeVec, bool Compress_Flag)
+bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, const size_t ni_test, const size_t ns_test, const size_t ni_total, const size_t ns_total, vector <size_t> &CompBuffSizeVec, bool Compress_Flag)
 {
 	ifstream infile (file_bed.c_str(), ios::binary);
 	if (!infile) {cout<<"error reading bed file:"<<file_bed<<endl; return false;}
@@ -1882,9 +1779,7 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 	char ch[1];
 	bitset<8> b;
     double vtx;
-	
-	size_t ni_total= indicator_idv.size();
-	size_t ns_total= indicator_snp.size();
+
 	size_t n_bit;
 	if (ni_total%4==0) {n_bit=ni_total/4;}
 	else {n_bit=ni_total/4+1;}
@@ -2028,113 +1923,6 @@ bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<b
 }
 
 
-/*bool ReadFile_bed (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, gsl_matrix *UtX, gsl_matrix *K, const bool calc_K)
- {
- ifstream infile (file_bed.c_str(), ios::binary);
- if (!infile) {cout<<"error reading bed file:"<<file_bed<<endl; return false;}
- 
- char ch[1];
- bitset<8> b;
- 
- int ni_total=(int)indicator_idv.size();
- int ns_total=(int)indicator_snp.size();
- int ni_test=UtX->size1;
- int ns_test=UtX->size2;
- int n_bit;
- 
- double vtx;
- 
- if (ni_total%4==0) {n_bit=ni_total/4;}
- else {n_bit=ni_total/4+1;}
- 
- 
- //print the first three majic numbers
- for (int i=0; i<3; ++i) {
- infile.read(ch,1);
- b=ch[0];
- }
- 
- if (calc_K==true) {gsl_matrix_set_zero (K);}
- 
- gsl_vector *genotype=gsl_vector_alloc (UtX->size1);
- 
- double geno, geno_mean;
- size_t n_miss;
- size_t c_idv=0, c_snp=0, c=0;
- 
- //start reading snps and doing association test
- for (int t=0; t<ns_total; ++t) {
- if (indicator_snp[t]==0) {continue;}
- infile.seekg(t*n_bit+3);		//n_bit, and 3 is the number of magic numbers
- 
- //read genotypes
- c_idv=0; geno_mean=0.0; n_miss=0; c=0;
- for (int i=0; i<n_bit; ++i) {
- infile.read(ch,1);
- b=ch[0];
- for (size_t j=0; j<4; ++j) {                //minor allele homozygous: 2.0; major: 0.0;
- if ((i==(n_bit-1)) && c == (size_t)ni_total) {break;}
- if (indicator_idv[c]==0) {c++; continue;}
- c++;
- 
- if (b[2*j]==0) {
- if (b[2*j+1]==0) {gsl_vector_set(genotype, c_idv, 2.0); geno_mean+=2.0;}
- else {gsl_vector_set(genotype, c_idv, 1.0); geno_mean+=1.0;}
- }
- else {
- if (b[2*j+1]==1) {gsl_vector_set(genotype, c_idv, 0.0); geno_mean+=0.0;}
- else {gsl_vector_set(genotype, c_idv, -9.0); n_miss++;}
- }
- c_idv++;
- }
- }
- if (n_miss > 0) cout << "n_miss = " << n_miss << endl;
- if(c_idv != (size_t)ni_test) cout << "# of readed individuals not equal to ni_test \n";
- 
- geno_mean/=(double)(ni_test-n_miss);
- if(geno_mean == 0) cout << "SNP_" << c_snp << "has geno_mean = 0" << endl;
- for (size_t i=0; i<genotype->size; ++i) {
- geno=gsl_vector_get (genotype, i);
- if (geno==-9) {geno=0.0;}
- else {geno-=geno_mean;}
- 
- gsl_vector_set (genotype, i, geno);
- gsl_matrix_set (UtX, i, c_snp, geno);
- }
- 
- //JY add
- gsl_blas_ddot(genotype, genotype, &vtx);
- if(vtx < 0.00000001)
- {cout << "snp has x'x = " << setprecision(9) << vtx;}
- //JY add
- 
- if (calc_K==true) {gsl_blas_dsyr (CblasUpper, 1.0, genotype, K);}
- 
- c_snp++;
- }
- if(c_snp != (size_t)ns_test) cout <<"# of readed SNP not equal to ns_test \n";
- 
- if (calc_K==true) {
- gsl_matrix_scale (K, 1.0/(double)ns_test);
- 
- for (size_t i=0; i<genotype->size; ++i) {
- for (size_t j=0; j<i; ++j) {
- geno=gsl_matrix_get (K, j, i);
- gsl_matrix_set (K, i, j, geno);
- }
- }
- }
- 
- gsl_vector_free (genotype);
- infile.clear();
- infile.close();
- 
- return true;
- } */
-
-
-
-
 bool CountFileLines (const string &file_input, size_t &n_lines)
 {
 	igzstream infile (file_input.c_str(), igzstream::in);
@@ -2180,6 +1968,7 @@ void WriteVector(const gsl_vector * X, const string file_str){
     outfile.clear();
     outfile.close();
     return;
-}//write gsl_vector X with filename = ***.txt
+}
+//write gsl_vector X with filename = ***.txt
 
 

@@ -321,13 +321,6 @@ void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
             str.assign(argv[i]);
             cPar.file_sample=str;
         }
-        else if (strcmp(argv[i], "-vcfp")==0) {
-			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
-			++i;
-			str.clear();
-			str.assign(argv[i]);
-			cPar.file_vcf_pheno=str;
-		}
 		else if (strcmp(argv[i], "-p")==0) {
 			if(argv[i+1] == NULL || argv[i+1][0] == '-') {continue;}
 			++i;
