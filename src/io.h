@@ -45,9 +45,9 @@ bool ReadFile_snps (const string &file_snps, set<string> &setSnps);
 
 bool ReadFile_bim (const string &file_bim, vector<SNPINFO> &snpInfo);
 
-bool ReadFile_fam (const string &file_fam, vector<bool> &indicator_pheno, vector<double> &pheno, vector<string> & InputSampleID);
+bool ReadFile_fam (const string &file_fam, vector<bool> &indicator_pheno, vector<double> &pheno, vector<string> & InputSampleID, size_t &ni_total);
 
-bool ReadFile_pheno (const string &file_pheno, vector<bool> &indicator_pheno, vector<double > &pheno, vector<string> &InputSampleID);
+bool ReadFile_pheno (const string &file_pheno, vector<bool> &indicator_pheno, vector<double > &pheno, vector<string> &InputSampleID, size_t & ni_total);
 
 bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const map<string, size_t> &PhenoID2Ind, vector<SNPINFO> &snpInfo, vector<string> &VcfSampleID, vector<size_t> &SampleVcfPos, const double &maf_level, const double &miss_level, const double &hwe_level, size_t &ns_test, size_t &ns_total, const size_t &ni_test, const size_t &ni_total) ; // first time
 
@@ -56,9 +56,12 @@ bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bo
 
 void ReadFile_kin (const string &file_kin, vector<bool> &indicator_idv, map<string, int> &mapID2num, const size_t k_mode, bool &error, gsl_matrix *G);
 
-bool VCFKin (const string &file_vcf, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin); //** NEED to be rewritten **
+bool getIDVvcf(const string &file_vcf, vector<bool> &indicator_idv, size_t & ni_total, string &GTfield);
+bool VCFKin (const string &file_vcf, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin, string &GTfield); //** NEED to be rewritten **
 
-bool BimbamKin (const string &file_geno, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
+bool getIDVgeno(const string &file_geno, vector<bool> &indicator_idv, size_t & ni_total);
+bool GenoKin (const string &file_geno, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
+
 
 bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
 

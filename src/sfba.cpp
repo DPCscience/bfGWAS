@@ -615,10 +615,12 @@ void SFBA::BatchRun (PARAM &cPar)
 		//set phenotype vector y		
 		cout << "copy phenotype success ... "<< endl;
 		cPar.CopyPheno (y);
-        
-        // reorder y for reading vcf files
-        cout << "Reorder y for reading vcf files ... "<< endl;
-        cPar.ReorderPheno(y);
+
+		if ( (!cPar.file_vcf.empty()) || (!cPar.file_geno.empty()) ) {
+        	// reorder y for reading vcf/genotype files
+        	cout << "Reorder y for reading vcf files ... "<< endl;
+        	cPar.ReorderPheno(y);
+    	} // reorder y for reading vcf files
 
         //read genotypes X 
         clock_t time_readfile = clock();
@@ -644,7 +646,7 @@ void SFBA::BatchRun (PARAM &cPar)
 		
 		gsl_matrix *G=gsl_matrix_alloc (cPar.ni_total, cPar.ni_total);
 		
-		time_start=clock();
+		//time_start=clock();
 		cPar.CalcKin (G);
 		cPar.time_G=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		if (cPar.error==true) {cout<<"error! fail to calculate relatedness matrix. "<<endl; return;}

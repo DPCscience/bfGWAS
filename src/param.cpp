@@ -146,7 +146,7 @@ void PARAM::ReadFiles (void)
 		if (ReadFile_bim (file_str, snpInfo)==false) {error=true;}
         
 		file_str=file_bfile+".fam";
-		if (ReadFile_fam (file_str, indicator_idv, pheno, InputSampleID)==false) {error=true;}
+		if (ReadFile_fam (file_str, indicator_idv, pheno, InputSampleID, ni_total)==false) {error=true;}
 		
 		// obtain ni_test, ni_total, PhenoID2Ind before reading genotypes
 		ProcessPheno();
@@ -157,10 +157,20 @@ void PARAM::ReadFiles (void)
     }else{
     	if (!file_pheno.empty()){
     		cout << "Start reading pheno file ...\n";
-        	if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false)
+        	if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID, ni_total)==false)
             	{error=true;}
         	ProcessPheno(); 
         	// obtain ni_test, ni_total, PhenoID2Ind before reading genotypes
+    	}else{
+    		cout << "No phenotype input file, extracting sample information from the vcf/genotype files.\n";
+    		if (!file_vcf.empty()) {
+        		getIDVvcf(file_vcf, indicator_idv,  ni_total, GTfield);
+      		}else if (!file_geno.empty()) {
+				getIDVgeno(file_geno, indicator_idv, ni_total) ;
+	  		}else{
+	  			cerr << "Unable to get sample information!" << endl;
+	  			exit(-1);
+	  		}
     	}
     
       	//read vcf file for genotypes
@@ -432,11 +442,11 @@ void PARAM::CalcKin (gsl_matrix *matrix_kin)  {
 	}
 	else if( !file_geno.empty() ) {
 		file_str=file_geno;
-		if (BimbamKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
+		if (GenoKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
 	}
 	else if( !file_vcf.empty() ) {
 		file_str=file_vcf;
-		if (VCFKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
+		if (VCFKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin, GTfield)==false) {error=true;}
 	}
 	else{
 		cerr << "Need input genotype file: plink, bimbam, or VCF!" <<endl;
@@ -542,10 +552,6 @@ void PARAM::ReorderPheno(gsl_vector *y)
 //post-process phentoypes, obtain ni_total, ni_test, PhenoIDInd
 void PARAM::ProcessPheno()
 {	
-	//obtain ni_total
-	ni_total = indicator_idv.size();
-	//cout << "indicator_idv.size() = " << indicator_idv.size() << "\n";
-
 	//obtain ni_test
 	ni_test=0;
 

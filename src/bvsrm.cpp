@@ -567,7 +567,6 @@ void BVSRM::SetXgamma (uchar **X, const gsl_matrix *X_old, const gsl_matrix *XtX
 //currently used in propose gamma
 void BVSRM::SetXgammaDel (const gsl_matrix *X_old, const gsl_matrix *XtX_old, const gsl_vector *Xty_old, const vector<size_t> &rank_old, size_t col_id, gsl_matrix *X_new, gsl_matrix *XtX_new, gsl_vector *Xty_new)
 {
-    double d;
     size_t s_size = rank_old.size();
     size_t s2;
     
@@ -725,7 +724,7 @@ void BVSRM::setHyp(double theta_temp, double subvar_temp){
     //cout << "load fixed hyper parameter values from : " << hypfile << endl;
     string line;
     char *pch, *nch;
-    int group_idx=0;
+    size_t group_idx=0;
     
     if (hypfile.c_str() == NULL) {
         cout << "Did not specify hypefile, use software initials...\n";
@@ -1550,7 +1549,6 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     if (original_method) {
         cout << "Run MCMC...\n";
     }
-    clock_t time_start;
     // cout << "# of unique function types = " << n_type << endl;
     
     //new model related
@@ -1602,10 +1600,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     for (size_t i=0; i<ns_test; i++) {
         beta_g.push_back(make_pair(0.0, 0.0));
     }
-    
-    //Setup log-likelihood ratio test statistics
-    time_start=clock();
-    
+        
     //cout << "create UcharTable ...\n";
     CreateUcharTable(UcharTable);
     
