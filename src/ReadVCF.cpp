@@ -172,7 +172,7 @@ uchar IntToUchar(const int intc){
     else return UCHAR_MAX;
 }
 
-// get genotype vector gor given column
+// get genotype vector for given column
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize){
     
     if (marker_i < ns_test ) {
@@ -212,7 +212,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
     }
 }
 
-//used in EM-BLock
+//used in MCMC()
 void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<double> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable){
     
     if (marker_i < ns_test ) {
@@ -253,7 +253,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 
                c = (int)X[marker_i][j];
                 geno = UcharTable[c].second;
-                //if(i < 20)  cout << geno << ",";
+                //if(j < 20)  cout << geno << ",";
                 gsl_vector_set(xvec, j, geno);
             }
         }

@@ -42,7 +42,7 @@ using namespace std;
 
 
 SFBA::SFBA(void):	
-version("SFBA_MCMC"), date("03/15/2016"), year("2016")
+version("SFBA_MCMC"), date("06/15/2016"), year("2016")
 {}
 
 void SFBA::PrintHeader (void)
@@ -546,14 +546,14 @@ void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
 			cPar.d_pace=atoi(str.c_str());
 		}
         else if (strcmp(argv[i], "-win")==0) {
-			if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.win=20;continue;}
+			if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.win=100;continue;}
 			++i;
 			str.clear();
 			str.assign(argv[i]);
 			cPar.win=atol(str.c_str());
 		}
         else if (strcmp(argv[i], "-initype")==0) {
-            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.iniType=1;continue;}
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.iniType=3;continue;}
             ++i;
             str.clear();
             str.assign(argv[i]);
@@ -567,32 +567,16 @@ void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
             cPar.FIXHYP=atoi(str.c_str());
         }
         else if (strcmp(argv[i], "-saveSNP")==0) {
-            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveSNP=1; continue;}
-            ++i;
-            str.clear();
-            str.assign(argv[i]);
-            cPar.saveSNP=atoi(str.c_str());
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveSNP=1; }
         }
         else if (strcmp(argv[i], "-saveGeno")==0) {
-            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveGeno=1; continue;}
-            ++i;
-            str.clear();
-            str.assign(argv[i]);
-            cPar.saveGeno=atoi(str.c_str());
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveGeno=1;}
         }
         else if (strcmp(argv[i], "-saveLD")==0) {
-            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveLD=0; continue;}
-            ++i;
-            str.clear();
-            str.assign(argv[i]);
-            cPar.saveLD=atoi(str.c_str());
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.saveLD=1; }
         }
         else if (strcmp(argv[i], "-comp")==0) {
-            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.Compress_Flag=0;continue;}
-            ++i;
-            str.clear();
-            str.assign(argv[i]);
-            cPar.Compress_Flag=atoi(str.c_str());
+            if(argv[i+1] == NULL || argv[i+1][0] == '-') {cPar.Compress_Flag=1;}
         }
 		else {cout<<"error! unrecognized option: "<<argv[i]<<endl; cPar.error=true; continue;}
 	}
@@ -620,7 +604,7 @@ void SFBA::BatchRun (PARAM &cPar)
 
 	cPar.CheckData();
 	if (cPar.error==true) {cout<<"error! fail to check data. "<<endl; return;}
-    cout << "Pass check data ..." << endl;
+    cout << "Pass data check." << endl;
 
     //Save Genotype file 
     if(cPar.saveGeno){
@@ -717,15 +701,17 @@ void SFBA::BatchRun (PARAM &cPar)
 		gsl_vector *y=gsl_vector_alloc (cPar.ni_test); // phenotype
 		gsl_matrix *W=gsl_matrix_alloc (y->size, 1); // intercept column of 1's
 		gsl_matrix_set_all(W, 1); //covariate matx
-		gsl_matrix *G=gsl_matrix_alloc (y->size, y->size);
+		gsl_matrix *G=gsl_matrix_alloc (y->size, y->size); // kinship matrix
 		
-		//set phenotype vector y		
-		cout << "copy phenotype success ... "<< endl;
+		// set phenotype vector y		
+		// cout << "copy phenotype success ... "<< endl;
 		cPar.CopyPheno (y);
         
-        // reorder y for reading vcf files
-        cout << "Reorder y for reading vcf files ... "<< endl;
-        cPar.ReorderPheno(y);
+        if ( (!cPar.file_vcf.empty()) || (!cPar.file_geno.empty()) ) {
+        	// reorder y for reading vcf/genotype files
+        	cout << "Reorder y for reading vcf files ... "<< endl;
+        	cPar.ReorderPheno(y);
+    	}
         
         //center y, even for case/control data
         cout << "Center phenotype ... "<< endl;
@@ -813,7 +799,7 @@ void SFBA::WriteLog (int argc, char ** argv, PARAM &cPar)
 		outfile<<"## Phenotype mean = "<<cPar.pheno_mean<<endl;	
 		outfile<<"##"<<endl;
 		outfile<<"## MCMC related:"<<endl;	
-		outfile<<"## initial value of h = "<<cPar.cHyp_initial.h<<endl;
+		//outfile<<"## initial value of h = "<<cPar.cHyp_initial.h<<endl;
 		//outfile<<"## initial value of rho = "<<cPar.cHyp_initial.rho<<endl;
 		//outfile<<"## initial value of pi = "<<exp(cPar.cHyp_initial.logp)<<endl;
 		outfile<<"## initial value of |gamma| = "<<cPar.cHyp_initial.n_gamma<<endl;

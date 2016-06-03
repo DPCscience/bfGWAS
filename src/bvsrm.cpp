@@ -765,9 +765,9 @@ void BVSRM::setHyp(double theta_temp, double subvar_temp){
         log_qtheta.push_back(log(1.0 - theta[i]));
     }
     
-    cout << "theta = "; PrintVector(theta);
-    cout << "subvar = "; PrintVector(subvar);
-    cout << "log_qtheta: "; PrintVector(log_qtheta); 
+    cout << "Initial causal probability per category = "; PrintVector(theta);
+    cout << "Initial effect-size variance per category = "; PrintVector(subvar);
+    //cout << "log_qtheta: "; PrintVector(log_qtheta); 
 
 }
 
@@ -778,7 +778,7 @@ void BVSRM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
 {
     //double q_genome=gsl_cdf_chisq_Qinv(0.05/(double)ns_test, 1);
     double q_genome=gsl_cdf_chisq_Qinv(5e-8, 1);
-    cout << "significant chisquare value : " << q_genome << endl;
+    //cout << "significant chisquare value : " << q_genome << endl;
     cHyp.n_gamma=0;
     for (size_t i=0; i<pos_loglr.size(); ++i) {
         if (2.0*pos_loglr[i].second>q_genome) {cHyp.n_gamma++;}
@@ -826,7 +826,7 @@ void BVSRM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     }
     else if(iniType == 0) {iniType = 1;}
     else if(iniType == 1) {
-        cout << "Start with top SVT SNPs.\n";
+        cout << "Start with top variants.\n";
         rank.clear();
         for (size_t i=0; i<cHyp.n_gamma; ++i) {
             rank.push_back(i);
@@ -892,7 +892,7 @@ void BVSRM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
 
     } // Start with most significant variants from SVT
     else if(iniType == 3){
-        cout << "Start with Step-wise SNPs. \n";
+        cout << "Start with Step-wise selected variants. \n";
     vector<pair<size_t, double> > rank_loglr;
     size_t posr, radd;
 
@@ -973,7 +973,7 @@ void BVSRM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     }
     //cout << "number of snps = " << cHyp.n_gamma << endl;
     //stable_sort (rank.begin(), rank.end(), comp_vec); //sort the initial rank.
-    cout << "Starting with ranks: \n"; PrintVector(rank);
+    cout << "Starting model has variants with ranks: \n"; PrintVector(rank);
     
     cHyp.logp=log((double)cHyp.n_gamma/(double)ns_test);
     cHyp.h=pve_null;
@@ -1011,11 +1011,11 @@ void BVSRM::InitialMCMC (uchar **X, const gsl_vector *Uty, vector<size_t> &rank,
     cHyp.log_theta = log_theta;
     cHyp.subvar = subvar; // initial subvar vector
     
-    //cout<<"initial value of h = "<< h <<endl;
-    //cout<<"initial value of rho = "<<cHyp.rho<<endl;
-    cout<<"initial value of theta_vec = "; PrintVector(theta);
-    cout << "initial value of sub-variance_vec = "; PrintVector(subvar);
-    cout<<"initial value of |gamma| = "<<cHyp.n_gamma<<endl;
+    // cout<<"initial value of h = "<< h <<endl;
+    // cout<<"initial value of rho = "<<cHyp.rho<<endl;
+    // cout<<"initial value of theta_vec = "; PrintVector(theta);
+    // cout << "initial value of sub-variance_vec = "; PrintVector(subvar);
+    cout<<"Initially selected number of variants in the model = "<<cHyp.n_gamma<<endl;
     
     return;
 }
@@ -1548,10 +1548,10 @@ void BVSRM::WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma){
 void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     
     if (original_method) {
-        cout << "Run Block MCMC...\n";
+        cout << "Run MCMC...\n";
     }
     clock_t time_start;
-    cout << "# of unique function types = " << n_type << endl;
+    // cout << "# of unique function types = " << n_type << endl;
     
     //new model related
     gsl_vector *sigma_subvec_old = gsl_vector_alloc(s_max);
@@ -1606,7 +1606,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     //Setup log-likelihood ratio test statistics
     time_start=clock();
     
-    cout << "create UcharTable ...\n";
+    //cout << "create UcharTable ...\n";
     CreateUcharTable(UcharTable);
     
     // Jingjing add a vector of "snpPos" structs snp_pos
@@ -1619,16 +1619,16 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     vector<double> Z_scores;
     vector<double> SE_beta;
 
-    cout << "Calculating Z_scores, SE(beta) and LRT statistic values, pvals ... \n";
+    cout << "Calculating Z_scores, standard errors of effect-sizes, LRT statistics, pvals ... \n";
     MatrixCalcLmLR (X, z, pos_loglr, ns_test, ni_test, SNPsd, SNPmean, Gvec, XtX_diagvec, Z_scores, SE_beta, pval_lrt, snp_pos, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable); //calculate trace_G or Gvec, Z_scores, SE_beta
  //calculate trace_G or Gvec
     trace_G = VectorSum(Gvec) / double(ns_test);
-    cout << "trace_G = " << trace_G << endl;
+    cout << "Trace of Genotype Matrix = " << trace_G << endl;
 
     for(size_t i=0; i < n_type; i++){
         Gvec[i] /= mFunc[i];
     } 
-    cout << "Avg trace_G vec : " ; PrintVector(Gvec); 
+    //cout << "Avg trace of genotypes per category : " ; PrintVector(Gvec); 
 
     //calculat LD matrix and save in the output
     if(saveLD){
@@ -1692,7 +1692,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     for(size_t i=0; i < pval_lrt.size(); i++){
         if (pval_lrt[i] < 5e-8) p_gamma_top++;
     }
-    cout << "# of markers with p_lrt < 5e-8 : " << p_gamma_top << endl;
+    cout << "Number of variants with p-value < 5e-8 : " << p_gamma_top << endl;
 
     // CalcPgamma (p_gamma); // calculate discrete distribution for gamma
     CalcPgamma (p_gamma, p_gamma_top);
@@ -1724,7 +1724,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     
     //cout << "Set m_gamma... \n";
     set_mgamma(cHyp_old, rank_old, snp_pos);
-    cout << "initial m_gamma: ";
+    cout << "Initial number of selected variants per category : ";
     PrintVector(cHyp_old.m_gamma); 
     //cout << "Set sigma_subvec... \n";
     getSubVec(sigma_subvec_old, rank_old, snp_pos);
@@ -1752,7 +1752,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
         cerr << "Failed at initialMCMC...\n";
         exit(-1);
     }
-    cout <<  "Initial logPost_old = " << logPost_old << endl;
+    //cout <<  "Initial logPost_old = " << logPost_old << endl;
     
     //calculate centered z_hat, and pve
     if (a_mode==13) {
@@ -1939,8 +1939,8 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
          if (t % w_pace == 0 && t > w_step) {
              accept_percent = (double)n_accept/(double)((t+1) * n_mh);
              //cout << "cHyp_old.n_gamma= " << cHyp_old.n_gamma << endl;
-             cout << "gamma acceptance percentage = " << setprecision(6) << accept_percent << endl ;
-             cout << "m_gamma: " << endl; PrintVector(cHyp_old.m_gamma);
+             cout << "acceptance percentage = " << setprecision(6) << accept_percent << endl ;
+             cout << "# of selected variants per category: " << endl; PrintVector(cHyp_old.m_gamma);
              //cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); cout << endl;
              cout << "loglike: " << loglike_old << endl;
         }
@@ -1984,7 +1984,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cout<< "MCMC completed ... " << endl << endl;
     accept_percent = (double)n_accept/(double)(total_step * n_mh);
     cout << "gamma acceptance percentage = " << accept_percent << endl ;
-    cout << "m_gamma: "; PrintVector(cHyp_old.m_gamma);
+    cout << "# of selected variants per category: "; PrintVector(cHyp_old.m_gamma);
     cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); 
     cout << "loglike: " << loglike_old << endl;
     cout << "k_save_sample = " << k_save_sample << endl;

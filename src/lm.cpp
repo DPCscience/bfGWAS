@@ -556,7 +556,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 }
 
 
-//used in EM_block
+//
 void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
 {
     size_t n_type = snp_pos[0].indicator_func.size();
@@ -566,12 +566,13 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
     gsl_vector *xvec = gsl_vector_alloc(ni_test);
 	double yty, xty, xtx, log_lr;
 	gsl_blas_ddot(y, y, &yty);
-    cout << "calcLR: yty = " << yty << endl;
+    cout << "calcLR: yty = " << yty <<"ns_test = " << ns_test << "; ni_test" << ni_test << endl;
     
 	for (size_t i=0; i<ns_test; ++i) {
         
         getGTgslVec(X, xvec, i, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
         gsl_blas_ddot(xvec, xvec, &xtx);
+        
         XtX_diagvec.push_back(xtx);
         gsl_blas_ddot(xvec, y, &xty);
         
@@ -591,7 +592,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 	return;
 }
 
-//calculate Z-Scores and SE(beta) 
+//calculate Z-Scores and SE(beta); used in EM_block
 void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, vector<double> &Z_scores, vector<double> &SE_beta, vector<double> &pval_lrt, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
 {
     size_t n_type = snp_pos[0].indicator_func.size();
@@ -604,12 +605,14 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
     gsl_vector *xvec = gsl_vector_alloc(ni_test);
 	double yty, xty, xtx, log_lr, beta_est, se_beta;
 	gsl_blas_ddot(y, y, &yty);
-    cout << "calcLR: yty = " << yty << endl;
+    //cout << "calcLR: yty = " << yty << endl;
     
 	for (size_t i=0; i<ns_test; ++i) {
         
         getGTgslVec(X, xvec, i, ni_test, ns_test, SNPsd, SNPmean, CompBuffSizeVec, UnCompBufferSize, Compress_Flag, UcharTable);
         gsl_blas_ddot(xvec, xvec, &xtx);
+        //if(i < 10) cout << xtx << ";";
+
         XtX_diagvec.push_back(xtx);
         gsl_blas_ddot(xvec, y, &xty);
 

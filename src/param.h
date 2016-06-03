@@ -151,12 +151,12 @@ public:
     bool FIXHYP;
     bool saveSNP;
     bool saveGeno;
+    bool saveLD;
+
     string iniSNPfile;
     string hypfile;
     double rv;
-    bool saveLD;
     double pheno_mean;
-    
     
 	// IO related parameters
     size_t UnCompBufferSize;
@@ -232,7 +232,7 @@ public:
 
 	// Data
     
-	vector<double>  pheno;			//a vector record all phenotypes, NA replaced with -9
+	vector<double>  pheno;	//a vector record all phenotypes, NA replaced with -9
 
 	vector<bool>  indicator_pheno;			//a matrix record when a phenotype is missing for an individual; 0 missing, 1 available
 

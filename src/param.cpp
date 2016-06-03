@@ -108,26 +108,20 @@ void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, cons
 
 
 PARAM::PARAM(void):
-vscale(0.0),
+vscale(0.0), iniType(3), saveSNP(0), saveGeno(0), saveLD(0), rv(1.0), 
+GTfield("GT"), Compress_Flag(0),
 mode_silence (false), a_mode (0), k_mode(1), d_pace (100000),
-file_out("result"), n_cvt(1),
+file_out("result"), 
 miss_level(0.05), maf_level(0.01), hwe_level(0), 
-//em_prec(0.0001),nr_prec(0.0001),em_iter(10000),nr_iter(100),crt(0),
-win(20),nadd_accept(0), ndel_accept(0),
-nswitch_accept(0),
+win(100),nadd_accept(0), ndel_accept(0), nswitch_accept(0),
 nother_accept(0), nadd(0), ndel(0),
 nswitch(0), nother(0),
-h_min(-1), h_max(1.0),	h_scale(-1),
+h_min(-1), h_max(1.0), h_scale(-1),
 rho_min(1.0), rho_max(1.0),	rho_scale(-1),
 logp_min(0.0), logp_max(0.0), logp_scale(-1),
-s_min(0), s_max(300),
-w_step(100000),	s_step(1000000),
-//r_pace(10), w_pace(1000),
-n_accept(0),
-n_mh(10),
-//geo_mean(2000.0),
-randseed(-1),
-error(false),
+s_min(0), s_max(10), 
+w_step(100000),	s_step(1000000), n_accept(0),
+n_mh(10), randseed(-1), error(false),
 time_total(0.0), time_G(0.0), time_Omega(0.0)
 {}
 
@@ -147,22 +141,22 @@ void PARAM::ReadFiles (void)
 
 	//read bed/bim/fam files of plink format
 	if (!file_bfile.empty()) {
-		cout << "start reading plink bim/fam files ...\n";
+		cout << "Start reading plink bim/fam files ...\n";
 		file_str=file_bfile+".bim";
 		if (ReadFile_bim (file_str, snpInfo)==false) {error=true;}
         
 		file_str=file_bfile+".fam";
-		if (ReadFile_fam (file_str, indicator_pheno, pheno, InputSampleID)==false) {error=true;}
+		if (ReadFile_fam (file_str, indicator_idv, pheno, InputSampleID)==false) {error=true;}
 		
 		// obtain ni_test, ni_total, PhenoID2Ind before reading genotypes
 		ProcessPheno();
 		
-		cout << "start reading plink bed file first time ...\n";
 		file_str=file_bfile+".bed";
+		cout << "First time reading Plink bed file: " << file_str << "\n";
 		if (ReadFile_bed (file_str, setSnps, indicator_idv, indicator_snp, snpInfo, PhenoID2Ind, ni_test, ni_total, maf_level, miss_level, hwe_level, ns_test, ns_total)==false) {error=true;}
     }else{
     	if (!file_pheno.empty()){
-    		cout << "start reading pheno file ...\n";
+    		cout << "Start reading pheno file ...\n";
         	if (ReadFile_pheno (file_pheno, indicator_idv, pheno, InputSampleID)==false)
             	{error=true;}
         	ProcessPheno(); 
@@ -171,20 +165,20 @@ void PARAM::ReadFiles (void)
     
       	//read vcf file for genotypes
       	if (!file_vcf.empty()) {
-        	cout << "start reading vcf file first time ...\n";
+        	cout << "Start reading vcf file first time ...\n";
         	indicator_snp.clear();
         	snpInfo.clear();
         	if (ReadFile_vcf(file_vcf, setSnps, indicator_idv, indicator_snp, maf_level, miss_level, hwe_level, snpInfo, ns_test, ns_total, ni_test, GTfield, PhenoID2Ind, VcfSampleID, SampleVcfPos) == false )
             	{error=true;}
       	}else if (!file_geno.empty()) {
 	  		//read genotype file 
-	  		cout << "start reading genotype file first time ...\n";
+	  		cout << "Start reading genotype file first time ...\n";
 			if (ReadFile_geno (file_geno, setSnps, indicator_idv, indicator_snp, PhenoID2Ind, snpInfo, VcfSampleID, SampleVcfPos, maf_level, miss_level, hwe_level, ns_test, ns_total, ni_test, ni_total)==false) {error=true;}
 	  	}
 	}
 
     if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-    	cout << "start reading annotation files ... \n";
+    	cout << "Start reading annotation files: " << file_anno << "\n";
         if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
     } 
 
@@ -348,7 +342,7 @@ void PARAM::ReadGenotypes (uchar **X, gsl_matrix *K, const bool calc_K) {
     
 	if (!file_bfile.empty()) {
 		file_str=file_bfile+".bed";
-		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test, ni_total, ns_total, CompBuffSizeVec, Compress_Flag)==false) {error=true;}
+		if (ReadFile_bed (file_str, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test, ni_total, ns_total, SNPmean, CompBuffSizeVec, Compress_Flag)==false) {error=true;}
         //revised
 	}
 	
@@ -357,8 +351,11 @@ void PARAM::ReadGenotypes (uchar **X, gsl_matrix *K, const bool calc_K) {
         {error=true;} // revised
     }
     
-    else{
-        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, X, K, calc_K, ni_test, ns_test, ni_total, ns_total)==false) {error=true;} //to be revised
+    else if(!file_geno.empty()){
+        if (ReadFile_geno (file_geno, indicator_idv, indicator_snp, X, K, calc_K, ni_test, SNPmean, CompBuffSizeVec, SampleVcfPos, PhenoID2Ind, VcfSampleID, Compress_Flag)==false) {error=true;} //to be revised
+    }else{
+    	cerr << "one of the genotype files has to be specified." << endl;
+    	exit(-1);
     }
     
     return;
@@ -504,33 +501,39 @@ void PARAM::CheckCvt ()
 void PARAM::ReorderPheno(gsl_vector *y)
 {
     if (VcfSampleID.size() < ni_test) {
-        cerr << "VCF sample size" <<  VcfSampleID.size() << "< ni_test: " << ni_test << endl;
+        cerr << "Sample size in genotype file" <<  VcfSampleID.size() << "< ni_test: " << ni_test << endl;
         exit(-1);
     }
     
-    double pheno;
+    double pheno_i;
     string id;
-    size_t c_ind=0;
+    size_t c_ind=0, pheno_idx;
     gsl_vector *ytemp=gsl_vector_alloc (ni_test);
-    VcfSampleID_test.clear();
+    VcfSampleID_test.clear(); // set VCFSampleID_test
     
-    cout << "Total SNP samples: " << VcfSampleID.size() << endl;
+    cout << "Total samples: " << VcfSampleID.size() << endl;
 	cout << "PhenoID2Ind.size() = " << PhenoID2Ind.size() << " within ReorderPheno() function ... " << endl;
 
+	// indicator_idv is of the same order as in the phenotype file
     for (size_t i=0; i < VcfSampleID.size(); i++) {
         id = VcfSampleID[i];
-        //if (i < 10) cout << id << ", count ="<< PhenoID2Ind.count(id) << ";    "; 
 
-        if ( PhenoID2Ind.count(id) > 0 ) {
-            if (indicator_idv[PhenoID2Ind.at(id)]) {
-                pheno = gsl_vector_get(y, PhenoID2Ind.at(id));
-                gsl_vector_set(ytemp, c_ind, pheno);
-                VcfSampleID_test.push_back(id);
-            }
-            c_ind++;
+        if(PhenoID2Ind.count(id) > 0){
+        	//if (i < 10) cout << id << ", count ="<< PhenoID2Ind.count(id) << ";    "; 
+        	pheno_idx = PhenoID2Ind.at(id);
+
+        	if (indicator_idv[pheno_idx] ) {
+            	pheno_i = gsl_vector_get(y, pheno_idx);
+            	gsl_vector_set(ytemp, c_ind, pheno_i);
+            	VcfSampleID_test.push_back(id);
+            	c_ind++;
+        	}else{
+        		indicator_idv[pheno_idx] = 0;
+        	}
         }
     }
-    cout << "\n reorder y, final c_ind = " << c_ind << endl;
+    ni_test = c_ind;
+    cout << "\n reorder y, final ni_test = " << ni_test << endl;
     gsl_vector_memcpy(y, ytemp);
     gsl_vector_free(ytemp);
 }
@@ -541,6 +544,7 @@ void PARAM::ProcessPheno()
 {	
 	//obtain ni_total
 	ni_total = indicator_idv.size();
+	//cout << "indicator_idv.size() = " << indicator_idv.size() << "\n";
 
 	//obtain ni_test
 	ni_test=0;
@@ -555,8 +559,8 @@ void PARAM::ProcessPheno()
         }
         else PhenoID2Ind[InputSampleID[i]] = ULONG_MAX;
     }
-    cout << "Create PhenoID2Ind map; ni_test = " << ni_test << "\n";
-    cout << "PhenoID2Ind map length = " << PhenoID2Ind.size() << "\n";
+    //cout << "Create PhenoID2Ind map; total number of analyzed individual ni_test = " << ni_test << "\n";
+    //cout << "PhenoID2Ind map length = " << PhenoID2Ind.size() << "\n";
 	
 	if (ni_test==0) {
 		error=true;
