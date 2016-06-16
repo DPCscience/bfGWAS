@@ -10,19 +10,16 @@ use Pod::Usage;
 
 =head1 NAME
 
-generate_makefile_EMMCMC
+Generate SFBA Makefile
 
 =head1 SYNOPSIS
 
-generate_makefile_EMMCMC [options] 
+./gen_mkf.pl [options] 
 
 Options:
-
-  -h      brief help message
-  --man   full documentation
+  -h      help messages
+  -d      degub
   --mf    output make file
-
-Example usage: ./generate_makefile_EMMCMC.pl -h
 
 =head1 OPTIONS
 
@@ -30,11 +27,12 @@ Example usage: ./generate_makefile_EMMCMC.pl -h
 
 =item B<-help>
 
-  -w         work directory : location of all output files
-  -t         SFBA software directory
-  --vd       vcf file directory
+  -w         work directory : location for all output files
+  -t         directory for the C++ executable file for Estep (running MCMC)
+  --geno     specify genotype format: vcf, genotxt, or bed
+  --gd       genotype file directory
   --ad       annotation file directory
-  --ac       annotation code file
+  --ac       annotation classification code file
   --pheno    phenotype file
   --hyp      initial hyper parameter value file
   -f         file with a list of vcf file heads
@@ -47,25 +45,27 @@ Example usage: ./generate_makefile_EMMCMC.pl -h
   -b         number of burn ins: default 50,000
   -N         number of MCMC iterations: default 50,000
   --NL       number of MCMC iterations for the last EM iteration: default 50,000
-  -c         compress genotype data or not: default 0 (do not compress)
-  --initype  specify initial model: default 3 (stepwise selection)
-  --rv       fixed residual variance value: default 1
+  -c         compress genotype data (1) or not (0): default 0 (do not compress)
+  --initype  specify initial model (1:start with top signal), (2: start with genome-wide significant signals), or default (3: stepwise selected signals)
+  --rv       fixed residual variance value : default 1 (recomended)
   --smin     minimum number of variates per block in the model: default 0
   --smax     maximum number of variates per block in the model: default 5
-  --mem      specify maximum memory usage: default 2Gb
+  --mem      specify maximum memory usage: default 3000MB
+  --saveSNP  whether save genotypes to an genotype text file (1) or not (0): default 0
   --time     specify time of runing MCMC per block per MCMC iteration: default 24hr
-  -l         specify how job will be submited: default srun
+  -l         specify how job will be submited (options: slurm, mosix, local): default slurm
   --mf       output make file
-
-=item B<-man>
-
-prints the manual page and exits.
+  --nice     SLURM option for scheduling priority
+  -j         specify job names
+  --xnode    compuation nodes to be excluded
+  --wnode    specify compuation nodes to be used
+  --part     specify SLURM partition
 
 =back
 
 =head1 DESCRIPTION
 
-B<generate_makefile_EMMCMC.pl> will generate a makefile to be run in the Unix/Linux/OS/Window system with the Bayesian EM_MCMC algorithm for GWASs. 
+B<gen_mkf.pl> will generate a makefile for conducting Bayesian GWASs by SFBA. 
 
 =cut
 
@@ -76,16 +76,17 @@ my $debug;
 my $man;
 my $launchMethod = "slurm";
 my $wkDir=getcwd();
-my $makeFile = "Makefile_EM_MCMC.mk";
+my $makeFile = "SFBA.mk";
+my $genofile = "vcf";
 
-my $toolDir="/net/wonderland/home/yjingj/AMD";
-my $annoDir="/net/wonderland/home/yjingj/Data/AMD/ImputeLoci_BlockVCFs/GVS_Anno";
-my $vcfDir = "/net/wonderland/home/yjingj/Data/AMD/ImputeLoci_BlockVCFs";
-my $pheno="/net/wonderland/home/yjingj/AMD/amd_pheno_scaled.txt.gz";
-my $annoCode="/net/wonderland/home/yjingj/AMD/AnnoPartition/Func7.txt";
-my $hyppar="/net/wonderland/home/yjingj/AMD/EM_Initial/init_hyper_group7";
-my $filelist = "/net/wonderland/home/yjingj/Data/AMD/ImputeLoci_BlockVCFs/vcf_filehead.txt";
-my $rs="/net/fantasia/home/yjingj/My_Rcode/Mstep_multgroup.r";
+my $toolE="/bin/Estep_mcmc";
+my $annoDir="";
+my $genoDir = "";
+my $pheno="";
+my $annoCode="";
+my $hyppar="";
+my $filelist = "";
+my $rs="./bin/Mstep.r";
 
 my $EM=5;
 my $GTfield="GT";
@@ -100,9 +101,8 @@ my $NmcmcLast="50000";
 my $compress="0";
 my $initype="3";
 my $rv="1";
-my $pp="1e-7";
+my $pp="1e-6";
 my $abgamma="0.1";
-my $software="Estep_mcmc"; # C++ software (binary executible file) name
 my $saveSNP="0";
 
 my $maxmem = "3000";
@@ -113,14 +113,13 @@ my $xnode="";
 my $wnode="";
 my $part="nomosix";
 
-# "twins-mc[01-04],1000g-mc[01-04],amd-mc[02-04],c43,got2d-mc[01-04],psoriasis-mc[01-04],r6313"; # excluded host list
 
 #initialize options
 Getopt::Long::Configure ('bundling');
 
 if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug, 'm'=>\$man,
-                'w:s'=>\$wkDir, 't:s' =>\$toolDir, 'ad:s'=>\$annoDir, 
-                'ac:s'=>\$annoCode, 'vd:s'=>\$vcfDir, 'pheno:s'=>\$pheno,
+                'w:s'=>\$wkDir, 'Estep:s' =>\$toolE, 'ad:s'=>\$annoDir, 'geno:s'=>\$genofile,
+                'ac:s'=>\$annoCode, 'gd:s'=>\$genoDir, 'pheno:s'=>\$pheno,
                 'hyp:s'=>\$hyppar, 'G:s'=>\$GTfield, 'maf:s'=>\$maf,
                 'smin:s'=>\$smin, 'smax:s'=>\$smax, 'win:s'=>\$win,
                 'b:s'=>\$burnin, 'N:s'=>\$Nmcmc, 'NL:s'=>\$NmcmcLast,
@@ -128,8 +127,8 @@ if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug, 'm'=>\$man,
                 'pp:s'=>\$pp, 'abgamma:s'=>\$abgamma, 
                 'mem:s'=>\$maxmem, 'saveSNP:s'=>\$saveSNP,
                 'time:s'=>\$time, 'f:s'=>\$filelist, 'em:i'=>\$EM, 'rs:s'=>\$rs,
-                'l:s'=>\$launchMethod, 'mf:s'=>\$makeFile, 'nice:s'=>\$nice, 'software:s'=>\$software, 'j:s' =>\$jobid, 'xnode:s'=>\$xnode, 
-                'wnode:s'=>\$wnode, 'part:s'=>\$part)
+                'l:s'=>\$launchMethod, 'mf:s'=>\$makeFile, 'nice:s'=>\$nice, 
+                'j:s' =>\$jobid, 'xnode:s'=>\$xnode, 'wnode:s'=>\$wnode, 'part:s'=>\$part)
   || !defined($wkDir) || scalar(@ARGV)!=0)
 {
     if ($help)
@@ -170,10 +169,10 @@ printf("Options\n");
 printf("\n");
 printf("launch method : %s\n", $launchMethod);
 printf("work directory : %s\n", $wkDir);
-print "vcfDir: ", $vcfDir, "\n", "annoDir: ", $annoDir, "\n",
+print "genoDir: ", $genoDir, "\n", "annoDir: ", $annoDir, "\n",
         "pheno: ", $pheno, "\nannoCode: ", $annoCode, "\n", 
         "hyppar: ", $hyppar, "\nfileheads: ", $filelist, "\n", 
-        "rscript: ", $rs, "\n",
+        "Rscript: ", $rs, "\n",
         "GTfield ", $GTfield, "; maf ", $maf, "; smin ", $smin, "\n", 
         "smax ", $smax, "; win ", $win, "; burnin ", $burnin, "; Nmcmc ", $Nmcmc, "\n",
         "NmcmcLast ", $NmcmcLast, "; compress ", $compress, "; initype ", $initype, "\n",
@@ -237,7 +236,16 @@ for(my $j=0; $j< @filehead; ++$j)
         $premcmcOK .= "$wkDir/OUT/$line.$i.OK ";
         $tgt = "$wkDir/OUT/$line.$i.OK";
         $dep = "$wkDir/pre_em.OK";
-        @cmd = "$toolDir/$software -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+        if($genofile eq "vcf"){
+           @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -vcfp $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+        }elsif ($genofile eq "genotxt"){
+          @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+        }elsif ($genofile eq "bed") {
+          @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+        }else{
+          die "genoDir need to be one of the vcf, genotxt, or bed file types\!\n"
+        }
+
         makeJob($launchMethod, $tgt, $dep, $wkDir, @cmd);
     }
 
@@ -271,10 +279,26 @@ for $i (1..$EM){
         $tgt = "$wkDir/OUT/$line.$i.OK";
         $dep = "$wkDir/R$ipre.OK";
         if($i < $EM){
-            @cmd = "$toolDir/$software -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
-            } elsif ($i == $EM){
-            @cmd = "$toolDir/$software -vcf $vcfDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+          if($genofile eq "vcf"){
+            @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+          }elsif ($genofile eq "genotxt"){
+            @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+          }elsif ($genofile eq "bed") {
+            @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+          }else{
+            die "genoDir need to be one of the vcf, genotxt, or bed file types\!\n"
+          }
+        } elsif ($i == $EM){
+            if($genofile eq "vcf"){
+              @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+            }elsif ($genofile eq "genotxt"){
+              @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+            }elsif ($genofile eq "bed") {
+              @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+            }else{
+              die "genoDir need to be one of the vcf, genotxt, or bed file types\!\n"
             }
+      }
         makeJob($launchMethod, $tgt, $dep, $wkDir, @cmd);
     }
 
@@ -357,7 +381,12 @@ sub makeMosix
     my $cmdtemp = "";
     for my $c (@cmd)
     {
-        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -b -q1 " . $c . "\n";
+      if($wnode){
+        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -j$wnode -J$jobid " . $c . "\n";
+      }else{
+        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -b -J$jobid " . $c . "\n";
+      }
+
     }
     $cmdtemp .= "\ttouch $tgt\n";
     push(@cmds, $cmdtemp);
@@ -373,8 +402,6 @@ sub makeSlurm
     for my $c (@cmd)
     {
         $cmdtemp .= "\tsrun --exclude=$xnode --partition=$part --mem-per-cpu\=$maxmem --time\=$time --nice\=$nice --error\=$wkDir/slurm_err/\%N.\%j.err -J $jobid -D $wkd $c \n";
-
-        #$cmdtemp .= "\tsrun --exclude=$xnode --nodelist=$wnode --mem-per-cpu\=$maxmem --time\=$time --nice\=$nice --error\=$wkDir/slurm_err/\%N.\%j.err -J $jobid -D $wkd $c \n";
     }
     $cmdtemp .= "\ttouch $tgt\n";
     push(@cmds, $cmdtemp);
