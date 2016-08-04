@@ -35,7 +35,7 @@ Options:
   --ac       annotation classification code file
   --pheno    phenotype file
   --hyp      initial hyper parameter value file
-  -f         file with a list of vcf file heads
+  -f         file with a list of fileheads for genotype files
   -G         genotype format: GT(genotype data 0/0, 0/1, 1/1) or EC (dosage data)
   --maf      maf threshold: default 0.5% 
   --pp       specify prior for the causal probability: default 1e-6
@@ -51,7 +51,6 @@ Options:
   --smin     minimum number of variates per block in the model: default 0
   --smax     maximum number of variates per block in the model: default 5
   --mem      specify maximum memory usage: default 3000MB
-  --saveSNP  whether save genotypes to an genotype text file (1) or not (0): default 0
   --time     specify time of runing MCMC per block per MCMC iteration: default 24hr
   -l         specify how job will be submited (options: slurm, mosix, local): default slurm
   --mf       output make file
@@ -85,7 +84,7 @@ my $genoDir = "";
 my $pheno="";
 my $annoCode="";
 my $hyppar="";
-my $filelist = "";
+my $filelist = "/net/fantasia/home/yjingj/GIT/SFBA_example/ExData/fileheads_4region.txt";
 my $rs="./bin/Mstep.r";
 
 my $EM=5;
@@ -98,17 +97,16 @@ my $win="100";
 my $burnin="50000";
 my $Nmcmc="50000";
 my $NmcmcLast="50000";
-my $compress="0";
+my $compress=0;
 my $initype="3";
 my $rv="1";
 my $pp="1e-6";
 my $abgamma="0.1";
-my $saveSNP="0";
 
 my $maxmem = "3000";
 my $time = "24:00:00";
 my $nice = "100";
-my $jobid;
+my $jobid="";
 my $xnode="";
 my $wnode="";
 my $part="nomosix";
@@ -118,15 +116,15 @@ my $part="nomosix";
 Getopt::Long::Configure ('bundling');
 
 if(!GetOptions ('h'=>\$help, 'v'=>\$verbose, 'd'=>\$debug, 'm'=>\$man,
-                'w:s'=>\$wkDir, 'Estep:s' =>\$toolE, 'ad:s'=>\$annoDir, 'geno:s'=>\$genofile,
+                'w:s'=>\$wkDir, 'Estep:s' =>\$toolE, 'ad:s'=>\$annoDir, 
+                'geno:s'=>\$genofile,
                 'ac:s'=>\$annoCode, 'gd:s'=>\$genoDir, 'pheno:s'=>\$pheno,
                 'hyp:s'=>\$hyppar, 'G:s'=>\$GTfield, 'maf:s'=>\$maf,
                 'smin:s'=>\$smin, 'smax:s'=>\$smax, 'win:s'=>\$win,
                 'b:s'=>\$burnin, 'N:s'=>\$Nmcmc, 'NL:s'=>\$NmcmcLast,
-                'c:s'=>\$compress, 'initype:s'=>\$initype, 'rv:s'=>\$rv,
+                'c:i'=>\$compress, 'initype:s'=>\$initype, 'rv:s'=>\$rv,
                 'pp:s'=>\$pp, 'abgamma:s'=>\$abgamma, 
-                'mem:s'=>\$maxmem, 'saveSNP:s'=>\$saveSNP,
-                'time:s'=>\$time, 'f:s'=>\$filelist, 'em:i'=>\$EM, 'rs:s'=>\$rs,
+                'mem:s'=>\$maxmem, 'time:s'=>\$time, 'f:s'=>\$filelist, 'em:i'=>\$EM, 'rs:s'=>\$rs,
                 'l:s'=>\$launchMethod, 'mf:s'=>\$makeFile, 'nice:s'=>\$nice, 
                 'j:s' =>\$jobid, 'xnode:s'=>\$xnode, 'wnode:s'=>\$wnode, 'part:s'=>\$part)
   || !defined($wkDir) || scalar(@ARGV)!=0)
@@ -169,6 +167,7 @@ printf("Options\n");
 printf("\n");
 printf("launch method : %s\n", $launchMethod);
 printf("work directory : %s\n", $wkDir);
+print "Estep: ", $toolE, "\n";
 print "genoDir: ", $genoDir, "\n", "annoDir: ", $annoDir, "\n",
         "pheno: ", $pheno, "\nannoCode: ", $annoCode, "\n", 
         "hyppar: ", $hyppar, "\nfileheads: ", $filelist, "\n", 
@@ -179,6 +178,10 @@ print "genoDir: ", $genoDir, "\n", "annoDir: ", $annoDir, "\n",
         "rv ", $rv, "; pp ", $pp, "; abgamma ", $abgamma, "\n"; 
 printf("\n");
 
+my $comp = "";
+if ($compress != 0){
+  $comp = "-comp"
+}
 
 #arrays for storing targets, dependencies and commands
 my @tgts = ();
@@ -237,11 +240,11 @@ for(my $j=0; $j< @filehead; ++$j)
         $tgt = "$wkDir/OUT/$line.$i.OK";
         $dep = "$wkDir/pre_em.OK";
         if($genofile eq "vcf"){
-           @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -vcfp $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+           @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp  -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         }elsif ($genofile eq "genotxt"){
-          @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+          @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         }elsif ($genofile eq "bed") {
-          @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+          @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         }else{
           die "genoDir need to be one of the vcf, genotxt, or bed file types\!\n"
         }
@@ -280,21 +283,21 @@ for $i (1..$EM){
         $dep = "$wkDir/R$ipre.OK";
         if($i < $EM){
           if($genofile eq "vcf"){
-            @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+            @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -p $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
           }elsif ($genofile eq "genotxt"){
-            @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+            @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
           }elsif ($genofile eq "bed") {
-            @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $Nmcmc -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+            @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
           }else{
             die "genoDir need to be one of the vcf, genotxt, or bed file types\!\n"
           }
         } elsif ($i == $EM){
             if($genofile eq "vcf"){
-              @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -vcfp $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
+              @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -p $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
             }elsif ($genofile eq "genotxt"){
-              @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+              @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
             }elsif ($genofile eq "bed") {
-              @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bslmm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -n 1 -o $line -w $burnin -s $NmcmcLast -comp $compress -saveSNP $saveSNP -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+              @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
             }else{
               die "genoDir need to be one of the vcf, genotxt, or bed file types\!\n"
             }

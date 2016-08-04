@@ -42,7 +42,7 @@ using namespace std;
 
 
 SFBA::SFBA(void):	
-version("SFBA_MCMC"), date("06/15/2016"), year("2016")
+version("SFBA_MCMC"), date("08/15/2016"), year("2016")
 {}
 
 void SFBA::PrintHeader (void)
@@ -111,8 +111,8 @@ void SFBA::PrintHelp(size_t option)
 		cout<<" 2: file I/O related"<<endl;
 		cout<<" 3: variant QC"<<endl;
 		cout<<" 4: calculate relatedness matrix"<<endl;
-		cout<<" 5: fit a single variate linear model"<<endl;
-		cout<<" 6: fit a BVSR model"<<endl;
+		cout<<" 5: apply single variate linear model"<<endl;
+		cout<<" 6: apply BVSR model"<<endl;
 		cout<<" 7: note"<<endl;
 		cout<<endl;
 	}	
@@ -148,7 +148,7 @@ void SFBA::PrintHelp(size_t option)
 		cout<<"                  ..."<<endl;	
 		cout<<"          missing value: NA"<<endl<<endl;	
 
-		cout<<" -p        [filename]     "<<" Specify input phenotype file associated with -g"<<endl;
+		cout<<" -p        [filename]     "<<" Specify input phenotype file associated with -g and -vcf"<<endl;
 		cout<<"          format: individual_1_id    phenotype1"<<endl;	
 		cout<<"                  individual_2_id    phenotype2"<<endl;	
 		cout<<"                  ..."<<endl;
@@ -156,7 +156,6 @@ void SFBA::PrintHelp(size_t option)
 
 		cout<<" -vcf        [filename]     "<<" Specify input VCF genotype file"<<endl;
 		cout<<" -GTfield        [keyword]     "<<" Specify whether to read for genotypes with keyword=GT, or read for doseage data keyword=EC from the VCF genotype file"<<endl;
-		cout<<" -vcfp   	    [filename]     "<<" Specify input phenotype file associated with -vcf"<<endl<<endl;		
 
 		cout<<" -a        [filename]     "<<" Specify input annotation file name (optional)"<<endl;	
 		cout<<"          format: rs#1 chr_number base_position anno1"<<endl;	
@@ -239,7 +238,7 @@ void SFBA::PrintHelp(size_t option)
 		cout<<"   Others" << endl;
 		cout<<" -w        [num]          "<<" specify burn-in steps (default 100,000)" << endl; 
 		cout<<" -s        [num]          "<<" specify sampling steps (default 1,000,000)" << endl; 
-		cout<<" -comp     [num]          "<<" specify whether to impement in-memory compression with value 1, or not (default with value 0)" << endl;
+		cout<<" -comp                    "<<" specify whether to impement in-memory compression (default no comp flag)" << endl;
 		cout<<" -saveSNP     [num]          "<<" specify whether to save genotypes with value 1, or not (default with value 0)" << endl;
 		cout<<" -initype     [num]          "<<" specify the initial model for MCMC: " << endl;
 		cout<<"          option 1: start with the most significant variant"<<endl;
