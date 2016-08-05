@@ -68,7 +68,7 @@ public:
     bool Compress_Flag;
 	int a_mode;
 	size_t d_pace;
-    vector<pair<long long int, double> > UcharTable;
+    vector<pair<int, double> > UcharTable;
     vector<string> InputSampleID; //size = ni_total
     vector<string> VcfSampleID_test; // sample id for ni_test in order of X[i][j]
 	

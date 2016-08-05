@@ -401,6 +401,7 @@ void PARAM::WriteGenotypes(uchar **X){
 
     size_t pos=0;
     double geno_j;
+    uchar c;
     
     //cout << "write variant information."<<endl;
     for (size_t i=0; i<ns_total; ++i) {
@@ -411,16 +412,20 @@ void PARAM::WriteGenotypes(uchar **X){
         outfile<< snpInfo[i].rs_number <<"\t"<< snpInfo[i].chr<<"\t" <<snpInfo[i].base_position << "\t" << snpInfo[i].a_major << "\t" << snpInfo[i].a_minor << "\t";
  
         for (size_t j=0; j < ni_test; j++) {
-            
-            geno_j = UcharTable[X[pos][j]].second;
-            if (geno_j == 0.0) geno_j = 0;
-            else if (geno_j == 2.0) geno_j = 2;
-            else if (geno_j == 1.0) geno_j = 1;
-
-            if (j == (ni_test-1))
-                outfile << fixed << setprecision(2)  << geno_j << endl;
-            else
-                outfile << fixed << setprecision(2) << geno_j << "\t";
+        	c = X[pos][j];
+            geno_j = UcharTable[(int)c].second;
+            if(geno_j < 0.0 || geno_j > 2){
+            	cout << "ERROR: genotype = " << geno_j << endl;
+                exit(-1);
+            }else{
+            		if (geno_j == 0.0) geno_j = 0;
+            		else if (geno_j == 2.0) geno_j = 2;
+            		else if (geno_j == 1.0) geno_j = 1;
+		            if (j == (ni_test-1))
+		                outfile << fixed << setprecision(2)  << geno_j << endl;
+		            else
+		                outfile << fixed << setprecision(2) << geno_j << "\t";
+		            }           
         }
         pos++;
     }

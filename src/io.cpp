@@ -1274,6 +1274,7 @@ bool GenoKin (const string &file_geno, vector<bool> &indicator_idv, vector<bool>
                     // read genotype value
                     if (pch == NULL) {
                         geno = -9;//missing
+                        gsl_vector_set (geno_vec, ctest_idv, -9.0);
                         n_miss++; c_idv++; ctest_idv++; 
                         pch = (nch == NULL) ? NULL : nch+1;
                         continue;
@@ -1281,7 +1282,8 @@ bool GenoKin (const string &file_geno, vector<bool> &indicator_idv, vector<bool>
                     else {
                         //read dosage data 
                         if( ((pch[0]=='N') && (pch[1] == 'A')) || ((pch[0]=='.') && (pch[1] == '\t'))){
-                            geno = -9;                       
+                            geno = -9;
+                            gsl_vector_set (geno_vec, ctest_idv, -9.0);                       
                             n_miss++; c_idv++; ctest_idv++;
                             pch = (nch == NULL) ? NULL : nch+1;
                             continue;                           
@@ -1555,6 +1557,7 @@ bool VCFKin (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &
 
                         if (p==NULL) {
                             geno = -9;//missing
+                            gsl_vector_set (geno_vec, ctest_idv, geno);
                             n_miss++; c_idv++; ctest_idv++; 
                             pch = (nch == NULL) ? NULL : nch+1;
                             continue;
@@ -1563,6 +1566,7 @@ bool VCFKin (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &
                         //read bi-allelic GT
                             if( (p[0]=='.') && (p[2]=='.')){
                                 geno = -9;//missing
+                                gsl_vector_set (geno_vec, ctest_idv, geno);
                                 n_miss++; c_idv++; ctest_idv++;
                                 pch = (nch == NULL) ? NULL : nch+1;
                                 continue;
@@ -1579,6 +1583,7 @@ bool VCFKin (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &
                             //read dosage data
                             if( (p[0]=='.') && ( (p[1] == '\t') || (p[1] == ':') ) ){
                                 geno = -9;
+                                gsl_vector_set (geno_vec, ctest_idv, geno);
                                 n_miss++; c_idv++; ctest_idv++;
                                 pch = (nch == NULL) ? NULL : nch+1;
                                 continue;                               

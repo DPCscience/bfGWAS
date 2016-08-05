@@ -43,16 +43,14 @@
     return j;
 }*/
 
-void CreateUcharTable(vector<pair<long long int, double> > &UcharTable)
+void CreateUcharTable(vector<pair<int, double> > &UcharTable)
 {
     UcharTable.clear();
-    long long first_val;
     double second_val;
     for (int i=0; i <= UCHAR_MAX; i++) {
-        first_val = (long long)i;
         second_val = ((double)i) * 0.01;
-        UcharTable.push_back(make_pair(first_val, second_val));
-        //cout << (uchar)i << ", " << first_val << ", " << second_val << endl;
+        UcharTable.push_back(make_pair(i, second_val));
+        //cout << (uchar)i << ", " << i << ", " << second_val << endl;
     }
 }
 
@@ -213,7 +211,7 @@ void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_
 }
 
 //used in MCMC()
-void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<double> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable){
+void getGTgslVec(uchar ** X, gsl_vector *xvec, size_t marker_i, const size_t ni_test, const size_t ns_test, const vector<double> &SNPsd, const vector<double> &SNPmean, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<int, double> > &UcharTable){
     
     if (marker_i < ns_test ) {
         

@@ -685,10 +685,10 @@ void SFBA::BatchRun (PARAM &cPar)
 				cLm.AnalyzePlink (W, Y);
 			} 
 			else if( !cPar.file_geno.empty() ) {
-				cLm.AnalyzeBimbam (W, Y);
+				cLm.AnalyzeGeno (W, Y, cPar.SampleVcfPos, cPar.PhenoID2Ind, cPar.VcfSampleID);
 			} 
 			else if( !cPar.file_vcf.empty() ) {
-				cLm.AnalyzeVCF(W, Y);
+				cLm.AnalyzeVCF(W, Y, cPar.GTfield, cPar.SampleVcfPos, cPar.PhenoID2Ind, cPar.VcfSampleID);
 			}
 			
 			cLm.WriteFiles();

@@ -44,6 +44,7 @@
 #include "gzstream.h"
 #include "lapack.h"
 #include "lm.h"
+#include "param.h"
 
 
 
@@ -96,7 +97,7 @@ void LM::WriteFiles ()
 	ofstream outfile (file_str.c_str(), ofstream::out);
 	if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
 	
-		outfile<<"chr"<<"\t"<<"rs"<<"\t"<<"ps"<<"\t"<<"n_miss"<<"\t"<<"allele1"<<"\t"<<"allele0"<<"\t"<<"af"<<"\t";
+		outfile<<"CHR"<<"\t"<<"ID"<<"\t"<<"POS"<<"\t"<<"n_miss"<<"\t"<<"ALT"<<"\t"<<"REF"<<"\t"<<"maf"<<"\t";
 		
 		if (a_mode==51) {
 			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_wald"<<endl;
@@ -199,28 +200,31 @@ void LmCalcP (const size_t test_mode, const double yPwy, const double xPwy, cons
 
 
 //Begin of AnalyzeVCF 
-void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y)
+void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y, string &GTfield, const vector <size_t> &SampleVcfPos, const map<string, size_t> &PhenoID2Ind, const vector<string> &VcfSampleID)
 {
-	igzstream infile (file_vcf.c_str(), igzstream::in);
-	//	ifstream infile (file_geno.c_str(), ifstream::in);
-	if (!infile) {cout<<"error reading genotype file:"<<file_vcf<<endl; return;}
+	if (GTfield.empty()) {
+        GTfield = "GT"; //defalt load GT Data
+    }
+    int lkey = GTfield.size(); //length of the field-key string
+
+    igzstream infile (file_vcf.c_str(), igzstream::in);
+    if (!infile) {cout<<"error reading vcf genotype file:"<<file_vcf<<endl; exit(-1);}
 	
 	clock_t time_start=clock();
 	
-	string line;
-	char *ch_ptr;
+	string line, pheno_id;
+	char *pch, *p, *nch=NULL, *n;
 	
 	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
-	int n_miss, c_phen;
-	double geno, x_mean;
+	size_t n_miss, c_idv=0, c_snp=0, ctest_idv = 0, tab_count, pheno_index, ns_test=0;
+	double geno, x_mean, d;
+	int GTpos=0, k=0;
 	
 	//calculate some basic quantities
 	double yPwy, xPwy, xPwx;
 	double df=(double)W->size1-(double)W->size2-1.0;
 
 	gsl_vector *x=gsl_vector_alloc (W->size1);
-	gsl_vector *x_miss=gsl_vector_alloc (W->size1);
-
 	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
 	gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);		
 	gsl_vector *Wty=gsl_vector_alloc (W->size2);
@@ -236,37 +240,137 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y)
 	CalcvPv(WtWi, Wty, y, yPwy);
 	
 	//start reading genotypes and analyze	
-	for (size_t t=0; t<indicator_snp.size(); ++t) {
-		//if (t>1) {break;}
-		getline(infile, line);
-		if (t%d_pace==0 || t==(ns_total-1)) {ProgressBar ("Reading SNPs  ", t, ns_total-1);}
-		if (indicator_snp[t]==0) {continue;}
-		
-		ch_ptr=strtok ((char *)line.c_str(), " , \t");
-		ch_ptr=strtok (NULL, " , \t");
-		ch_ptr=strtok (NULL, " , \t");
-		
-		x_mean=0.0; c_phen=0; n_miss=0;
-		gsl_vector_set_zero(x_miss);
-		for (size_t i=0; i<ni_total; ++i) {
-			ch_ptr=strtok (NULL, " , \t");
-			if (indicator_idv[i]==0) {continue;}
-			
-			if (strcmp(ch_ptr, "NA")==0) {gsl_vector_set(x_miss, c_phen, 0.0); n_miss++;}
-			else {
-				geno=atof(ch_ptr); 				
-				
-				gsl_vector_set(x, c_phen, geno); 
-				gsl_vector_set(x_miss, c_phen, 1.0); 
-				x_mean+=geno;
-			}
-			c_phen++;
-		}	
-		
+	while(!safeGetline(infile, line).eof())
+    {
+        if (c_snp%d_pace==0 || c_snp==(indicator_snp.size()-1)) {ProgressBar ("Reading SNPs  ", c_snp, indicator_snp.size()-1);}
+
+        if (line[0] == '#') {
+            continue; //skip header
+        }
+        else {
+            if (!indicator_snp[c_snp]) {c_snp++; continue;}
+            c_idv=0; //increase to the total individuals ni_total
+            x_mean=0.0; n_miss=0; 
+        
+            pch= (char *)line.c_str();
+            for (tab_count=0; pch != NULL; tab_count++) {
+                nch=strchr(pch, '\t'); //point to the position of next '\t'
+
+                if ((tab_count == 8) && (c_idv == 0))
+                {
+                    // parse FORMAT field
+                    if (pch[0] == GTfield[0] && pch[1] == GTfield[1] && ((nch==pch+2)||pch[2]==':') ) {
+                        GTpos=0; //GT start in the first position
+                    }
+                    else if (nch == NULL){ cerr << "VCF has FORMAT field but dose not have any genotype\n";}
+                    else{
+                        k=0; //index of key characters
+                        GTpos=0;
+                        p=pch;
+                        while (p<nch) {
+                            if (*p == ':') {
+                                if (k >= lkey) {
+                                    break;
+                                }
+                                else {
+                                    ++GTpos;
+                                    k=0;
+                                }
+                            }
+                            else {
+                                if (GTfield[k] == *p) {
+                                    ++k;
+                                }
+                                else { k=0; }
+                            }
+                            ++p;
+                        }
+                        if ((p==nch) && (k != lkey)) {
+                            cerr << "Cannot find" << GTfield << endl;
+                            exit(-1);
+                        }
+                    }
+                }
+                else if ( tab_count == SampleVcfPos[ctest_idv] )
+                {                   
+                    pheno_id = VcfSampleID[c_idv];
+                    if (PhenoID2Ind.count(pheno_id) > 0){
+                            pheno_index = PhenoID2Ind.at(pheno_id); 
+                    }
+                    else {
+                        cerr << "error: pheno ID matched error ... "<< endl;
+                        exit(-1);
+                    }
+                    if ( !indicator_idv[pheno_index] ) {
+                        cerr << "error: pheno is not in sample ... "<< endl;
+                        exit(-1);
+                        //continue;
+                    }
+                    else{
+                        p = pch; // make p reach to the key index
+                        if (GTpos>0) {
+                            for (int i=0; (i<GTpos) && (p!=NULL); ++i) {
+                                n = strchr(p, ':');
+                                p = (n == NULL) ? NULL : n+1;
+                            }
+                        }
+                        if (p==NULL) {
+                            geno = -9;//missing
+                            gsl_vector_set (x, ctest_idv, geno);
+                            n_miss++; c_idv++; ctest_idv++; 
+                            pch = (nch == NULL) ? NULL : nch+1;
+                            continue;
+                        }
+                        else if ( (p[1] == '/') || (p[1] == '|') ) {
+                        //read bi-allelic GT
+                            if( (p[0]=='.') && (p[2]=='.')){
+                                geno = -9;//missing
+                                gsl_vector_set (x, ctest_idv, geno);
+                                n_miss++; c_idv++; ctest_idv++;
+                                pch = (nch == NULL) ? NULL : nch+1;
+                                continue;
+                            }
+                            else if ( (p[0]=='.') && (p[2]!='.')) {
+                                geno = (double)(p[2] -'0');
+                            }
+                            else if ((p[0]!='.') && p[2]=='.') {
+                                geno = (double)(p[0] -'0');
+                            }
+                            else geno = (double)((p[0] - '0') + (p[2]- '0'));
+                        }
+                        else {
+                            //read dosage data
+                            if( (p[0]=='.') && ( (p[1] == '\t') || (p[1] == ':') ) ){
+                                geno = -9;
+                                gsl_vector_set (x, ctest_idv, geno);
+                                n_miss++; c_idv++; ctest_idv++;
+                                pch = (nch == NULL) ? NULL : nch+1;
+                                continue;                               
+                            }else if (isdigit(p[0])){
+                                geno = strtod(p, NULL);
+                            }else{
+                                cerr << "dosage data is not a digit ... " << endl;
+                                exit(-1);
+                            }                        
+                        }
+                        gsl_vector_set (x, ctest_idv, geno);
+                        if( (geno >= 0.0) && (geno <= 2.0)) {x_mean += geno;}
+                        ctest_idv++; // increase analyzed phenotype #
+                        c_idv++;
+                    }
+                }
+                else if ( tab_count >= 9 ) { c_idv++; }
+                pch = (nch == NULL) ? NULL : nch+1;
+            } 	
+		ns_test++; c_snp++;
+
 		x_mean/=(double)(ni_test-n_miss);
 		
 		for (size_t i=0; i<ni_test; ++i) {
-			if (gsl_vector_get (x_miss, i)==0) {gsl_vector_set(x, i, x_mean);}
+			if ( gsl_vector_get (x, i) == -9.0 ) 
+            {
+                gsl_vector_set(x, i, x_mean);
+            }
 			geno=gsl_vector_get(x, i);
 			if (x_mean>1) {
 				gsl_vector_set(x, i, 2-geno);
@@ -275,22 +379,19 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y)
 		
 		//calculate statistics		
 		time_start=clock();		
-
 		gsl_blas_dgemv(CblasTrans, 1.0, W, x, 0.0, Wtx);		
 		CalcvPv(WtWi, Wty, Wtx, y, x, xPwy, xPwx);
-		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);
-		
+		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);	
 		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		
 		//store summary data
 		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score};
 		sumStat.push_back(SNPs);
+		}
 	}	
 	cout<<endl;
 
 	gsl_vector_free(x);
-	gsl_vector_free(x_miss);
-
 	gsl_matrix_free(WtW);
 	gsl_matrix_free(WtWi);
 	gsl_vector_free(Wty);
@@ -305,7 +406,7 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y)
 // end of AnalyzeVCF
 
 
-void LM::AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y)
+void LM::AnalyzeGeno (const gsl_matrix *W, const gsl_vector *y, const vector <size_t> &SampleVcfPos, const map<string, size_t> &PhenoID2Ind, const vector<string> &VcfSampleID)
 {
 	igzstream infile (file_geno.c_str(), igzstream::in);
 	//	ifstream infile (file_geno.c_str(), ifstream::in);
@@ -313,18 +414,19 @@ void LM::AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y)
 	
 	clock_t time_start=clock();
 	
-	string line;
-	char *ch_ptr;
+	string line, pheno_id, s;
+	char *pch, *nch=NULL;
 	
 	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
-	int n_miss, c_phen;
+	int n_miss;
 	double geno, x_mean;
+	size_t c_idv, ctest_idv, tab_count, pheno_index, c_snp=0;
 	
 	//calculate some basic quantities
 	double yPwy, xPwy, xPwx;
 	double df=(double)W->size1-(double)W->size2-1.0;
 
-	gsl_vector *x=gsl_vector_alloc (W->size1);
+	gsl_vector *x=gsl_vector_alloc (W->size1); // save vector of genotypes
 	gsl_vector *x_miss=gsl_vector_alloc (W->size1);
 
 	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
@@ -340,39 +442,71 @@ void LM::AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y)
 
 	gsl_blas_dgemv (CblasTrans, 1.0, W, y, 0.0, Wty);
 	CalcvPv(WtWi, Wty, y, yPwy);
-	
-	//start reading genotypes and analyze	
-	for (size_t t=0; t<indicator_snp.size(); ++t) {
-		//if (t>1) {break;}
-		getline(infile, line);
-		if (t%d_pace==0 || t==(ns_total-1)) {ProgressBar ("Reading SNPs  ", t, ns_total-1);}
-		if (indicator_snp[t]==0) {continue;}
-		
-		ch_ptr=strtok ((char *)line.c_str(), " , \t");
-		ch_ptr=strtok (NULL, " , \t");
-		ch_ptr=strtok (NULL, " , \t");
-		
-		x_mean=0.0; c_phen=0; n_miss=0;
-		gsl_vector_set_zero(x_miss);
-		for (size_t i=0; i<ni_total; ++i) {
-			ch_ptr=strtok (NULL, " , \t");
-			if (indicator_idv[i]==0) {continue;}
-			
-			if (strcmp(ch_ptr, "NA")==0) {gsl_vector_set(x_miss, c_phen, 0.0); n_miss++;}
-			else {
-				geno=atof(ch_ptr); 				
-				
-				gsl_vector_set(x, c_phen, geno); 
-				gsl_vector_set(x_miss, c_phen, 1.0); 
-				x_mean+=geno;
-			}
-			c_phen++;
-		}	
-		
+
+	while(!safeGetline(infile, line).eof()){
+
+        if (c_snp%d_pace==0 || c_snp==(indicator_snp.size()-1)) {ProgressBar ("Reading SNPs  ", c_snp, indicator_snp.size()-1);}
+
+        pch= (char *)line.c_str();
+
+        if ( (strncmp(line.c_str(), "ID", 2) == 0) ) {continue;} // skip header 
+        else{
+            if (indicator_snp[c_snp]==0) {c_snp++; continue;} // skip unanalyzed snp            
+            c_idv=0; ctest_idv = 0; x_mean = 0.0; n_miss = 0; 
+            for (tab_count=0; pch != NULL; tab_count++) {
+                nch=strchr(pch, '\t'); //point to the position of next '\t'           
+                if(tab_count == SampleVcfPos[ctest_idv] ) 
+                {
+                    pheno_id = VcfSampleID[c_idv];
+                    pheno_index = PhenoID2Ind.at(pheno_id);
+                  if ( !indicator_idv[pheno_index] ) {
+                       cout << "phenotype of "<< pheno_id<<" is not analyzed."<< endl;
+                       pch = (nch == NULL) ? NULL : nch+1;
+                       c_idv++;  
+                       continue;
+                  } 
+                  else{
+                    // read genotype value
+                    if (pch == NULL) {
+                        //missing
+                        gsl_vector_set (x, ctest_idv, -9.0);
+                        n_miss++; c_idv++; ctest_idv++; 
+                        pch = (nch == NULL) ? NULL : nch+1;
+                        continue;
+                    }
+                    else {
+                        //read dosage data 
+                        if( ((pch[0]=='N') && (pch[1] == 'A')) || ((pch[0]=='.') && (pch[1] == '\t'))){
+                            gsl_vector_set (x, ctest_idv, -9.0);                       
+                            n_miss++; c_idv++; ctest_idv++;
+                            pch = (nch == NULL) ? NULL : nch+1;
+                            continue;                           
+                        }else{
+                            if (nch == NULL) { s.assign( pch );}
+                            else s.assign( pch, nch-pch ); // field string s
+                            geno = atof(s.c_str());
+                        }  
+                    }
+                    if( (geno >= 0.0) && (geno <= 2.0)) {
+                        gsl_vector_set (x, ctest_idv, geno);
+                        x_mean += geno;
+                    }else{
+                        gsl_vector_set (x, ctest_idv, -9.0);
+                        n_miss++; c_idv++; ctest_idv++;
+                        pch = (nch == NULL) ? NULL : nch+1;
+                        continue;
+                    }
+                    ctest_idv++;
+                    c_idv++;
+                  }
+                }
+                else if(tab_count >= 5){ c_idv++; }
+                pch = (nch == NULL) ? NULL : nch+1;
+            }
+        }
 		x_mean/=(double)(ni_test-n_miss);
-		
 		for (size_t i=0; i<ni_test; ++i) {
-			if (gsl_vector_get (x_miss, i)==0) {gsl_vector_set(x, i, x_mean);}
+			if (gsl_vector_get (x, i)==-9.0) {gsl_vector_set(x, i, x_mean);}
 			geno=gsl_vector_get(x, i);
 			if (x_mean>1) {
 				gsl_vector_set(x, i, 2-geno);
@@ -381,11 +515,9 @@ void LM::AnalyzeBimbam (const gsl_matrix *W, const gsl_vector *y)
 		
 		//calculate statistics		
 		time_start=clock();		
-
 		gsl_blas_dgemv(CblasTrans, 1.0, W, x, 0.0, Wtx);		
 		CalcvPv(WtWi, Wty, Wtx, y, x, xPwy, xPwx);
 		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);
-		
 		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		
 		//store summary data
@@ -557,7 +689,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 
 
 //
-void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<int, double> > &UcharTable)
 {
     size_t n_type = snp_pos[0].indicator_func.size();
     Gvec.assign(n_type, 0.0);
@@ -593,7 +725,7 @@ void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double>
 }
 
 //calculate Z-Scores and SE(beta); used in EM_block
-void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, vector<double> &Z_scores, vector<double> &SE_beta, vector<double> &pval_lrt, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<long long int, double> > &UcharTable)
+void MatrixCalcLmLR (uchar **X, const gsl_vector *y, vector<pair<size_t, double> > &pos_loglr, const size_t &ns_test, const size_t &ni_test, const vector<double> &SNPsd, const vector<double> &SNPmean, vector<double> &Gvec, vector<double> &XtX_diagvec, vector<double> &Z_scores, vector<double> &SE_beta, vector<double> &pval_lrt, const vector<SNPPOS> &snp_pos, std::vector <size_t> &CompBuffSizeVec, size_t UnCompBufferSize, bool Compress_Flag, const vector<pair<int, double> > &UcharTable)
 {
     size_t n_type = snp_pos[0].indicator_func.size();
     Gvec.assign(n_type, 0.0);

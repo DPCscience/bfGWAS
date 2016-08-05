@@ -311,6 +311,7 @@ void BVSRM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
     size_t pos;
     string rs;
     double geno_j;
+    uchar c;
     
     for (size_t i=0; i<ns_test; ++i) {
         
@@ -330,16 +331,22 @@ void BVSRM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
         //outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
         
         for (size_t j=0; j < ni_test; j++) {
-            
-            geno_j = UcharTable[X[pos][j]].second;
-            if (geno_j == 0.0) geno_j = 0;
-            else if (geno_j == 2.0) geno_j = 2;
-            else if (geno_j == 1.0) geno_j = 1;
+            c = X[pos][j];
+            geno_j = UcharTable[(int)c].second;
 
-            if (j == (ni_test-1))
-                outfile << fixed << setprecision(2)  << geno_j << endl;
-            else
-                outfile << fixed << setprecision(2) << geno_j << "\t";
+            if(geno_j < 0.0 || geno_j > 2.0){
+                cout << "ERROR: genotype = " << geno_j << endl;
+                exit(-1);
+            }else{
+                if (geno_j == 0.0) geno_j = 0;
+                else if (geno_j == 2.0) geno_j = 2;
+                else if (geno_j == 1.0) geno_j = 1;
+
+                if (j == (ni_test-1))
+                    outfile << fixed << setprecision(2)  << geno_j << endl;
+                else
+                    outfile << fixed << setprecision(2) << geno_j << "\t";
+            }
         }
     }
     
