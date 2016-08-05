@@ -1,0 +1,72 @@
+srun: job 26202080 queued and waiting for resources
+srun: job 26202081 queued and waiting for resources
+srun: job 26202082 queued and waiting for resources
+srun: job 26202083 queued and waiting for resources
+srun: job 26202080 has been allocated resources
+srun: job 26202081 has been allocated resources
+srun: job 26202082 has been allocated resources
+srun: job 26202083 has been allocated resources
+running
+  '/usr/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp0.txt 0 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current'
+
+Loading required package: grid
+srun: job 26202121 queued and waiting for resources
+srun: job 26202122 queued and waiting for resources
+srun: job 26202123 queued and waiting for resources
+srun: job 26202124 queued and waiting for resources
+srun: job 26202121 has been allocated resources
+srun: job 26202122 has been allocated resources
+srun: job 26202123 has been allocated resources
+srun: job 26202124 has been allocated resources
+running
+  '/usr/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp1.txt 1 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current'
+
+Loading required package: grid
+srun: job 26202146 queued and waiting for resources
+srun: job 26202147 queued and waiting for resources
+srun: job 26202148 queued and waiting for resources
+srun: job 26202149 queued and waiting for resources
+srun: job 26202146 has been allocated resources
+srun: job 26202147 has been allocated resources
+srun: job 26202148 has been allocated resources
+srun: job 26202149 has been allocated resources
+running
+  '/usr/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp2.txt 2 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current'
+
+Loading required package: grid
+srun: job 26202182 queued and waiting for resources
+srun: job 26202183 queued and waiting for resources
+srun: job 26202184 queued and waiting for resources
+srun: job 26202185 queued and waiting for resources
+srun: job 26202182 has been allocated resources
+srun: job 26202183 has been allocated resources
+srun: job 26202184 has been allocated resources
+srun: job 26202185 has been allocated resources
+running
+  '/usr/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp3.txt 3 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current'
+
+Loading required package: grid
+srun: job 26202210 queued and waiting for resources
+srun: job 26202211 queued and waiting for resources
+srun: job 26202212 queued and waiting for resources
+srun: job 26202213 queued and waiting for resources
+srun: job 26202210 has been allocated resources
+srun: job 26202211 has been allocated resources
+srun: job 26202212 has been allocated resources
+srun: job 26202213 has been allocated resources
+running
+  '/usr/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp4.txt 4 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current'
+
+Loading required package: grid
+srun: job 26202257 queued and waiting for resources
+srun: job 26202258 queued and waiting for resources
+srun: job 26202259 queued and waiting for resources
+srun: job 26202260 queued and waiting for resources
+srun: job 26202257 has been allocated resources
+srun: job 26202258 has been allocated resources
+srun: job 26202259 has been allocated resources
+srun: job 26202260 has been allocated resources
+running
+  '/usr/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp5.txt 5 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current'
+
+Loading required package: grid

@@ -1,0 +1,264 @@
+[H[J
+ ~/bin/util_func.r sourced!
+---------------
+
+[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=en_US.UTF-8;LC_PAPER=en_US.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=en_US.UTF-8;LC_IDENTIFICATION=C"
+[1] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp0.txt" 
+[2] "0"                                                            
+[3] "1e-6"                                                         
+[4] "0.1"                                                          
+[5] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt"
+[6] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current"       
+[1] "a_gamma=b_gamma =  0.1"
+[1] " # of function type:  6"
+[1] "hyper parameter values pre MCMC: "
+     pi sigma2
+1 1e-06     10
+2 1e-06     10
+3 1e-06     10
+4 1e-06     10
+5 1e-06     10
+6 1e-06     10
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+               pi     sigma2
+[1,] 4.582468e-05 0.11178052
+[2,] 1.000000e-06 0.09067947
+[3,] 1.000000e-06 0.09090909
+[4,] 1.000000e-06 0.08914264
+[5,] 1.000000e-06 0.09090909
+[6,] 4.198958e-06 0.14093010
+[1] "write to hypcurrent file with hyper parameter values after MCMC: "
+ [1] "0"            "1.737127e-01" "1.915027e+02" "4.582468e-05" "3.305609e-05"
+ [6] "1.117805e-01" "7.648184e-02" "1.000000e-06" "0.000000e+00" "9.067947e-02"
+[11] "8.609354e-02" "1.000000e-06" "0.000000e+00" "9.090909e-02" "8.667842e-02"
+[16] "1.000000e-06" "0.000000e+00" "8.914264e-02" "8.099876e-02" "1.000000e-06"
+[21] "0.000000e+00" "9.090909e-02" "8.667842e-02" "4.198958e-06" "1.307329e-05"
+[26] "1.409301e-01" "1.517455e-01"
+[1] "EM step time (in minutes) : "
+        user       system      elapsed 
+0.0001666667 0.0000000000 0.0010666667 
+[H[J
+ ~/bin/util_func.r sourced!
+---------------
+
+[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=en_US.UTF-8;LC_PAPER=en_US.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=en_US.UTF-8;LC_IDENTIFICATION=C"
+[1] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp1.txt" 
+[2] "1"                                                            
+[3] "1e-6"                                                         
+[4] "0.1"                                                          
+[5] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt"
+[6] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current"       
+[1] "a_gamma=b_gamma =  0.1"
+[1] " # of function type:  6"
+[1] "hyper parameter values pre MCMC: "
+            pi     sigma2
+1 4.582468e-05 0.11178050
+2 1.000000e-06 0.09067947
+3 1.000000e-06 0.09090909
+4 1.000000e-06 0.08914264
+5 1.000000e-06 0.09090909
+6 4.198958e-06 0.14093010
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+               pi     sigma2
+[1,] 1.170625e-04 0.08525264
+[2,] 1.000000e-06 0.09076286
+[3,] 1.000000e-06 0.09090909
+[4,] 1.000000e-06 0.09064117
+[5,] 1.000000e-06 0.09090909
+[6,] 2.779225e-06 0.13865822
+[1] "write to hypcurrent file with hyper parameter values after MCMC: "
+ [1] "1"            "1.923168e-01" "2.327866e+02" "1.170625e-04" "5.283178e-05"
+ [6] "8.525264e-02" "4.166605e-02" "1.000000e-06" "0.000000e+00" "9.076286e-02"
+[11] "8.630180e-02" "1.000000e-06" "0.000000e+00" "9.090909e-02" "8.667842e-02"
+[16] "1.000000e-06" "0.000000e+00" "9.064117e-02" "8.600054e-02" "1.000000e-06"
+[21] "0.000000e+00" "9.090909e-02" "8.667842e-02" "2.779225e-06" "1.063595e-05"
+[26] "1.386582e-01" "1.487988e-01"
+[1] "EM step time (in minutes) : "
+        user       system      elapsed 
+0.0001666667 0.0000000000 0.0006333333 
+[H[J
+ ~/bin/util_func.r sourced!
+---------------
+
+[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=en_US.UTF-8;LC_PAPER=en_US.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=en_US.UTF-8;LC_IDENTIFICATION=C"
+[1] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp2.txt" 
+[2] "2"                                                            
+[3] "1e-6"                                                         
+[4] "0.1"                                                          
+[5] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt"
+[6] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current"       
+[1] "a_gamma=b_gamma =  0.1"
+[1] " # of function type:  6"
+[1] "hyper parameter values pre MCMC: "
+            pi     sigma2
+1 1.170625e-04 0.08525264
+2 1.000000e-06 0.09076286
+3 1.000000e-06 0.09090909
+4 1.000000e-06 0.09064117
+5 1.000000e-06 0.09090909
+6 2.779225e-06 0.13865820
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+               pi     sigma2
+[1,] 1.471286e-04 0.07723300
+[2,] 1.000000e-06 0.09086873
+[3,] 1.000000e-06 0.09090909
+[4,] 1.000000e-06 0.09079209
+[5,] 1.000000e-06 0.09090909
+[6,] 2.848421e-06 0.13812517
+[1] "write to hypcurrent file with hyper parameter values after MCMC: "
+ [1] "2"            "1.947638e-01" "2.325398e+02" "1.471286e-04" "5.922817e-05"
+ [6] "7.723300e-02" "3.433254e-02" "1.000000e-06" "0.000000e+00" "9.086873e-02"
+[11] "8.657553e-02" "1.000000e-06" "0.000000e+00" "9.090909e-02" "8.667842e-02"
+[16] "1.000000e-06" "0.000000e+00" "9.079209e-02" "8.637841e-02" "1.000000e-06"
+[21] "0.000000e+00" "9.090909e-02" "8.667842e-02" "2.848421e-06" "1.076754e-05"
+[26] "1.381252e-01" "1.476821e-01"
+[1] "EM step time (in minutes) : "
+        user       system      elapsed 
+0.0003333333 0.0000000000 0.0025833333 
+[H[J
+ ~/bin/util_func.r sourced!
+---------------
+
+[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=en_US.UTF-8;LC_PAPER=en_US.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=en_US.UTF-8;LC_IDENTIFICATION=C"
+[1] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp3.txt" 
+[2] "3"                                                            
+[3] "1e-6"                                                         
+[4] "0.1"                                                          
+[5] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt"
+[6] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current"       
+[1] "a_gamma=b_gamma =  0.1"
+[1] " # of function type:  6"
+[1] "hyper parameter values pre MCMC: "
+            pi     sigma2
+1 1.471286e-04 0.07723300
+2 1.000000e-06 0.09086873
+3 1.000000e-06 0.09090909
+4 1.000000e-06 0.09079209
+5 1.000000e-06 0.09090909
+6 2.848421e-06 0.13812520
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+               pi     sigma2
+[1,] 1.543665e-04 0.07194106
+[2,] 1.000000e-06 0.09087653
+[3,] 1.000000e-06 0.09090909
+[4,] 1.000000e-06 0.09076575
+[5,] 1.000000e-06 0.09090909
+[6,] 1.293715e-05 0.13204661
+[1] "write to hypcurrent file with hyper parameter values after MCMC: "
+ [1] "3"            "1.947416e-01" "2.320119e+02" "1.543665e-04" "6.066730e-05"
+ [6] "7.194106e-02" "3.095061e-02" "1.000000e-06" "0.000000e+00" "9.087653e-02"
+[11] "8.659431e-02" "1.000000e-06" "0.000000e+00" "9.090909e-02" "8.667842e-02"
+[16] "1.000000e-06" "0.000000e+00" "9.076575e-02" "8.630808e-02" "1.000000e-06"
+[21] "0.000000e+00" "9.090909e-02" "8.667842e-02" "1.293715e-05" "2.294730e-05"
+[26] "1.320466e-01" "1.279328e-01"
+[1] "EM step time (in minutes) : "
+        user       system      elapsed 
+0.0003333333 0.0000000000 0.0005000000 
+[H[J
+ ~/bin/util_func.r sourced!
+---------------
+
+[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=en_US.UTF-8;LC_PAPER=en_US.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=en_US.UTF-8;LC_IDENTIFICATION=C"
+[1] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp4.txt" 
+[2] "4"                                                            
+[3] "1e-6"                                                         
+[4] "0.1"                                                          
+[5] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt"
+[6] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current"       
+[1] "a_gamma=b_gamma =  0.1"
+[1] " # of function type:  6"
+[1] "hyper parameter values pre MCMC: "
+            pi     sigma2
+1 1.543665e-04 0.07194106
+2 1.000000e-06 0.09087653
+3 1.000000e-06 0.09090909
+4 1.000000e-06 0.09076575
+5 1.000000e-06 0.09090909
+6 1.293715e-05 0.13204660
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+               pi     sigma2
+[1,] 0.0001629221 0.07189296
+[2,] 0.0000010000 0.09086410
+[3,] 0.0000010000 0.09090909
+[4,] 0.0000010000 0.09074699
+[5,] 0.0000010000 0.09090909
+[6,] 0.0000375521 0.12076133
+[1] "write to hypcurrent file with hyper parameter values after MCMC: "
+ [1] "4"            "1.949587e-01" "2.292922e+02" "1.629221e-04" "6.232557e-05"
+ [6] "7.189296e-02" "3.042380e-02" "1.000000e-06" "0.000000e+00" "9.086410e-02"
+[11] "8.655847e-02" "1.000000e-06" "0.000000e+00" "9.090909e-02" "8.667842e-02"
+[16] "1.000000e-06" "0.000000e+00" "9.074699e-02" "8.625260e-02" "1.000000e-06"
+[21] "0.000000e+00" "9.090909e-02" "8.667842e-02" "3.755210e-05" "3.909526e-05"
+[26] "1.207613e-01" "9.829829e-02"
+[1] "EM step time (in minutes) : "
+        user       system      elapsed 
+0.0001666667 0.0000000000 0.0005333333 
+[H[J
+ ~/bin/util_func.r sourced!
+---------------
+
+[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=en_US.UTF-8;LC_PAPER=en_US.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=en_US.UTF-8;LC_IDENTIFICATION=C"
+[1] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/hyptemp5.txt" 
+[2] "5"                                                            
+[3] "1e-6"                                                         
+[4] "0.1"                                                          
+[5] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/Eoutput/EM_result.txt"
+[6] "/net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current"       
+[1] "a_gamma=b_gamma =  0.1"
+[1] " # of function type:  6"
+[1] "hyper parameter values pre MCMC: "
+            pi     sigma2
+1 0.0001629221 0.07189296
+2 0.0000010000 0.09086410
+3 0.0000010000 0.09090909
+4 0.0000010000 0.09074699
+5 0.0000010000 0.09090909
+6 0.0000375521 0.12076130
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+               pi     sigma2
+[1,] 1.644707e-04 0.07202194
+[2,] 1.000000e-06 0.09087511
+[3,] 1.000000e-06 0.09090909
+[4,] 1.000000e-06 0.09080346
+[5,] 1.000000e-06 0.09090909
+[6,] 3.736649e-05 0.11617284
+[1] "write to hypcurrent file with hyper parameter values after MCMC: "
+ [1] "5"            "1.961244e-01" "2.297511e+02" "1.644707e-04" "6.262103e-05"
+ [6] "7.202194e-02" "3.040364e-02" "1.000000e-06" "0.000000e+00" "9.087511e-02"
+[11] "8.658847e-02" "1.000000e-06" "0.000000e+00" "9.090909e-02" "8.667842e-02"
+[16] "1.000000e-06" "0.000000e+00" "9.080346e-02" "8.640391e-02" "1.000000e-06"
+[21] "0.000000e+00" "9.090909e-02" "8.667842e-02" "3.736649e-05" "3.899852e-05"
+[26] "1.161728e-01" "9.264545e-02"
+[1] "EM step time (in minutes) : "
+        user       system      elapsed 
+0.0003333333 0.0000000000 0.0004500000 

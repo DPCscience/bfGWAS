@@ -1,0 +1,87 @@
+
+# Script for testing SFBA
+
+################ setup directories
+
+sfba_dir="/net/fantasia/home/yjingj/GIT/SFBA"
+data_dir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData"
+wkdir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_TEST"
+# makdir -p $wkdir
+
+################## perl script is used to generate makefile #############
+
+${sfba_dir}/gen_mkf.pl \
+-w ${wkdir} \
+--Estep ${sfba_dir}/bin/Estep_mcmc \
+--ad ${data_dir}/annos \
+--geno vcf --ac ${data_dir}/AnnoCode6.txt  \
+--gd ${data_dir}/vcfs \
+--pheno ${data_dir}/phenoAMD_1KG.txt \
+--hyp ${data_dir}/InitValues6.txt \
+-f ${data_dir}/fileheads_4region.txt \
+--rs ${sfba_dir}/bin/Mstep.r \
+-G GT --maf 0.005 --smin 0 --smax 10 -b 50000 -N 50000 --NL 50000 \
+--em 5 -j testjob -l slurm --mem 3000 \
+--mf ${wkdir}/Test_sfba.mk
+
+## Run Makefile with 4 parallel jobs
+make -k -C ${wkdir} -f ${wkdir}/Test_sfba.mk -j 4 > ${wkdir}/make.output 2> ${wkdir}/make.err  &
+
+## Clean all jobs when you need rerun everything
+# make -f ${wkdir}/Test_sfba.mk clean
+
+
+#################
+############## Output under ${wkdir} ###################
+
+######### /OUT/ : saves all screen outputs
+
+######### /output/ : saves all MCMC output for 1 E-step / will be overridden by the next E-step
+# filehead.log.txt contains log file for MCMC 
+# filehead.paramtemp contains estimates for each variant with columns "ID", "chr", "bp", "maf", "func", "beta", "pi", "Zscore", "SE_beta", "LRT", "pval_LRT", "rank";
+
+# "ID" : variant ID
+# "chr" : chromosome number 
+# "bp" : base pair position
+# "maf" : MAF of the variant
+# "func" : annotation code used in --ac FuncAnno4.txt
+# "beta" : effect size estimate
+# "pi" : causal probability for each variant
+# "Zscore" : Zscore by single likelihood ratio test
+# "SE_beta" : from single likelihood ratio test
+# "LRT" : test statistic by single likelihood ratio test
+# "pval_LRT" : pvalue by single likelihood ratio test
+# "rank" : rank within block based on p-values, 0:top significant variant by pvalue
+
+# function LoadEMdata() in EM_func.r can be used to read this paramtemp file into R, requiring library "data.table"
+
+# filehead.hyptemp contains estimates required for M-step 
+
+######### /slurm_err/ : saves all error file for slurm jobs
+
+###### under folder /Eoutput/ : main results ########
+# let i denote the ith EM iteration
+# log${i}.txt contains all log files for all blocks
+# hyptemp${i}.txt contains all hyptemp files for all blocks
+# paramtemp${i}.txt contains all paramtemp files for all blocks
+# EM_result.txt contains all hyper parameter estimates with columns "EM_iter_#", "PVE/heritability", "likelihood", every 4 of the following columns denotes the "causal probability" "causal probability SE" "effect size variance" "effect size variance SE" for group 0, 1, 2, ...
+# R function LoadEMhyp() can be used to read EM_result.txt file
+# R function CItable() can be used to convert one row of EM_result.txt to a table of annotations
+
+############ example R code for analysis
+
+# load in GWAS results for each variant
+paramdata_AMD = LoadEMdata(filename="./Eoutput/paramtemp5.txt")
+
+# load in EM_result.txt data
+AMDgwas_hyp <- LoadEMhyp(filename = "EM_result.txt")
+
+# convert one row of AMDgwas_hyp to a table of functions
+AMDgwas_CI_table <- CItable(AMDgwas_hyp[2, ], 4, 0.95, mafgroup=rep(NA, 4), funcgroup = c("non-syn", "coding-syn", "others", "intron"))
+
+# plot causal proportion estimates
+PlotCI_PIP_Multgroup(hyp_table=AMDgwas_CI_table, pdfname=paste("AMDgwas_EMpip_95CI_Func4.pdf", sep =""), size = 18)
+
+# plot effect size estimates
+PlotCI_Var_Multgroup(hyp_table=AMDgwas_CI_table, pdfname=paste("AMDgwas_EMvar_95CI_Func4.pdf", sep =""), size = 18)
+

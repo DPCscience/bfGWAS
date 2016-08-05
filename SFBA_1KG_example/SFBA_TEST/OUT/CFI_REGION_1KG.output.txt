@@ -1,0 +1,328 @@
+Reading Files ... 
+Start reading pheno file ...
+open phenotype file ... /net/fantasia/home/yjingj/GIT/SFBA_example/ExData/phenoAMD_1KG.txt
+Start reading vcf file first time ...
+Load VCF file genotype field: GT
+open vcf file ...
+
+ Parse for VCF sample IDs with size 2504
+VCF tab_count = 2513
+vcf read first time success ... 
+ns_test = 3542ns_total = 16085
+Start reading annotation files: /net/fantasia/home/yjingj/GIT/SFBA_example/ExData/annos/Anno_CFI_REGION_1KG.gz
+Number of annotation categories: 6
+Number of variants per category: 2517, 51, 0, 383, 0, 591, 
+Readinf file first time cost 0.198333mints 
+## number of total individuals = 2504
+## number of individuals with full phenotypes = 2504
+## number of total SNPs = 16085
+## number of analyzed SNPs = 3542
+Pass data check.
+Reorder y for reading vcf files ... 
+Total samples: 2504
+PhenoID2Ind.size() = 2504 within ReorderPheno() function ... 
+
+ reorder y, final ni_test = 2504
+Center phenotype ... 
+pheno_mean = 0.49401
+open vcf file second time ...
+read vcf file second time success ... 
+load genotype data cost 0.0548333mints
+Run MCMC...
+Calculating Z_scores, standard errors of effect-sizes, LRT statistics, pvals ... 
+Trace of Genotype Matrix = 0.172972
+Number of variants with p-value < 5e-8 : 0
+Start initializing MCMC ... 
+Start with Step-wise selected variants. 
+
+Starting model has variants with ranks: 
+0, 
+rv from command line = 1
+Initial causal probability per category = 0.000162922, 1e-06, 1e-06, 1e-06, 1e-06, 3.75521e-05, 
+Initial effect-size variance per category = 0.071893, 0.0908641, 0.0909091, 0.090747, 0.0909091, 0.120761, 
+Initially selected number of variants in the model = 1
+Initial number of selected variants per category : 0, 0, 0, 1, 0, 0, 
+Running MCMC                               0.00%  & acceptance ratio 0.00
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+INFO =4: Lapack solve unsuccessful in LapackSolve.
+acceptance percentage = 0.188408
+# of selected variants per category: 
+4, 0, 0, 0, 0, 0, 
+loglike: -14.936229
+acceptance percentage = 0.189823
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: 2.120278
+INFO =2: Lapack solve unsuccessful in LapackSolve.
+acceptance percentage = 0.191053
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: 1.085579
+acceptance percentage = 0.192237
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -3.787343
+acceptance percentage = 0.192796
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -0.867317
+acceptance percentage = 0.194175
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: 2.437285
+acceptance percentage = 0.193874
+# of selected variants per category: 
+1, 0, 0, 0, 0, 1, 
+loglike: -6.753682
+acceptance percentage = 0.193462
+# of selected variants per category: 
+1, 0, 0, 0, 0, 1, 
+loglike: -6.297266
+acceptance percentage = 0.192759
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.191947
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.191489
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.906530
+acceptance percentage = 0.191497
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: 0.190066
+acceptance percentage = 0.191267
+# of selected variants per category: 
+3, 0, 0, 0, 0, 0, 
+loglike: -12.007292
+acceptance percentage = 0.190763
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.190151
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 3.851002
+acceptance percentage = 0.190058
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -0.088677
+acceptance percentage = 0.190072
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -4.230991
+acceptance percentage = 0.189850
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.906530
+acceptance percentage = 0.190229
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.189997
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -1.533373
+acceptance percentage = 0.190040
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.189595
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -3.943872
+acceptance percentage = 0.189395
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.189241
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.906530
+acceptance percentage = 0.188877
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -7.291774
+acceptance percentage = 0.188590
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -0.741272
+acceptance percentage = 0.188868
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -2.558344
+INFO =3: Lapack solve unsuccessful in LapackSolve.
+acceptance percentage = 0.189805
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: 2.120278
+acceptance percentage = 0.190010
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 1.706866
+acceptance percentage = 0.190123
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 2.563823
+acceptance percentage = 0.189763
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 0.879210
+acceptance percentage = 0.190034
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.189733
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.189379
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.906530
+acceptance percentage = 0.189080
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.188986
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -15.311524
+acceptance percentage = 0.188573
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.187918
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -3.415436
+acceptance percentage = 0.187829
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.627966
+acceptance percentage = 0.187720
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: -3.176567
+acceptance percentage = 0.187679
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 2.562821
+acceptance percentage = 0.187031
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 2.562821
+acceptance percentage = 0.186847
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 4.906530
+acceptance percentage = 0.186753
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 0.217337
+acceptance percentage = 0.186819
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -3.162035
+acceptance percentage = 0.186946
+# of selected variants per category: 
+3, 0, 0, 0, 0, 0, 
+loglike: -4.973129
+acceptance percentage = 0.187276
+# of selected variants per category: 
+1, 0, 0, 0, 0, 0, 
+loglike: 2.562821
+acceptance percentage = 0.186876
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -3.780205
+acceptance percentage = 0.186685
+# of selected variants per category: 
+2, 0, 0, 0, 0, 0, 
+loglike: -1.470067
+Running MCMC ==============================100.00%  & acceptance ratio 0.19
+MCMC completed ... 
+
+gamma acceptance percentage = 0.19
+# of selected variants per category: 1, 0, 0, 0, 0, 0, 
+beta_hat: -0.151222, 
+loglike: 4.906530
+k_save_sample = 49646
