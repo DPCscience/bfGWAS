@@ -300,7 +300,7 @@ void BVSRM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
     if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
     
     //write header with VcfSampleID_test 
-    outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"pos"<<"\t" << "func"<< "\t" << "maf"  << "\t";
+    outfile<<"ID"<<"\t"<<"CHROM"<<"\t" <<"POS"<<"\t" << "REF"<< "\t" << "ALT"  << "\t";
     for (size_t i=0; i<ni_test; i++) {
         if (i ==(ni_test-1)) {
             outfile << VcfSampleID_test[i] << endl;
@@ -318,16 +318,16 @@ void BVSRM::WriteGenotypeFile(uchar **X, const vector<SNPPOS> &snp_pos)
         // save the data along the order of all variants, snp_pos is sorted by order
         rs = snp_pos[i].rs;
         outfile<< rs <<"\t"<< snp_pos[i].chr<<"\t" <<snp_pos[i].bp << "\t";
+        outfile << snp_pos[i].a_major << "\t" <<snp_pos[i].a_minor << "\t";
         
-        for (size_t j=0; j < n_type; j++) {
+        /*for (size_t j=0; j < n_type; j++) {
             if (snp_pos[i].indicator_func[j]) {
                 outfile << j << "\t";
                 break;
             }
             else if(j == (n_type - 1)) outfile << "NA" << "\t";
-        }
-        
-        outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
+        }*/       
+        //outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
         
         for (size_t j=0; j < ni_test; j++) {
             
@@ -2389,9 +2389,12 @@ void BVSRM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
     long int bp;
     size_t tt=0;
     vector<bool> indicator_func;
-    vector<double> weight;
-    double weight_i;
+    //vector<double> weight;
+    //double weight_i;
     double maf;
+    string a_minor;
+    string a_major;
+
     //SNPsd.clear();
     
     for (size_t i=0; i < ns_total; ++i){
@@ -2405,12 +2408,15 @@ void BVSRM::CreateSnpPosVec(vector<SNPPOS> &snp_pos)
         chr = snpInfo[i].chr;
         bp = snpInfo[i].base_position;
         maf = snpInfo[i].maf;
+        a_minor = snpInfo[i].a_minor;
+        a_major = snpInfo[i].a_major;
+
         indicator_func = snpInfo[i].indicator_func;
-        weight = snpInfo[i].weight;
-        
-        weight_i = snpInfo[i].weight_i;
+
+        //weight = snpInfo[i].weight;
+        //weight_i = snpInfo[i].weight_i;
         // cout << weight_i << ", ";
-        SNPPOS snp_temp={pos, rs, chr, bp, maf, indicator_func, weight, weight_i};
+        SNPPOS snp_temp={pos, rs, chr, bp, a_minor, a_major, maf, indicator_func};
         snp_pos.push_back(snp_temp);
         
         //SNPsd.push_back(1.0 / sqrt(2.0 * maf * (1.0 - maf)));

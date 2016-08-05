@@ -74,7 +74,8 @@ void SNPPOS::printMarker(){
     std::cout << "ID : " << rs <<"; ";
     std::cout << "chr : " << chr <<"; ";
     std::cout << "bp : " << bp <<"; ";
-    std::cout << "weight_i : " << weight_i <<"; \n";
+    std::cout << "minor allel : " << a_minor <<"; ";
+    std::cout << "major allel : " << a_major <<"; \n";
 }
 
 void SNPINFO::printMarker(){

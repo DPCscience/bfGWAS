@@ -79,11 +79,12 @@ struct SNPPOS{
     string rs;
     string chr;
     long int bp;
-    double maf;
-    
+    string a_minor;
+	string a_major;
+	double maf;
     vector<bool> indicator_func;
-    vector<double> weight;
-    double weight_i;
+    //vector<double> weight;
+    //double weight_i;
     
     void printMarker();
 };

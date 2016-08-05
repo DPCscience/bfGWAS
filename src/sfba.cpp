@@ -113,13 +113,14 @@ void SFBA::PrintHelp(size_t option)
 		cout<<" 4: calculate relatedness matrix"<<endl;
 		cout<<" 5: apply single variate linear model"<<endl;
 		cout<<" 6: apply BVSR model"<<endl;
-		cout<<" 7: note"<<endl;
+		cout<<" 7: save genotype text file or LD matrix"<<endl;
+		cout<<" 8: note"<<endl;
 		cout<<endl;
 	}	
 	
 	if (option==1) {
-		cout<<" QUICK GUIDE" << endl;
-		cout<<" Generate a relatedness matrix: "<<endl;
+		cout<<" QUICK GUIDE " << endl;
+		cout<<" Generate a kinship matrix: "<<endl;
 		cout<<"         ./gemma -bfile [prefix] -gk [num] -o [prefix]"<<endl;
 		cout<<"         ./gemma -vcf [filename] -p [filename] -gk [num] -o [prefix]"<<endl;
 		cout<<"         ./gemma -g [filename] -p [filename] -gk [num] -o [prefix]"<<endl<<endl;
@@ -129,15 +130,15 @@ void SFBA::PrintHelp(size_t option)
 		cout<<"         ./gemma -vcf [filename] -p [filename] -lm [num] -o [prefix]"<<endl;
 		cout<<"         ./gemma -g [filename] -p [filename] -lm [num] -o [prefix]"<<endl<<endl;
 
-		cout<<" Fit a Bayesian variable selection regression model: "<<endl;
-		cout<<"         ./gemma -bfile [prefix] -bvsrm [num] -o [prefix]"<<endl;
-		cout<<"         ./gemma -vcf [filename] -p [filename] -a [filename] -bvsrm [num] -o [prefix]"<<endl;
-		cout<<"         ./gemma -g [filename] -p [filename] -a [filename] -bvsrm [num] -o [prefix]"<<endl;
+		cout<<" Fit a Bayesian variable selection regression model (BVSRM): "<<endl;
+		cout<<"         ./gemma -bfile [prefix] -a [filename] -fcode [filename] -hfile [filename] -bvsrm -o [prefix]"<<endl;
+		cout<<"         ./gemma -vcf [filename] -p [filename] -a [filename] -fcode [filename] -hfile [filename] -GTfield [keyword] -bvsrm -o [prefix]"<<endl;
+		cout<<"         ./gemma -g [filename] -p [filename] -a [filename] -fcode [filename] -hfile [filename] -bvsrm -o [prefix]"<<endl;
 		cout<<endl;
 	}
 	
 	if (option==2) {
-		cout<<" FILE I/O RELATED OPTIONS" << endl;
+		cout<<" FILE I/O RELATED OPTIONS " << endl;
 		cout<<" -bfile    [prefix]       "<<" Specify input PLINK binary ped file prefix."<<endl;	
 		cout<<"          requires: *.fam, *.bim and *.bed files"<<endl;	
 		cout<<"          missing value: -9"<<endl<<endl;
@@ -154,8 +155,8 @@ void SFBA::PrintHelp(size_t option)
 		cout<<"                  ..."<<endl;
 		cout<<"          missing value: NA"<<endl<<endl;
 
-		cout<<" -vcf        [filename]     "<<" Specify input VCF genotype file"<<endl;
-		cout<<" -GTfield        [keyword]     "<<" Specify whether to read for genotypes with keyword=GT, or read for doseage data keyword=EC from the VCF genotype file"<<endl;
+		cout<<" -vcf        [filename]     "<<" Specify input VCF genotype file"<<endl<<endl;
+		cout<<" -GTfield        [keyword]     "<<" Specify whether to read for genotypes with keyword=GT, or read for doseage data keyword=EC from the VCF genotype file"<<endl<<endl;
 
 		cout<<" -a        [filename]     "<<" Specify input annotation file name (optional)"<<endl;	
 		cout<<"          format: rs#1 chr_number base_position anno1"<<endl;	
@@ -164,10 +165,10 @@ void SFBA::PrintHelp(size_t option)
 		cout<<"          in the same order as variants in the genotype file"<<endl;
 		cout<<"          missing value: NA or blank"<<endl<<endl;
 
-		cout<<" -fcode        [filename]     "<<" Specify annotation code file"<<endl;
+		cout<<" -fcode        [filename]     "<<" Specify annotation code file"<<endl<<endl;
 		cout<<" -hfile        [filename]     "<<" Specify hyper parameter values"<<endl<<endl;
 
-		cout<<" -k        [filename]     "<<" Specify input kinship/relatedness matrix file name"<<endl<<endl;	
+		//cout<<" -k        [filename]     "<<" Specify input kinship/relatedness matrix file name"<<endl<<endl;	
 
 		cout<<" -snps     [filename]     "<<" Specify the variant ids that are to be analyzed"<<endl;
 		cout<<"          format: rs#1"<<endl;	
@@ -176,11 +177,11 @@ void SFBA::PrintHelp(size_t option)
 
 		cout<<" -silence                 "<<" Silent terminal display"<<endl<<endl;
 
-		cout<<" -km       [num]          "<<" Specify input kinship/relatedness file type (default 1)."<<endl;
-		cout<<"          options: 1: \"n by n matrix\" format"<<endl;
-		cout<<"                   2: \"id  id  value\" format"<<endl<<endl;
+		//cout<<" -km       [num]          "<<" Specify input kinship/relatedness file type (default 1)."<<endl;
+		//cout<<"          options: 1: \"n by n matrix\" format"<<endl;
+		//cout<<"                   2: \"id  id  value\" format"<<endl<<endl;
 
-		cout<<" -pace     [num]          "<<" Specify terminal display update pace (default 100000 variants or 100000 iterations)."<<endl<<endl;
+		//cout<<" -pace     [num]          "<<" Specify terminal display update pace (default 100000 variants or 100000 iterations)."<<endl<<endl;
 
 		cout<<" -o        [prefix]       "<<" Specify output file prefix (default \"result\")"<<endl;  
 		cout<<"          output: prefix.cXX.txt or prefix.sXX.txt from kinship/relatedness matrix estimation"<<endl;	
@@ -189,7 +190,7 @@ void SFBA::PrintHelp(size_t option)
 	}
 	
 	if (option==3) {
-		cout<<" Variant QC OPTIONS" << endl;
+		cout<<" Variant QC OPTIONS " << endl;
 		cout<<" -miss     [num]          "<<" specify missingness threshold (default 0.05)" << endl; 
 		cout<<" -maf      [num]          "<<" specify minor allele frequency threshold (default 0.005)" << endl; 
 		cout<<" -hwe      [num]          "<<" specify HWE test p value threshold (default 0; no test)" << endl; 
@@ -197,7 +198,7 @@ void SFBA::PrintHelp(size_t option)
 	}
 	
 	if (option==4) {
-		cout<<" RELATEDNESS MATRIX CALCULATION OPTIONS" << endl;
+		cout<<" RELATEDNESS MATRIX CALCULATION OPTIONS " << endl;
 		cout<<" -gk       [num]          "<<" specify which type of kinship/relatedness matrix to generate (default 1)" << endl; 
 		cout<<"          options: 1: centered XX^T/p"<<endl;
 		cout<<"                   2: standardized XX^T/p"<<endl;
@@ -206,7 +207,7 @@ void SFBA::PrintHelp(size_t option)
 	}
 	
 	if (option==5) {
-		cout<<" LINEAR MODEL OPTIONS" << endl;		
+		cout<<" LINEAR MODEL OPTIONS " << endl;		
 		cout<<" -lm       [num]         "<<" specify analysis options (default 1)."<<endl;
 		cout<<"          options: 1: Wald test"<<endl;
 		cout<<"                   2: Likelihood ratio test"<<endl;
@@ -216,30 +217,26 @@ void SFBA::PrintHelp(size_t option)
 	}
 	
 	if (option==6) {
-		cout<<" FIT BVSR MODEL" << endl;
-		cout<<" -bvsrm	  [num]			 "<<" specify analysis options (default 1)."<<endl;
-		cout<<"          options: 1: BVSRM"<<endl <<endl;	
+		cout<<" BVSRM OPTIONS " << endl;	
+		cout<<" -bvsrm	   "<<" apply BVSR model "<<endl;
 		
-		cout<<"   MCMC OPTIONS" << endl;
-		cout<<"   Prior" << endl;
-		cout<<" -hmin     [num]          "<<" specify minimum value for h (default 0)" << endl; 
-		cout<<" -hmax     [num]          "<<" specify maximum value for h (default 1)" << endl; 
-		cout<<" -rmin     [num]          "<<" specify minimum value for rho (default 0)" << endl; 
-		cout<<" -rmax     [num]          "<<" specify maximum value for rho (default 1)" << endl; 
-		cout<<" -pmin     [num]          "<<" specify minimum value for log10(pi) (default log10(1/p), where p is the number of analyzed SNPs )" << endl; 
-		cout<<" -pmax     [num]          "<<" specify maximum value for log10(pi) (default log10(1) )" << endl; 			
+		//cout<<"   MCMC OPTIONS" << endl;
+		//cout<<"   Prior" << endl;
+		//cout<<" -hmin     [num]          "<<" specify minimum value for h (default 0)" << endl; 
+		//cout<<" -hmax     [num]          "<<" specify maximum value for h (default 1)" << endl; 
+		//cout<<" -rmin     [num]          "<<" specify minimum value for rho (default 0)" << endl; 
+		//cout<<" -rmax     [num]          "<<" specify maximum value for rho (default 1)" << endl; 
+		//cout<<" -pmin     [num]          "<<" specify minimum value for log10(pi) (default log10(1/p), where p is the number of analyzed SNPs )" << endl; 
+		//cout<<" -pmax     [num]          "<<" specify maximum value for log10(pi) (default log10(1) )" << endl; 			
+
 		cout<<" -smin     [num]          "<<" specify minimum value for |gamma| (default 0)" << endl; 
-		cout<<" -smax     [num]          "<<" specify maximum value for |gamma| (default 300)" << endl<<endl;
-		cout<<" -rv     [num]          "<<" specify the residual variance value (default 1 for standardized phenotypes)" << endl; 
-		
-		cout<<"   Proposal" << endl;
-		cout<<" -win   [num]          "<<" specify the neighbourhood window size (default 100)" << endl<<endl; 
-		
-		cout<<"   Others" << endl;
+		cout<<" -smax     [num]          "<<" specify maximum value for |gamma| (default 300)" << endl;
+		cout<<" -rv     [num]          "<<" specify the residual variance value (default 1 for standardized phenotypes)" << endl; 		
+		cout<<" -win   [num]          "<<" specify the neighbourhood window size (default 100)" << endl; 
 		cout<<" -w        [num]          "<<" specify burn-in steps (default 100,000)" << endl; 
 		cout<<" -s        [num]          "<<" specify sampling steps (default 1,000,000)" << endl; 
 		cout<<" -comp                    "<<" specify whether to impement in-memory compression (default no comp flag)" << endl;
-		cout<<" -saveSNP     [num]          "<<" specify whether to save genotypes with value 1, or not (default with value 0)" << endl;
+		
 		cout<<" -initype     [num]          "<<" specify the initial model for MCMC: " << endl;
 		cout<<"          option 1: start with the most significant variant"<<endl;
 		cout<<"          option 2: start with the significant variants that acheive genome-wide significance"<<endl;
@@ -250,8 +247,15 @@ void SFBA::PrintHelp(size_t option)
 		cout<<"          requires quantitative phenotypes (0/1 for case/control)"<<endl;	
 		cout<<endl<<endl;
 	}
-	
+
 	if (option==7) {
+		cout<<" -saveGeno  "<<" specify whether to save a tab delimited genotype text file from the inpute genotype file" << endl;
+		cout<<" -saveLD  "<<" specify whether to save LD matrix from the analyzed variants" << endl;
+		cout<<" -saveSNP  "<<" specify whether to save a tab delimited genotype text file for the analyzed variants in bvsrm" << endl;
+		cout<<endl;
+	}
+	
+	if (option==8) {
 		cout<<" NOTE"<<endl;
 		cout<<" 1. Only individuals with quantitative non-NA phenotoypes will be analyzed."<<endl;
 		cout<<" 2. Missing genotoypes will be repalced by the sample mean genotype."<<endl;
