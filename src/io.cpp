@@ -207,13 +207,13 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
         else {
           if (!indicator_snp[snp_i]) {
           	// SNP is excluded from analysis
-              pch=(char *)line.c_str();
-              nch = strchr(pch, '\t');
-              rs.assign(pch, nch-pch);
-              if (snpInfo[snp_i].rs_number.compare(rs) != 0) {
+            //  pch=(char *)line.c_str();
+            //  nch = strchr(pch, '\t');
+            //  rs.assign(pch, nch-pch);
+              /*if (snpInfo[snp_i].rs_number.compare(rs) != 0) {
                   cerr << "annotation file ID dose not match genotype file ID...\n";
                   exit(-1);
-              }
+              }*/ // do not check for variant ID
               snp_i++;
               continue;
           }
@@ -222,10 +222,10 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             nch = strchr(pch, '\t');
             rs.assign(pch, nch-pch);
             //cout << "snp_i=" << snp_i << ";anno rs=" << rs << "; snpInfo.rs_number=" << snpInfo[snp_i].rs_number << endl;
-            if (snpInfo[snp_i].rs_number.compare(rs) != 0) {
+            /*if (snpInfo[snp_i].rs_number.compare(rs) != 0) {
                 cerr << "annotation file ID dose not match genotype file ID...\n";
                 exit(-1);
-            }
+            }*/
             
             pch = (nch == NULL) ? NULL : nch+1;
             nch = strchr(pch, '\t');
@@ -1488,7 +1488,7 @@ bool VCFKin (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &
         else {
             if (!indicator_snp[c_snp]) {c_snp++; continue;}
             c_idv=0; //increase to the total individuals ni_total
-            geno_mean=0.0; n_miss=0; geno_var=0.0;
+            geno_mean=0.0; n_miss=0; geno_var=0.0; ctest_idv = 0;
         
             pch= (char *)line.c_str();
             for (tab_count=0; pch != NULL; tab_count++) {

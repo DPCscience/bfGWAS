@@ -250,7 +250,7 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y, string &GTfield, 
         else {
             if (!indicator_snp[c_snp]) {c_snp++; continue;}
             c_idv=0; //increase to the total individuals ni_total
-            x_mean=0.0; n_miss=0; 
+            x_mean=0.0; n_miss=0; ctest_idv = 0;
         
             pch= (char *)line.c_str();
             for (tab_count=0; pch != NULL; tab_count++) {
