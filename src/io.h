@@ -57,13 +57,14 @@ bool ReadFile_bed (const string &file_bed, const set<string> &setSnps, vector<bo
 void ReadFile_kin (const string &file_kin, vector<bool> &indicator_idv, map<string, int> &mapID2num, const size_t k_mode, bool &error, gsl_matrix *G);
 
 bool getIDVvcf(const string &file_vcf, vector<bool> &indicator_idv, size_t & ni_total, string &GTfield);
-bool VCFKin (const string &file_vcf, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin, string &GTfield); //** NEED to be rewritten **
+
+bool VCFKin (const string &file_vcf, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin, string &GTfield, const vector <size_t> &SampleVcfPos, const map<string, size_t> &PhenoID2Ind, const vector<string> &VcfSampleID); 
 
 bool getIDVgeno(const string &file_geno, vector<bool> &indicator_idv, size_t & ni_total);
-bool GenoKin (const string &file_geno, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
+bool GenoKin (const string &file_geno, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin, const vector <size_t> &SampleVcfPos, const map<string, size_t> &PhenoID2Ind, const vector<string> &VcfSampleID);
 
 
-bool PlinkKin (const string &file_bed, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
+bool PlinkKin (const string &file_bed, vector<bool> &indicator_idv, vector<bool> &indicator_snp, const int k_mode, const int display_pace, gsl_matrix *matrix_kin);
 
 bool ReadFile_geno (const string &file_geno, const vector<bool> &indicator_idv, const vector<bool> &indicator_snp, uchar **X, gsl_matrix *K, const bool calc_K, const size_t ni_test, vector<double> &SNPmean, vector <size_t> &CompBuffSizeVec, const vector <size_t> &SampleVcfPos, const map<string, size_t> &PhenoID2Ind, const vector<string> &VcfSampleID, bool Compress_Flag); // second time
 

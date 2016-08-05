@@ -113,7 +113,7 @@ vscale(0.0), iniType(3), saveSNP(0), saveGeno(0), saveLD(0), rv(1.0),
 GTfield("GT"), Compress_Flag(0),
 mode_silence (false), a_mode (0), k_mode(1), d_pace (100000),
 file_out("result"), 
-miss_level(0.05), maf_level(0.01), hwe_level(0), 
+miss_level(0.05), maf_level(0.005), hwe_level(0), 
 win(100),nadd_accept(0), ndel_accept(0), nswitch_accept(0),
 nother_accept(0), nadd(0), ndel(0),
 nswitch(0), nother(0),
@@ -121,8 +121,8 @@ h_min(-1), h_max(1.0), h_scale(-1),
 rho_min(1.0), rho_max(1.0),	rho_scale(-1),
 logp_min(0.0), logp_max(0.0), logp_scale(-1),
 s_min(0), s_max(10), 
-w_step(100000),	s_step(1000000), n_accept(0),
-n_mh(10), randseed(-1), error(false),
+w_step(50000),	s_step(500000), n_accept(0),
+n_mh(10), randseed(2016), error(false),
 time_total(0.0), time_G(0.0), time_Omega(0.0)
 {}
 
@@ -431,7 +431,7 @@ void PARAM::WriteGenotypes(uchar **X){
 }
 
 
-
+// Calculate kinshiip matrix
 void PARAM::CalcKin (gsl_matrix *matrix_kin)  {
 	string file_str;
 	
@@ -439,15 +439,15 @@ void PARAM::CalcKin (gsl_matrix *matrix_kin)  {
 	
 	if ( !file_bfile.empty() ) {		
 		file_str=file_bfile+".bed";
-		if (PlinkKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
+		if (PlinkKin (file_str, indicator_idv, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
 	}
 	else if( !file_geno.empty() ) {
 		file_str=file_geno;
-		if (GenoKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin)==false) {error=true;}
+		if (GenoKin (file_str, indicator_idv, indicator_snp, a_mode-20, d_pace, matrix_kin, SampleVcfPos, PhenoID2Ind, VcfSampleID)==false) {error=true;}
 	}
 	else if( !file_vcf.empty() ) {
 		file_str=file_vcf;
-		if (VCFKin (file_str, indicator_snp, a_mode-20, d_pace, matrix_kin, GTfield)==false) {error=true;}
+		if (VCFKin (file_str, indicator_idv, indicator_snp, a_mode-20, d_pace, matrix_kin, GTfield, SampleVcfPos, PhenoID2Ind, VcfSampleID)==false) {error=true;}
 	}
 	else{
 		cerr << "Need input genotype file: plink, bimbam, or VCF!" <<endl;

@@ -599,7 +599,7 @@ void SFBA::BatchRun (PARAM &cPar)
     
 	time_begin=clock();	
 	
-	//Read Files
+	//Read Files for the first time and filt variants
 	cout<<"Reading Files ... " << endl;
 	cPar.ReadFiles();
 	if (cPar.error==true) {cout<<"error! fail to read files. "<<endl; return;}
@@ -647,7 +647,7 @@ void SFBA::BatchRun (PARAM &cPar)
 	if (cPar.a_mode==21 || cPar.a_mode==22) {  
 		cout<<"Calculating Relatedness Matrix ... "<<endl;
 		
-		gsl_matrix *G=gsl_matrix_alloc (cPar.ni_total, cPar.ni_total);
+		gsl_matrix *G=gsl_matrix_alloc (cPar.ni_test, cPar.ni_test);
 		
 		//time_start=clock();
 		cPar.CalcKin (G);
@@ -672,7 +672,7 @@ void SFBA::BatchRun (PARAM &cPar)
 	if (cPar.a_mode==51 || cPar.a_mode==52 || cPar.a_mode==53 || cPar.a_mode==54) {  
 
 		gsl_vector *Y=gsl_vector_alloc (cPar.ni_test); //set phenotype vector Y
-		gsl_matrix *W=gsl_matrix_alloc (Y->size, 1); // intercept column of 1's
+		gsl_matrix *W=gsl_matrix_alloc (Y->size, 1); // intercept column of 1's; or covariates
 		gsl_matrix_set_all(W, 1);
 
 		cPar.CopyPheno (Y);
