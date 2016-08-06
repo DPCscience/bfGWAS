@@ -10,7 +10,7 @@ wkdir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_TEST"
 
 ################## perl script is used to generate makefile #############
 
-${sfba_dir}/gen_mkf.pl \
+${sfba_dir}/bin/gen_mkf.pl \
 -w ${wkdir} \
 --Estep ${sfba_dir}/bin/Estep_mcmc \
 --ad ${data_dir}/annos \
