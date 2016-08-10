@@ -29,7 +29,7 @@ Options:
 
   -w         work directory : location for all output files
   -t         directory for the C++ executable file for Estep (running MCMC)
-  --geno     specify genotype format: vcf, genotxt, or bed
+  --geno     specify genotype format: (gzipped) vcf, (gzipped) genotxt, or bed
   --gd       genotype file directory
   --ad       annotation file directory
   --ac       annotation classification code file
@@ -55,8 +55,8 @@ Options:
   -l         specify how job will be submited (options: slurm, mosix, local): default slurm
   --mf       output make file
   --nice     SLURM option for scheduling priority
-  -j         specify job names
   --xnode    compuation nodes to be excluded
+  -j         specify SLURM job names
   --wnode    specify compuation nodes to be used
   --part     specify SLURM partition
 
@@ -242,7 +242,7 @@ for(my $j=0; $j< @filehead; ++$j)
         if($genofile eq "vcf"){
            @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp  -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         }elsif ($genofile eq "genotxt"){
-          @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+          @cmd = "$toolE -g $genoDir/$line.geno.gz -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         }elsif ($genofile eq "bed") {
           @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
         }else{
@@ -285,7 +285,7 @@ for $i (1..$EM){
           if($genofile eq "vcf"){
             @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -p $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
           }elsif ($genofile eq "genotxt"){
-            @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+            @cmd = "$toolE -g $genoDir/$line.geno.gz -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
           }elsif ($genofile eq "bed") {
             @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $Nmcmc $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
           }else{
@@ -295,7 +295,7 @@ for $i (1..$EM){
             if($genofile eq "vcf"){
               @cmd = "$toolE -vcf $genoDir/$line.vcf.gz -a $annoDir/Anno\_$line.gz -p $pheno -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt ";
             }elsif ($genofile eq "genotxt"){
-              @cmd = "$toolE -g $genoDir/$line.geno -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
+              @cmd = "$toolE -g $genoDir/$line.geno.gz -p $pheno -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
             }elsif ($genofile eq "bed") {
               @cmd = "$toolE -bfile $genoDir/$line -a $annoDir/Anno\_$line.gz -fcode $annoCode -hfile $hypcurrent -GTfield $GTfield -maf $maf -bvsrm -rmin $rho -rmax $rho -smin $smin -smax $smax -win $win -o $line -w $burnin -s $NmcmcLast $comp -initype $initype -rv $rv > $wkDir/OUT/$line.output.txt";
             }else{
@@ -385,9 +385,9 @@ sub makeMosix
     for my $c (@cmd)
     {
       if($wnode){
-        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -j$wnode -J$jobid " . $c . "\n";
+        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -j$wnode " . $c . "\n";
       }else{
-        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -b -J$jobid " . $c . "\n";
+        $cmdtemp .= "\tmosbatch -E$wkd -m$maxmem -b " . $c . "\n";
       }
 
     }

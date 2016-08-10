@@ -189,7 +189,7 @@ void PARAM::ReadFiles (void)
 	}
 
     if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-    	cout << "Start reading annotation files: " << file_anno << "\n";
+    	cout << "Start reading annotation files: " << file_anno << "with code file " << file_func_code << "\n";
         if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
     } 
 

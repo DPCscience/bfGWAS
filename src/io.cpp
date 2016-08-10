@@ -167,6 +167,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     int func_code, snp_nfunc;
     
     // Load function_code file first, create a hash map between func_type and code
+    // cout<<"Reading annotation code file: "<<file_func_code<<endl; 
     igzstream infile_code (file_func_code.c_str(), igzstream::in);
     if (!infile_code) {cout<<"error opening annotation file: "<<file_func_code<<endl; return false;}
     while (!safeGetline(infile_code, line).eof()) {
@@ -175,6 +176,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             pch = (char *)line.c_str();
             nch = strchr(pch, '\t');
             n_type = strtol(nch, NULL, 0);
+            cout << "Number of annotation categories" << n_type << endl;            
             mFunc.assign(n_type, 0);
             continue;
         }
@@ -191,6 +193,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     infile_code.clear();
     
     // Load annotation file...
+    // cout<<"Reading annotation file: "<<file_anno<<endl; 
     igzstream infile (file_anno.c_str(), igzstream::in);
     if (!infile) {cout<<"error opening annotation file: "<<file_anno<<endl; return false;}
     
@@ -241,7 +244,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             maf_temp = snpInfo[snp_i].maf;
         	if(maf_temp > 0.5) maf_temp = 1.0 - maf_temp;
 
-            //if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
+            if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
             if( isalpha(pch[0]) || isdigit(pch[0]) ){
             	//pch[0] is a letter or number
             	while (pch != NULL) {
@@ -666,12 +669,14 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
                 //failed filter, continue with next record
             }
             
-            else if ((tab_count == 8) && (c_idv == 0))
+            else if ((tab_count == 8) && (ns_test == 0))
             {
+                // cout << "parse FORMAT field" << endl;
             	// cout << "; ni_test = " <<ni_test << "; n_miss start = " << n_miss << "\n";
                 // parse FORMAT field
                 if (pch[0] == GTfield[0] && pch[1] == GTfield[1] && ((nch==pch+2)||pch[2]==':') ) {
                     GTpos=0; //GT start in the first position
+                    //cout << "GT start in the first position" << endl;
                 }
                 else if (nch == NULL){ cerr << "VCF has FORMAT field but dose not have any genotype\n";}
                 else{

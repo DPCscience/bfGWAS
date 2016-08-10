@@ -603,7 +603,7 @@ void SFBA::BatchRun (PARAM &cPar)
 	cout<<"Reading Files ... " << endl;
 	cPar.ReadFiles();
 	if (cPar.error==true) {cout<<"error! fail to read files. "<<endl; return;}
-    cout << "Readinf file first time cost " << (clock()-time_begin)/(double(CLOCKS_PER_SEC)*60.0) << "mints \n";
+    cout << "Readin files first time cost " << (clock()-time_begin)/(double(CLOCKS_PER_SEC)*60.0) << "mints \n";
 
 	cPar.CheckData();
 	if (cPar.error==true) {cout<<"error! fail to check data. "<<endl; return;}

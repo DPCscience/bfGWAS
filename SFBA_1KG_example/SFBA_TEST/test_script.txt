@@ -5,7 +5,7 @@
 
 sfba_dir="/net/fantasia/home/yjingj/GIT/SFBA"
 data_dir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData"
-wkdir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST"
+wkdir="/net/fantasia/home/yjingj/SFBA_TEST"
 # makdir -p $wkdir
 
 ################## perl script is used to generate makefile #############
@@ -24,7 +24,6 @@ ${sfba_dir}/bin/gen_mkf.pl \
 -G GT --maf 0.005 --smin 0 --smax 10 -b 10 -N 10 --NL 10 \
 --em 5 -j testjob -l mosix --mem 3000 \
 --mf ${wkdir}/Test_sfba.mk
-
 
 ## Run Makefile with 4 parallel jobs
 make -k -C ${wkdir} -f ${wkdir}/Test_sfba.mk -j 4 > ${wkdir}/make.output 2> ${wkdir}/make.err  &
