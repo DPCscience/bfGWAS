@@ -84,6 +84,8 @@ bool CreatVcfHash(const string &file_vcf, StringIntHash &sampleID2vcfInd, const 
 //for new model
 bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<string, int> &mapFunc2Code, vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc);
 
+bool Empty_anno (vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc);
+
 void SetMAFCode (const double &maf, string &func_type);
 
 void WriteMatrix(const gsl_matrix * X, const string file_str);

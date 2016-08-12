@@ -722,6 +722,9 @@ bool comp_snp(const SNPPOS& lhs, const SNPPOS& rhs){
 
 
 void BVSRM::setHyp(double theta_temp, double subvar_temp){
+    
+    if(theta_temp <= 0) theta_temp = 1e-6;
+    if(subvar_temp <= 0) subvar_temp = 1;
         
     // Without specifying initial values   
     cout << "rv from command line = " << rv << endl;
@@ -760,7 +763,7 @@ void BVSRM::setHyp(double theta_temp, double subvar_temp){
         infile.close();
         if(group_idx != n_type) {
             cerr << "# of hyper parameters dose not match group # of annotations. \n";
-            exit(1);
+            exit(-1);
         }
     }
 

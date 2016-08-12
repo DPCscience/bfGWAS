@@ -306,6 +306,27 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     return true;
 }
 
+//Empty Annotation
+bool Empty_anno (vector<bool> &indicator_snp, vector<SNPINFO> &snpInfo, size_t &n_type, vector<size_t> &mFunc)
+{
+    cout << "Empty annotation file, all variants are treated as of one category!" << endl;
+
+    n_type = 1; // all variants are of one annotation
+    mFunc.assign(1, 0);
+
+    for(size_t i = 0; i < indicator_snp.size(); i++){
+        if(indicator_snp[i] == 0) continue;
+        snpInfo[i].indicator_func.assign(n_type, 1);
+        snpInfo[i].weight_i = 1.0 ;
+        mFunc[0]++;
+    }
+
+    cout << "Number of annotation categories: " << n_type << endl;
+    cout << "Number of variants per category: "; PrintVector(mFunc);
+    
+    return true;
+}
+
 
 
 //Read geno/VCF phenotype file, 
