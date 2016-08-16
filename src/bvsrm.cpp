@@ -135,6 +135,7 @@ void BVSRM::CopyToParam (PARAM &cPar)
 	cPar.cHyp_initial=cHyp_initial;
 	cPar.n_accept=n_accept;
 	cPar.pheno_mean=pheno_mean;
+    cPar.pheno_var = pheno_var;
 	cPar.randseed=randseed;
     
     cPar.nadd_accept=nadd_accept;
@@ -722,28 +723,27 @@ bool comp_snp(const SNPPOS& lhs, const SNPPOS& rhs){
 
 
 void BVSRM::setHyp(double theta_temp, double subvar_temp){
-    
-    if(theta_temp <= 0) theta_temp = 1e-6;
-    if(subvar_temp <= 0) subvar_temp = 1;
         
-    // Without specifying initial values   
+    // Default initial values   
     cout << "rv from command line = " << rv << endl;
-    theta.assign(n_type, theta_temp);
-    subvar.assign(n_type, subvar_temp);
+    theta.assign(n_type, 1.0e-6);
+    subvar.assign(n_type, 10.0);
 
     //cout << "load fixed hyper parameter values from : " << hypfile << endl;
     string line;
     char *pch, *nch;
     size_t group_idx=0;
     
-    if (hypfile.c_str() == NULL) {
-        cout << "Did not specify hypefile, use software initials...\n";
+    if (hypfile.empty()) {
+        cout << "Did not specify hypefile, use default values ...\n";
     }
     else{
         ifstream infile(hypfile.c_str(), ifstream::in);
-        if(!infile) {cout << "Error opening file " << hypfile << endl; exit(-1);}
-           // cout << "load hyp from hypfile... " << hypfile << endl;
-
+        if(!infile) {
+            cout << "Error opening file " << hypfile << endl; 
+            exit(-1);
+        }
+        // cout << "load hyp from hypfile... " << hypfile << endl;
         while (!safeGetline(infile, line).eof()) {
             if ((line[0] == 'h') || (line[0] == '#') || (line[0] == 'p')) {
                 continue;
@@ -755,16 +755,14 @@ void BVSRM::setHyp(double theta_temp, double subvar_temp){
                 if(nch == NULL){
                  cerr << "Need input initial hyper parameter value for sigma2 \n";
                     } else{pch = nch+1;}
-                subvar[group_idx] = strtod(pch, NULL);
+                if(group_idx < n_type)  {
+                    subvar[group_idx] = strtod(pch, NULL);
+                }
                 group_idx++;
             }
         }
         infile.clear();
         infile.close();
-        if(group_idx != n_type) {
-            cerr << "# of hyper parameters dose not match group # of annotations. \n";
-            exit(-1);
-        }
     }
 
     log_theta.clear();
@@ -1591,9 +1589,12 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     double ztz=0.0;
     gsl_vector_memcpy (z, y);
     double mean_z = CenterVector (z); // center phenotype in case
+
     gsl_blas_ddot(z, z, &ztz); // ztz is the sum square of total SST
-    //cout << "ztz = " << ztz << "; phenotype variance = " << ztz / ((double)(ni_test-1)) <<endl;
-    gsl_vector_scale(z, 1.0 / sqrt(ztz / (double)(ni_test-1))); // standardize phenotype z
+    pheno_var = ztz / ((double)(ni_test-1)) ;
+
+    //cout << "ztz = " << ztz << "; phenotype variance = " << ztz / pheno_var <<endl;
+    gsl_vector_scale(z, 1.0 / sqrt(pheno_var)); // standardize phenotype z
     gsl_blas_ddot(z, z, &ztz); // calculate ztz for one more time after standardization
     
     //Initialize variables for MH

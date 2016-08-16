@@ -639,7 +639,7 @@ void SFBA::BatchRun (PARAM &cPar)
         gsl_vector_free(y);
 
         cout << "writting genotype file success ... "<< endl; 
-        exit(1);
+        //exit(EXIT_SUCCESS);
     }
 
 	
@@ -672,11 +672,16 @@ void SFBA::BatchRun (PARAM &cPar)
 	if (cPar.a_mode==51 || cPar.a_mode==52 || cPar.a_mode==53 || cPar.a_mode==54) {  
 
 		gsl_vector *Y=gsl_vector_alloc (cPar.ni_test); //set phenotype vector Y
-		gsl_matrix *W=gsl_matrix_alloc (Y->size, 1); // intercept column of 1's; or covariates
+		gsl_matrix *W=gsl_matrix_alloc (cPar.ni_test, 1); // intercept column of 1's; or covariates
 		gsl_matrix_set_all(W, 1);
 
 		cPar.CopyPheno (Y);
-		
+		if ( (!cPar.file_vcf.empty()) || (!cPar.file_geno.empty()) ) {
+        	// reorder y for reading vcf/genotype files
+        	cout << "Reorder y for reading vcf or geno files ... "<< endl;
+        	cPar.ReorderPheno(Y);
+    	}
+
 		//Fit LM 
 			LM cLm;
 			cLm.CopyFromParam(cPar);
@@ -802,6 +807,7 @@ void SFBA::WriteLog (int argc, char ** argv, PARAM &cPar)
 	
 	if (cPar.a_mode==11) {
 		outfile<<"## Phenotype mean = "<<cPar.pheno_mean<<endl;	
+		outfile<<"## Phenotype var = "<<cPar.pheno_var<<endl;
 		outfile<<"##"<<endl;
 		outfile<<"## MCMC related:"<<endl;	
 		//outfile<<"## initial value of h = "<<cPar.cHyp_initial.h<<endl;
@@ -810,6 +816,9 @@ void SFBA::WriteLog (int argc, char ** argv, PARAM &cPar)
 		outfile<<"## initial value of |gamma| = "<<cPar.cHyp_initial.n_gamma<<endl;
 		outfile<<"## random seed = "<<cPar.randseed<<endl;
 		outfile<<"## acceptance ratio = "<<(double)cPar.n_accept/(double)((cPar.w_step+cPar.s_step)*cPar.n_mh)<<endl;
+	}else if (cPar.a_mode >= 51 && cPar.a_mode <= 54){
+		outfile<<"## Phenotype mean = "<<cPar.pheno_mean<<endl;	
+		outfile<<"## Phenotype var = "<<cPar.pheno_var<<endl;	
 	}
 	
 	outfile<<"##"<<endl;

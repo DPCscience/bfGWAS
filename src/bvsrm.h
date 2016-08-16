@@ -83,6 +83,7 @@ public:
 	size_t n_region;
 	double pve_null;
 	double pheno_mean;
+    double pheno_var;
 	
 	// BSLMM MCMC related parameters
     

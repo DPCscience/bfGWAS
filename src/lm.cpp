@@ -82,7 +82,8 @@ void LM::CopyFromParam (PARAM &cPar)
 
 void LM::CopyToParam (PARAM &cPar) 
 {
-	cPar.time_opt=time_opt;		
+	cPar.time_opt=time_opt;	
+	cPar.pheno_var = pheno_var;	
 	return;
 }
 
@@ -97,17 +98,18 @@ void LM::WriteFiles ()
 	ofstream outfile (file_str.c_str(), ofstream::out);
 	if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
 	
-		outfile<<"CHR"<<"\t"<<"ID"<<"\t"<<"POS"<<"\t"<<"n_miss"<<"\t"<<"ALT"<<"\t"<<"REF"<<"\t"<<"maf"<<"\t";
+		/*outfile<<"CHR"<<"\t"<<"ID"<<"\t"<<"POS"<<"\t"<<"n_miss"<<"\t"<<"ALT"<<"\t"<<"REF"<<"\t"<<"maf"<<"\t";
 		
 		if (a_mode==51) {
 			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_wald"<<endl;
 		} else if (a_mode==52) {
 			outfile<<"p_lrt"<<endl;
 		} else if (a_mode==53) {
-			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_score"<<endl;
+			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_score"<<"\t"<<"score_u"<<"\t"<<"score_v"<<endl;
 		} else if (a_mode==54) {
-			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_wald"<<"\t"<<"p_lrt"<<"\t"<<"p_score"<<endl;
+			outfile<<"beta"<<"\t"<<"se"<<"\t"<<"p_wald"<<"\t"<<"p_lrt"<<"\t"<<"p_score"<<"\t"<<"score_u"<<"\t"<<"score_v"<<endl;
 		} else {}
+		*/
 		
 		size_t t=0;
 		for (size_t i=0; i<snpInfo.size(); ++i) {
@@ -120,9 +122,9 @@ void LM::WriteFiles ()
 			} else if (a_mode==52) {
 				outfile<<scientific<<setprecision(6)<<sumStat[t].p_lrt<<endl;
 			} else if (a_mode==53) {
-				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_score<<endl;
+				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_score<<"\t"<<sumStat[t].score_u<<"\t"<<sumStat[t].score_v<<endl;
 			} else if (a_mode==54) {
-				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_wald <<"\t"<<sumStat[t].p_lrt<<"\t"<<sumStat[t].p_score<<endl;
+				outfile<<scientific<<setprecision(6)<<sumStat[t].beta<<"\t"<<sumStat[t].se<<"\t"<<sumStat[t].p_wald <<"\t"<<sumStat[t].p_lrt<<"\t"<<sumStat[t].p_score<<"\t"<<sumStat[t].score_u<<"\t"<<sumStat[t].score_v<<endl;
 			} else {}
 			t++;
 		}
@@ -132,8 +134,6 @@ void LM::WriteFiles ()
 	outfile.clear();
 	return;
 }
-
-
 
 
 
@@ -215,16 +215,16 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y, string &GTfield, 
 	string line, pheno_id;
 	char *pch, *p, *nch=NULL, *n;
 	
-	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
+	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0, score_u=0, score_v=0;
 	size_t n_miss, c_idv=0, c_snp=0, ctest_idv = 0, tab_count, pheno_index, ns_test=0;
 	double geno, x_mean, d;
 	int GTpos=0, k=0;
 	
 	//calculate some basic quantities
 	double yPwy, xPwy, xPwx;
-	double df=(double)W->size1-(double)W->size2-1.0;
+	double df=(double)ni_test-(double)W->size2-1.0;
 
-	gsl_vector *x=gsl_vector_alloc (W->size1);
+	gsl_vector *x=gsl_vector_alloc (ni_test);
 	gsl_matrix *WtW=gsl_matrix_alloc (W->size2, W->size2);
 	gsl_matrix *WtWi=gsl_matrix_alloc (W->size2, W->size2);		
 	gsl_vector *Wty=gsl_vector_alloc (W->size2);
@@ -238,6 +238,7 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y, string &GTfield, 
 
 	gsl_blas_dgemv (CblasTrans, 1.0, W, y, 0.0, Wty);
 	CalcvPv(WtWi, Wty, y, yPwy);
+	pheno_var = yPwy / ( (double)ni_test - 1.0 )  ;
 	
 	//start reading genotypes and analyze	
 	while(!safeGetline(infile, line).eof())
@@ -382,10 +383,16 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y, string &GTfield, 
 		gsl_blas_dgemv(CblasTrans, 1.0, W, x, 0.0, Wtx);		
 		CalcvPv(WtWi, Wty, Wtx, y, x, xPwy, xPwx);
 		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);	
+
+		// obtain score summary statistics
+		if(a_mode == 53){
+			score_u = xPwy;
+			score_v = pheno_var * xPwx ;
+		}
 		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		
 		//store summary data
-		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score};
+		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score, score_u, score_v};
 		sumStat.push_back(SNPs);
 		}
 	}	
@@ -417,7 +424,7 @@ void LM::AnalyzeGeno (const gsl_matrix *W, const gsl_vector *y, const vector <si
 	string line, pheno_id, s;
 	char *pch, *nch=NULL;
 	
-	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
+	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0, score_u=0.0, score_v=0.0;
 	int n_miss;
 	double geno, x_mean;
 	size_t c_idv, ctest_idv, tab_count, pheno_index, c_snp=0;
@@ -442,6 +449,7 @@ void LM::AnalyzeGeno (const gsl_matrix *W, const gsl_vector *y, const vector <si
 
 	gsl_blas_dgemv (CblasTrans, 1.0, W, y, 0.0, Wty);
 	CalcvPv(WtWi, Wty, y, yPwy);
+	pheno_var = yPwy / ((double)ni_test - 1.0);
 
 	while(!safeGetline(infile, line).eof()){
 
@@ -518,10 +526,14 @@ void LM::AnalyzeGeno (const gsl_matrix *W, const gsl_vector *y, const vector <si
 		gsl_blas_dgemv(CblasTrans, 1.0, W, x, 0.0, Wtx);		
 		CalcvPv(WtWi, Wty, Wtx, y, x, xPwy, xPwx);
 		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);
+		if(a_mode == 53){
+			score_u = xPwy;
+			score_v = pheno_var * xPwx ;
+		}
 		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		
 		//store summary data
-		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score};
+		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score, score_u, score_v};
 		sumStat.push_back(SNPs);
 	}	
 	cout<<endl;
@@ -542,11 +554,6 @@ void LM::AnalyzeGeno (const gsl_matrix *W, const gsl_vector *y, const vector <si
 }
 
 
-
-
-
-
-
 void LM::AnalyzePlink (const gsl_matrix *W, const gsl_vector *y) 
 {
 	string file_bed=file_bfile+".bed";
@@ -558,7 +565,7 @@ void LM::AnalyzePlink (const gsl_matrix *W, const gsl_vector *y)
 	char ch[1];
 	bitset<8> b;	
 	
-	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0;
+	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0, score_u = 0.0, score_v = 0.0;
 	int n_bit, n_miss, ci_total, ci_test;
 	double geno, x_mean;
 		
@@ -581,6 +588,7 @@ void LM::AnalyzePlink (const gsl_matrix *W, const gsl_vector *y)
 
 	gsl_blas_dgemv (CblasTrans, 1.0, W, y, 0.0, Wty);
 	CalcvPv(WtWi, Wty, y, yPwy);
+	pheno_var = yPwy / ((double)ni_test - 1.0);
 		
 	//calculate n_bit and c, the number of bit for each snp
 	if (ni_total%4==0) {n_bit=ni_total/4;}
@@ -634,15 +642,18 @@ void LM::AnalyzePlink (const gsl_matrix *W, const gsl_vector *y)
 		
 		//calculate statistics		
 		time_start=clock();	
-		
 		gsl_blas_dgemv (CblasTrans, 1.0, W, x, 0.0, Wtx);
 		CalcvPv(WtWi, Wty, Wtx, y, x, xPwy, xPwx);		
-		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);    
+		LmCalcP (a_mode-50, yPwy, xPwy, xPwx, df, W->size1, beta, se, p_wald, p_lrt, p_score);  
 
+		if(a_mode == 53){
+			score_u = xPwy;
+			score_v = pheno_var * xPwx ;
+		}
 		time_opt+=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		
 		//store summary data
-		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score};
+		SUMSTAT SNPs={beta, se, 0.0, 0.0, p_wald, p_lrt, p_score, score_u, score_v};
 		sumStat.push_back(SNPs);
 	}	
 	cout<<endl;

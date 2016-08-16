@@ -192,11 +192,7 @@ void PARAM::ReadFiles (void)
     	cout << "Start reading annotation files: " << file_anno << "with code file " << file_func_code << "\n";
         if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
     }
-    else if ( !file_anno.empty() ) {
-    	cout << "Require annotation code file to read annotation files correctly!" << "\n";
-    	exit(-1);
-    }
-    else{
+    else {
     	if (Empty_anno (indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
     } 
 
@@ -596,12 +592,15 @@ void PARAM::ProcessPheno()
 void PARAM::CopyPheno (gsl_vector *y) 
 {
 	size_t ci_test=0;
+	pheno_mean = 0.0;
 	
 	for (size_t i=0; i<indicator_idv.size(); ++i) {
 		if (indicator_idv[i]==0) {continue;}
 		gsl_vector_set (y, ci_test, pheno[i]);
+		pheno_mean += pheno[i];
 		ci_test++;
 	}
+	pheno_mean /= (double) ci_test;
 	
 	return;
 }

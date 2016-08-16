@@ -103,6 +103,9 @@ public:
 	double p_wald;			//p value from a Wald test
 	double p_lrt;				//p value from a likelihood ratio test
 	double p_score;			//p value from a score test
+
+	double score_u; // for meta-analysis
+	double score_v;
 };
 
 //results for mvlmm
@@ -157,7 +160,7 @@ public:
     string iniSNPfile;
     string hypfile;
     double rv;
-    double pheno_mean;
+    double pheno_mean, pheno_var;
     
 	// IO related parameters
     size_t UnCompBufferSize;
