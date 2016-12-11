@@ -816,6 +816,9 @@ void SFBA::WriteLog (int argc, char ** argv, PARAM &cPar)
 		outfile<<"## initial value of |gamma| = "<<cPar.cHyp_initial.n_gamma<<endl;
 		outfile<<"## random seed = "<<cPar.randseed<<endl;
 		outfile<<"## acceptance ratio = "<<(double)cPar.n_accept/(double)((cPar.w_step+cPar.s_step)*cPar.n_mh)<<endl;
+
+		outfile<<"## Region_PIP = "<<(double)cPar.region_pip/(double)(cPar.s_step)<<endl;
+
 	}else if (cPar.a_mode >= 51 && cPar.a_mode <= 54){
 		outfile<<"## Phenotype mean = "<<cPar.pheno_mean<<endl;	
 		outfile<<"## Phenotype var = "<<cPar.pheno_var<<endl;	

@@ -21,7 +21,7 @@ ${sfba_dir}/bin/gen_mkf.pl \
 --hyp ${data_dir}/InitValues6.txt \
 -f ${data_dir}/fileheads_4region.txt \
 --rs ${sfba_dir}/bin/Mstep.r \
--G GT --maf 0.005 --smin 0 --smax 10 -b 10 -N 10 --NL 10 \
+-G GT --maf 0.005 --smin 0 --smax 5 -b 10000 -N 10000 --NL 10000 \
 --em 5 -j testjob -l mosix --mem 3000 \
 --mf ${wkdir}/Test_sfba.mk
 

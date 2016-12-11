@@ -104,6 +104,7 @@ public:
 	size_t w_pace;					//write pace
 	size_t n_accept;				//number of acceptance
 	size_t n_mh;					//number of MH steps within each iteration
+    size_t region_pip;              //number of MCMC with SNPs>0
 	double geo_mean;				//mean of the geometric distribution
 	long int randseed;
 	double trace_G;	

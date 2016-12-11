@@ -74,7 +74,7 @@ my $maf="0.005";
 
 my $maxmem = "3000";
 my $time = "24:00:00";
-my $nice = "100";
+my $nice = "0";
 my $jobid="";
 my $xnode="";
 my $wnode="";

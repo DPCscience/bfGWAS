@@ -95,6 +95,7 @@ void BVSRM::CopyFromParam (PARAM &cPar)
 	time_UtZ=0.0;
 	time_Omega=0.0;
 	n_accept=0;
+    region_pip = 0;
     Switch_Flag = 0;
 	
 	h_min=cPar.h_min;	
@@ -146,6 +147,7 @@ void BVSRM::CopyToParam (PARAM &cPar)
     cPar.ndel=ndel;
     cPar.nswitch=nswitch;
     cPar.nother=nother;
+    cPar.region_pip = region_pip;
 	
 	return;
 }
@@ -1778,6 +1780,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     size_t repeat=1;
     int flag_gamma=0;
     double accept_percent, betai; // accept_theta_percent;
+
     
     cHyp_new = cHyp_old;
     rank_new = rank_old;
@@ -1960,6 +1963,8 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             
             if (cHyp_old.n_gamma > 0){
 
+                region_pip++; //count increase if the model has >0 SNPs
+
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
                     // beta_g saved by position
                     pos=SNPrank_vec[rank_old[i]].first;
@@ -1988,12 +1993,15 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     }
     
     cout<< "MCMC completed ... " << endl << endl;
+    cout << "region_pip = " << region_pip << endl;
+
     accept_percent = (double)n_accept/(double)(total_step * n_mh);
     cout << "gamma acceptance percentage = " << accept_percent << endl ;
     cout << "# of selected variants per category: "; PrintVector(cHyp_old.m_gamma);
     cout << "beta_hat: "; PrintVector(beta_old, rank_old.size()); 
     cout << "loglike: " << loglike_old << endl;
     cout << "k_save_sample = " << k_save_sample << endl;
+
     
     //save all marker information
     if (saveSNP) {

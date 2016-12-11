@@ -212,6 +212,7 @@ public:
 	size_t s_step;					//number of sampling iterations
 	size_t n_accept;				//number of acceptance
 	size_t n_mh;					//number of MH steps within each iteration
+    size_t region_pip;              //number of MCMC with SNPs>0
 	long int randseed;
 	double trace_G;
 	
