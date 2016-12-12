@@ -20,6 +20,8 @@
 #define __BVSRM_H__
 
 #include <vector>
+#include <iostream>
+#include <string>
 #include <map>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -28,6 +30,8 @@
 #include "param.h"
 
 using namespace std;
+
+
 
 
 class BVSRM {
@@ -143,6 +147,8 @@ public:
     
     //************* MCMC related functions
     void MCMC (uchar **X, const gsl_vector *y, bool original_method);
+
+    void WriteMCMC(const vector<string> &snps_mcmc);
 
     void WriteHyptemp(gsl_vector *LnPost, vector<double> &em_gamma);
 

@@ -2260,6 +2260,7 @@ void WriteVector(const gsl_vector * X, const string file_str){
     outfile.close();
     return;
 }
+
 //write gsl_vector X with filename = ***.txt
 
 

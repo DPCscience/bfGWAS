@@ -48,6 +48,14 @@
 
 using namespace std;
 
+// define to_string function : convert to string
+template <class T>
+inline std::string to_string (const T& t)
+{
+    std::stringstream ss;
+    ss << t;
+    return ss.str();
+}
 
 void BVSRM::CopyFromParam (PARAM &cPar) 
 {
@@ -195,6 +203,23 @@ void BVSRM::WriteIniSNP (const vector<size_t> &rank, const vector<SNPPOS> &snp_p
     
     for (size_t i=0; i<rank.size(); ++i) {
         outfile<< snp_pos[SNPrank_vec[rank[i]].second].rs <<endl;
+    }
+    
+    outfile.clear();
+    outfile.close();
+    return;
+}
+
+void BVSRM::WriteMCMC(const vector<string> &snps_mcmc){
+    string file_str;
+    file_str="./output/"+file_out;
+    file_str+=".mcmc";
+    
+    ofstream outfile (file_str.c_str(), ofstream::out);
+    if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
+    
+    for (size_t i=0; i<snps_mcmc.size(); ++i) {
+        outfile<< snps_mcmc[i] <<endl;
     }
     
     outfile.clear();
@@ -1785,6 +1810,10 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     cHyp_new = cHyp_old;
     rank_new = rank_old;
 
+    vector <string> snps_mcmc; // save locations of included snps per iteration
+    string snps_mcmc_temp;
+    size_t order_i;
+
     for (size_t t=0; t<total_step; ++t) {
         
        if (t%d_pace==0 || t==total_step-1) {ProgressBar ("Running MCMC ", t, total_step-1, (double)n_accept/(double)(t*n_mh+1));
@@ -1964,20 +1993,26 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
             if (cHyp_old.n_gamma > 0){
 
                 region_pip++; //count increase if the model has >0 SNPs
+                snps_mcmc_temp="";
 
                 for (size_t i=0; i<cHyp_old.n_gamma; ++i) {
                     // beta_g saved by position
                     pos=SNPrank_vec[rank_old[i]].first;
+                    order_i = SNPrank_vec[rank_old[i]].second;
+
                     betai = gsl_vector_get(beta_old, i);
                     beta_g[pos].first += betai;
                     beta_g[pos].second += 1.0;
                     for (size_t j=0; j < n_type; j++) {
-                        if (snp_pos[SNPrank_vec[rank_old[i]].second].indicator_func[j]) {
+                        if (snp_pos[order_i].indicator_func[j]) {
                             sumbeta2[j] += betai * betai;
                             break;
                         }
                     }
+                    snps_mcmc_temp += string(snp_pos[order_i].rs) + string(":") + string(snp_pos[order_i].chr) + string(":") + to_string(snp_pos[order_i].bp) + string(";");
                 }
+                snps_mcmc.push_back(snps_mcmc_temp);
+
                 //if(cHyp_old.m_gamma[0]>0)
                    // sample_sigma0.push_back(make_pair(sumbeta2[0] /(double)cHyp_old.m_gamma[0], cHyp_old.m_gamma[0] ));
                 //if(cHyp_old.m_gamma[1]>0)
@@ -2017,6 +2052,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
     //Save temp EM results
     WriteHyptemp(LnPost, em_gamma);
     WriteParam(beta_g, snp_pos, pos_loglr, Z_scores, SE_beta, pval_lrt);
+    WriteMCMC(snps_mcmc); // save all active SNPs from MCMC
     
    // gsl_matrix_free(Result_hyp);
    // gsl_matrix_free(Result_gamma);
