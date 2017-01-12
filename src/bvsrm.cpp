@@ -237,7 +237,7 @@ void BVSRM::WriteParam(vector<pair<double, double> > &beta_g, const vector<SNPPO
     ofstream outfile (file_str.c_str(), ofstream::out);
     if (!outfile) {cout<<"error writing file: "<<file_str.c_str()<<endl; return;}
     
-    //outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" << "maf" << "\t" << "Func_code"<< "\t" <<"beta"<<"\t"<<"gamma" << "\t" <<"Zscore" << "\t" << "SE_beta" << "\t" << "LRT" << "\t" << "pval_lrt"  << "\t" << "rank" << endl;
+    //outfile<<"markerID"<<"\t"<<"chr"<<"\t" <<"bp"<<"\t" <<"REF"<<"\t" <<"ALT"<<"\t" << "maf" << "\t" << "Func_code"<< "\t" <<"beta"<<"\t"<<"gamma" << "\t" <<"Zscore" << "\t" << "SE_beta" << "\t" << "LRT" << "\t" << "pval_lrt"  << "\t" << "rank" << endl;
     
     size_t pos;
     vector< pair<string , double> > pi_vec;
@@ -248,7 +248,7 @@ void BVSRM::WriteParam(vector<pair<double, double> > &beta_g, const vector<SNPPO
         
         // save the data along the order of all variants, snp_pos is sorted by order
         rs = snp_pos[i].rs;
-        outfile<< rs <<"\t"<< snp_pos[i].chr<<"\t" <<snp_pos[i].bp << "\t";
+        outfile<<rs<<"\t"<<snp_pos[i].chr<<"\t"<<snp_pos[i].bp<<"\t"<< snp_pos[i].a_major<<"\t"<<snp_pos[i].a_minor<<"\t" ;
         outfile << scientific << setprecision(6)  << snp_pos[i].maf << "\t";
         
         for (size_t j=0; j < n_type; j++) {
@@ -2009,7 +2009,7 @@ void BVSRM::MCMC (uchar **X, const gsl_vector *y, bool original_method) {
                             break;
                         }
                     }
-                    snps_mcmc_temp += string(snp_pos[order_i].rs) + string(":") + string(snp_pos[order_i].chr) + string(":") + to_string(snp_pos[order_i].bp) + string(";");
+                    snps_mcmc_temp += string(snp_pos[order_i].rs) + string(":") + string(snp_pos[order_i].chr) + string(":") + to_string(snp_pos[order_i].bp) + string(":") + to_string(snp_pos[order_i].a_major) + string(":") + to_string(snp_pos[order_i].a_minor)+ string(";");
                 }
                 snps_mcmc.push_back(snps_mcmc_temp);
 

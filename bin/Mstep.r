@@ -1,10 +1,10 @@
 Sys.setlocale('LC_ALL', 'C')
 options(stringsAsFactors=F)
-source("/net/fantasia/home/yjingj/My_Rcode/EM_func.r")
+source("/net/fantasia/home/yjingj/GIT/SFBA/bin/R_funcs.r")
 
 ######## Need to pass args(hypfile, paramfile, k, hypcurrent_file) from bash
 args <- commandArgs(TRUE)
-print(args)
+# print(args)
 
 hypfile=args[[1]]
 k=as.numeric(args[[2]])
@@ -13,13 +13,6 @@ abgamma = as.numeric(args[[4]])
 EM_result_file = args[[5]]
 hypcurrent_file=args[[6]]
 
-#args=(commandArgs(TRUE))
-#if(length(args)==0) {
-#	stop("Error: No arguments supplied!")
-#} else {
-#	for (i in 1:length(args)) eval(parse(text=args[[i]]))
-#}
-
 # abgamma=0.1
 a_gamma <- b_gamma <- abgamma;
 print(paste("a_gamma=b_gamma = ", abgamma))
@@ -27,11 +20,12 @@ print(paste("a_gamma=b_gamma = ", abgamma))
 ptm <- proc.time()
 
 ########### Load data ....
-# setwd("/net/wonderland/home/yjingj/AMD/AMD_Impute_gwas_Chromatin/Hmec/Eoutput")
-# hypfile="hyptemp5.txt"
+
+# hypfile="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/Eoutput/hyptemp5.txt"
+
 hypdata = read.table(hypfile, sep="\t", header=FALSE)
 n_type = (dim(hypdata)[2] - 4)/4
-print(paste(" # of function type: ", n_type))
+print(paste(" Total Annotation categories : ", n_type))
 
 temp_col_names <- c("block", "loglike", "GV", "rv")
 for(i in 1:n_type){
@@ -46,9 +40,9 @@ rv = mean(hypdata[, "rv"])
 tau = 1.0 / rv
 pve = sum(hypdata[, "GV"])
 
-# hypcurrent_file="/net/wonderland/home/yjingj/AMD/AMD_Impute_gwas_Chromatin/Hmec/hyper.current"
+# hypcurrent_file="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/hyper.current"
 prehyp <- read.table(hypcurrent_file, header=TRUE)
-print("hyper parameter values pre MCMC: ")
+print("hyper parameter values before MCMC: ")
 print(prehyp)
 
 ######### Set hierarchical parameter values
@@ -58,14 +52,11 @@ for(i in 1:n_type){
 }
 
 #### updating hyper pi and sigma2 values for each group
-# pp=1e-6; a_gamma = b_gamma = 0.1
-# print(paste("pp = ", pp))
-
 hypcurrent <- NULL
 hypmat <- NULL
 
 for(i in 1:n_type){
-	print(i)
+	# print(i)
 	if(n_vec[i] > 0){
 		a_beta = 2 * n_vec[i] * pp; b_beta = 2 * n_vec[i] - a_beta;
 		}else{a_beta=1; b_beta = 1e6 - 1;}
@@ -83,8 +74,8 @@ for(i in 1:n_type){
 
 ########## Write out updated hyper parameter values
 colnames(hypmat) <- c("pi", "sigma2")
+print("hyper parameter values updates after MCMC: ")
 print(hypmat)
-# hypcurrent_file="current_hyper.txt"
 write.table(format(hypmat, scientific=TRUE), file=hypcurrent_file, 
 	quote = FALSE, sep = "\t", row.names=FALSE, col.names=TRUE)
 
@@ -107,14 +98,14 @@ for(i in 1:n_type){
 }
 
 ########## Write out updated hyper parameter values and se to EM_result_file
-# EM_result_file="EM_result.txt"
+# EM_result_file="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/Eoutput/EM_result.txt"
 hypcurrent = c(pve, loglike_total, hypcurrent)
 hypcurrent <- format(hypcurrent, scientific = TRUE)
 print("write to hypcurrent file with hyper parameter values after MCMC: ")
 print(c(k, hypcurrent))
 write.table(matrix(c(k, hypcurrent), nrow=1), file = EM_result_file, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
 
-print("EM step time (in minutes) : ")
+print("EM step time cost (in minutes) : ")
 print((proc.time() - ptm)/60)
 
 

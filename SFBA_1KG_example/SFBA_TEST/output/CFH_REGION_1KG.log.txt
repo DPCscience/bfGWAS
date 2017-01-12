@@ -1,31 +1,33 @@
 ##
 ## GEMMA Version = SFBA_MCMC
 ##
-## Command Line Input = -vcf /net/fantasia/home/yjingj/GIT/SFBA_example/ExData/vcfs/CFH_REGION_1KG.vcf.gz -a /net/fantasia/home/yjingj/GIT/SFBA_example/ExData/annos/Anno_CFH_REGION_1KG.gz -p /net/fantasia/home/yjingj/GIT/SFBA_example/ExData/phenoAMD_1KG.txt -fcode /net/fantasia/home/yjingj/GIT/SFBA_example/ExData/AnnoCode6.txt -hfile /net/fantasia/home/yjingj/GIT/SFBA_TEST/hypval.current -GTfield GT -maf 0.005 -bvsrm -rmin 1 -rmax 1 -smin 0 -smax 10 -win 100 -o CFH_REGION_1KG -w 50000 -s 50000 -initype 3 -rv 1 
+## Command Line Input = -vcf /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/vcfs/CFH_REGION_1KG.vcf.gz -a /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/annos/Anno_CFH_REGION_1KG.gz -p /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/phenoAMD_1KG.txt -fcode /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/AnnoCode6.txt -hfile /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/hypval.current -GTfield GT -maf 0.005 -bvsrm -rmin 1 -rmax 1 -smin 0 -smax 10 -win 100 -o CFH_REGION_1KG -w 10000 -s 10000 -initype 3 -rv 1 
 ##
-## Date = Thu Jun 16 12:55:50 2016
+## Date = Wed Jan 11 19:18:21 2017
 
 ##
 ## Summary Statistics:
 ## number of total individuals = 2504
 ## number of analyzed individuals = 2504
 ## number of total SNPs = 31330
-## number of analyzed SNPs = 6294
+## number of analyzed SNPs = 3692
 ## Phenotype mean = 0.49401
+## Phenotype var = 0.250064
 ##
 ## MCMC related:
 ## initial value of |gamma| = 2
-## random seed = 60758
-## acceptance ratio = 0.196
+## random seed = 2016
+## acceptance ratio = 0.1781
+## Region_PIP = 1
 ##
 ## Computation Time:
-## total computation time = 3.69333 min 
+## total computation time = 1.32436 min 
 ## computation time break down: 
-##      time on proposal = 0 min 
-##      time on mcmc = 3.2075 min 
-##      time on Omega = 0 min 
-Accept #add=3437, total add step = 32881
-Accept #delete=3433, total delete step = 34327
-Accept #switch=12730, total switch step = 32781
-Accept #other=0, total other step = 11
+##      time on proposal = 6.95292e-310 min 
+##      time on mcmc = 0.782433 min 
+##      time on Omega = 1.03333e-06 min 
+Accept #add=500, total add step = 6534
+Accept #delete=500, total delete step = 6912
+Accept #switch=2562, total switch step = 6554
+Accept #other=0, total other step = 0
 ##
