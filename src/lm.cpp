@@ -217,7 +217,7 @@ void LM::AnalyzeVCF (const gsl_matrix *W, const gsl_vector *y, string &GTfield, 
 	
 	double beta=0, se=0, p_wald=0, p_lrt=0, p_score=0, score_u=0, score_v=0;
 	size_t n_miss, c_idv=0, c_snp=0, ctest_idv = 0, tab_count, pheno_index, ns_test=0;
-	double geno, x_mean, d;
+	double geno, x_mean;
 	int GTpos=0, k=0;
 	
 	//calculate some basic quantities

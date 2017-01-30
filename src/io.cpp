@@ -206,7 +206,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     
     // read function annotation file
     string rs, chr;
-    long int b_pos;
+    long int b_pos=0;
     size_t snp_i = 0;
     double maf_temp;
 
@@ -231,6 +231,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             pch=(char *)line.c_str();
             nch = strchr(pch, '\t');
             rs.assign(pch, nch-pch);
+
             //cout << "snp_i=" << snp_i << ";anno rs=" << rs << "; snpInfo.rs_number=" << snpInfo[snp_i].rs_number << endl;
             /*if (snpInfo[snp_i].rs_number.compare(rs) != 0) {
                 cerr << "annotation file ID dose not match genotype file ID...\n";
@@ -251,7 +252,7 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
             maf_temp = snpInfo[snp_i].maf;
         	if(maf_temp > 0.5) maf_temp = 1.0 - maf_temp;
 
-            if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
+            //if (snp_i < 5)  cout << rs << ":chr" << chr << ":bp"<< b_pos <<endl;
             if( isalpha(pch[0]) || isdigit(pch[0]) ){
             	//pch[0] is a letter or number
             	while (pch != NULL) {
@@ -401,7 +402,7 @@ bool ReadFile_bim (const string &file_bim, vector<SNPINFO> &snpInfo)
 	char *ch_ptr;
 	
 	string rs;
-	long int b_pos;
+	long int b_pos=0;
 	string chr;
 	double cM;
 	string major;
@@ -423,6 +424,10 @@ bool ReadFile_bim (const string &file_bim, vector<SNPINFO> &snpInfo)
 		minor=ch_ptr;
 		ch_ptr=strtok (NULL, " \t");
 		major=ch_ptr;
+
+        if(rs.compare(".") == 0 || rs.empty()){
+                rs = chr + ":" + to_string(b_pos) + ":" + minor + ":" + major;
+        }
 		
         SNPINFO sInfo={chr, rs, cM, b_pos, minor, major, -9, -9, -9, indicator_func_temp, weight_temp, 0.0};
 		snpInfo.push_back(sInfo);
@@ -910,7 +915,7 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<
 	gsl_vector *genotype=gsl_vector_alloc (indicator_idv.size());
 	
     char *pch, *nch=NULL;
-	long int b_pos;
+	long int b_pos=0;
 	string s, rs, line, chr, major, minor, pheno_id;
 	double cM=-9, maf, geno, geno_old;
 	size_t c_idv, ctest_idv, n_miss, n_0, n_1, n_2, tab_count, pheno_index;
@@ -972,13 +977,16 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<
                         case 2:
                             b_pos=atol(s.c_str()); break;
                         case 3:
-                            major = s; break;
-                        case 4:
                             minor = s; break;
+                        case 4:
+                            major = s; break;
                         default:
                             break;
                     }
                     pch = (nch == NULL) ? NULL : nch+1;  
+                }
+                if(rs.compare(".") == 0 || rs.empty()){
+                    rs = chr + ":" + to_string(b_pos) + ":" + minor + ":" + major;
                 }
                 else if ( tab_count == SampleVcfPos[ctest_idv] )
                 {

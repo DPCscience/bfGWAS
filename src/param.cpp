@@ -110,9 +110,9 @@ void CalcWeight(const vector<bool> &indicator_func, vector<double> &weight, cons
 
 PARAM::PARAM(void):
 vscale(0.0), iniType(3), saveSNP(0), saveGeno(0), saveLD(0), rv(1.0), 
-GTfield("GT"), Compress_Flag(0),
+Compress_Flag(0),
 mode_silence (false), a_mode (0), k_mode(1), d_pace (100000),
-file_out("result"), 
+GTfield("GT"), file_out("result"), 
 miss_level(0.05), maf_level(0.005), hwe_level(0.001), 
 win(100),nadd_accept(0), ndel_accept(0), nswitch_accept(0),
 nother_accept(0), nadd(0), ndel(0),

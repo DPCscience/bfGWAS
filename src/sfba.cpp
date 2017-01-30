@@ -591,14 +591,12 @@ void SFBA::Assign(int argc, char ** argv, PARAM &cPar)
 
 void SFBA::BatchRun (PARAM &cPar) 
 {
-	clock_t time_begin, time_start;
+	clock_t time_begin=clock(), time_start=clock();
     
     //cout << "create UcharTable ...\n";
     //vector<pair<long long int, double> > UcharTable;
     //CreateUcharTable(UcharTable);
-    
-	time_begin=clock();	
-	
+    	
 	//Read Files for the first time and filt variants
 	cout<<"Reading Files ... " << endl;
 	cPar.ReadFiles();
@@ -649,7 +647,7 @@ void SFBA::BatchRun (PARAM &cPar)
 		
 		gsl_matrix *G=gsl_matrix_alloc (cPar.ni_test, cPar.ni_test);
 		
-		//time_start=clock();
+		time_start=clock();
 		cPar.CalcKin (G);
 		cPar.time_G=(clock()-time_start)/(double(CLOCKS_PER_SEC)*60.0);
 		if (cPar.error==true) {cout<<"error! fail to calculate relatedness matrix. "<<endl; return;}
