@@ -46,9 +46,16 @@
 #include "io.h"
 
 
-
 using namespace std;
 
+// define to_string function : convert to string
+template <class T>
+inline std::string to_string (const T& t)
+{
+    std::stringstream ss;
+    ss << t;
+    return ss.str();
+}
 
 
 //Print process bar
@@ -610,7 +617,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
     }
         
     long int b_pos = 0; string chr;
-    string rs, major; string minor, s, pheno_id, line; 
+    string rs, major, minor, s, pheno_id, line; 
     size_t pheno_index, n_miss, n_0, n_1, n_2, c_idv=0, ctest_idv=0, tab_count;
     double maf, geno, geno_old, cM=-9;
     int flag_poly, GTpos=0, k=0;  // flag polymophysum variant
@@ -666,13 +673,16 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
                     case 1:
                         b_pos=atol(s.c_str()); break;
                     case 2:
-                        rs = s; break;
+			            rs = s; break;
                     case 3:
-                        major = s; break;
-                    case 4:
                         minor = s; break;
+                    case 4:
+                        major = s; break;
                     default:
                         break;
+                }
+                if(rs.compare(".") == 0 || rs.empty()){
+                    rs = chr + ":" + to_string(b_pos) + ":" + minor + ":" + major;
                 }
                 if (setSnps.size()!=0 && setSnps.count(rs)==0) {
                     indicator_snp.push_back(0);
