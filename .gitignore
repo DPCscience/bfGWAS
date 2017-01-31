@@ -1,1 +1,0 @@
-bin/Estep_mcmc src/*.o .* */.*
