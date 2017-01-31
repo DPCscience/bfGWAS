@@ -619,7 +619,7 @@ void SFBA::BatchRun (PARAM &cPar)
 
 		if ( (!cPar.file_vcf.empty()) || (!cPar.file_geno.empty()) ) {
         	// reorder y for reading vcf/genotype files
-        	cout << "Reorder y for reading vcf files ... "<< endl;
+        	cout << "Reorder phenotype for reading vcf files ... "<< endl;
         	cPar.ReorderPheno(y);
     	} // reorder y for reading vcf files
 

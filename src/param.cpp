@@ -189,7 +189,7 @@ void PARAM::ReadFiles (void)
 	}
 
     if ( (!file_anno.empty()) && (!file_func_code.empty()) ) {
-    	cout << "Start reading annotation files: " << file_anno << "with code file " << file_func_code << "\n";
+    	cout << "Start reading annotation files: " << file_anno << " \nwith code file " << file_func_code << "\n";
         if (ReadFile_anno (file_anno, file_func_code, mapFunc2Code, indicator_snp, snpInfo, n_type, mFunc)==false) {error=true;}
     }
     else {
@@ -530,8 +530,8 @@ void PARAM::ReorderPheno(gsl_vector *y)
     gsl_vector *ytemp=gsl_vector_alloc (ni_test);
     VcfSampleID_test.clear(); // set VCFSampleID_test
     
-    cout << "Total samples: " << VcfSampleID.size() << endl;
-	cout << "PhenoID2Ind.size() = " << PhenoID2Ind.size() << " within ReorderPheno() function ... " << endl;
+    //cout << "Number of samples in the genotype file: " << VcfSampleID.size() << endl;
+	//cout << "PhenoID2Ind.size() = " << PhenoID2Ind.size() << " within ReorderPheno() function ... " << endl;
 
 	// indicator_idv is of the same order as in the phenotype file
     for (size_t i=0; i < VcfSampleID.size(); i++) {
@@ -552,7 +552,7 @@ void PARAM::ReorderPheno(gsl_vector *y)
         }
     }
     ni_test = c_ind;
-    cout << "\n reorder y, final ni_test = " << ni_test << endl;
+    cout << "\n Reorder phenotypes, final analyzed sample size ni_test = " << ni_test << endl;
     gsl_vector_memcpy(y, ytemp);
     gsl_vector_free(ytemp);
 }

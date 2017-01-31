@@ -177,13 +177,14 @@ bool ReadFile_anno (const string &file_anno, const string &file_func_code, map<s
     // cout<<"Reading annotation code file: "<<file_func_code<<endl; 
     igzstream infile_code (file_func_code.c_str(), igzstream::in);
     if (!infile_code) {cout<<"error opening annotation file: "<<file_func_code<<endl; return false;}
+
     while (!safeGetline(infile_code, line).eof()) {
         
         if (line[0] == '#') {
             pch = (char *)line.c_str();
             nch = strchr(pch, '\t');
             n_type = strtol(nch, NULL, 0);
-            cout << "Number of annotation categories" << n_type << endl;            
+            // cout << "Number of annotation categories" << n_type << endl;            
             mFunc.assign(n_type, 0);
             continue;
         }
@@ -654,7 +655,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
                    }
                    pch = (nch == NULL) ? NULL : nch+1;
                }
-               cout << "\n Parse for VCF sample IDs with size " << SampleVcfPos.size() << "\n";
+               cout << "\n Matched phenotype sample IDs in the VCF file " << SampleVcfPos.size() << "\n";
             }
             continue;
         }
@@ -845,7 +846,7 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
 	//cout << "Total sample number " << c_idv << "; analyzed sample number " << ctest_idv << "\n";
 
         if (ctest_idv != ni_test) {
-            cerr << "record sample number " << ctest_idv << " dose not equal to ni_total " << ni_test << "\n";
+            cerr << "matched sample size in the genotype file " << ctest_idv << " dose not equal to analyzed sample size " << ni_test << "\n";
             exit(-1);
         }
         maf/=2.0*(double)(ni_test-n_miss);
@@ -890,9 +891,9 @@ bool ReadFile_vcf (const string &file_vcf, const set<string> &setSnps, vector<bo
 
     // cout << "genotype vector:\n";
     // PrintVector(genotype, 10);
-    cout << "VCF tab_count = " << tab_count << endl;
+    //cout << "VCF tab_count = " << tab_count << endl;
     cout << "vcf read first time success ... \n";
-    cout << "ns_test = " << ns_test << "ns_total = " << ns_total<<"\n";
+    // cout << "analyzed sample size ns_test = " << ns_test << "; loaded sample size ns_total = " << ns_total<<"\n";
      
     gsl_vector_free (genotype);
     infile.clear();
@@ -944,7 +945,7 @@ bool ReadFile_geno (const string &file_geno, const set<string> &setSnps, vector<
                 }
                 pch = (nch == NULL) ? NULL : nch+1;
             }
-            cout << "\n Parse first header line for sample IDs with size " << SampleVcfPos.size() << "\n";
+            cout << "\n Matched phenotype Sample IDs in the genotype file " << SampleVcfPos.size() << "\n";
             continue;
         }else{
             nch=strchr(pch, '\t'); // parse ID first
@@ -2076,7 +2077,7 @@ bool ReadFile_geno (const string &file_geno, const vector<bool> &indicator_idv, 
       }
 	}
 
-    if(c_snp != indicator_snp.size() ){cerr << "c_snp dose not equal to ns_test!" << endl; exit(-1);}
+    if(c_snp != indicator_snp.size() ){cerr << "compressed variant number dose not equal to analyzed variant number!" << endl; exit(-1);}
 	
     if (calc_K==true) {
         gsl_matrix_scale (K, 1.0/(double)ctest_snp);
