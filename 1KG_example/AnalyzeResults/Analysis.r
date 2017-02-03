@@ -3,13 +3,13 @@
 ####### Source Util Functions and set data directories
 source("../../bin/R_funcs.r")
 
-DataDir = "/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/" # example data directory
-OutDir = "/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/AnalyzeResults/" # directory to save plots
-ResultDir = "/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST" # result directory
+DataDir = "/net/fantasia/home/yjingj/bfGWAS/1KG_example/ExData/" # example data directory
+OutDir = "/net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/AnalyzeResults/" # directory to save plots
+ResultDir = "/net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/Test_Wkdir" # result directory
 
 setwd(ResultDir)
 
-######## Load and analyze GWAS results by SFBA
+######## Load and analyze GWAS results by bfGWAS
 paramdata = LoadEMdata(filename="./Eoutput/paramtemp5.txt")
 head(paramdata)
 

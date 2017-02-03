@@ -1,5 +1,8 @@
-running
-  '/net/fantasia/home/yjingj/lib/anaconda2/lib/R/bin/R --slave --no-restore --no-save --no-restore --file=/net/fantasia/home/yjingj/GIT/SFBA/bin/Mstep.r --args /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/Eoutput/hyptemp5.txt 5 1e-6 0.1 /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/Eoutput/EM_result.txt /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/hypval.current'
-
-Loading required package: grid
-Loading required package: scales
+srun: job 34623119 queued and waiting for resources
+srun: job 34623120 queued and waiting for resources
+srun: job 34623121 queued and waiting for resources
+srun: job 34623122 queued and waiting for resources
+srun: job 34623119 has been allocated resources
+srun: job 34623120 has been allocated resources
+srun: job 34623121 has been allocated resources
+srun: job 34623122 has been allocated resources

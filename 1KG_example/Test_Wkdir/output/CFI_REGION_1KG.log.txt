@@ -1,9 +1,9 @@
 ##
-## GEMMA Version = SFBA_MCMC
+## GEMMA Version = bfGWAS_MCMC
 ##
-## Command Line Input = -vcf /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/vcfs/CFI_REGION_1KG.vcf.gz -a /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/annos/Anno_CFI_REGION_1KG.gz -p /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/phenoAMD_1KG.txt -fcode /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData/AnnoCode6.txt -hfile /net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST/hypval.current -GTfield GT -maf 0.005 -bvsrm -rmin 1 -rmax 1 -smin 0 -smax 10 -win 100 -o CFI_REGION_1KG -w 10000 -s 10000 -initype 3 -rv 1 
+## Command Line Input = -vcf /net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/ExData/vcfs/CFI_REGION_1KG.vcf.gz -p /net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/ExData/phenoAMD_1KG.txt -a /net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/ExData/annos/Anno_CFI_REGION_1KG.gz -fcode /net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/ExData/AnnoCode6.txt -hfile /net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/Test_Wkdir/hypval.current -GTfield GT -maf 0.005 -bvsrm -rmin 1 -rmax 1 -smin 0 -smax 10 -win 100 -o CFI_REGION_1KG -w 10000 -s 10000 -initype 3 -rv 1 
 ##
-## Date = Wed Jan 11 19:15:26 2017
+## Date = Fri Feb  3 18:32:54 2017
 
 ##
 ## Summary Statistics:
@@ -17,17 +17,17 @@
 ## MCMC related:
 ## initial value of |gamma| = 1
 ## random seed = 2016
-## acceptance ratio = 0.23265
-## Region_PIP = 0.7873
+## acceptance ratio = 0.00115
+## Region_PIP = 0.0018
 ##
 ## Computation Time:
-## total computation time = 0.954452 min 
+## total computation time = 0.286105 min 
 ## computation time break down: 
-##      time on proposal = 6.95306e-310 min 
-##      time on mcmc = 0.600765 min 
-##      time on Omega = 0.00222067 min 
-Accept #add=1521, total add step = 6566
-Accept #delete=1521, total delete step = 5291
-Accept #switch=1611, total switch step = 5156
-Accept #other=0, total other step = 2987
+##      time on proposal = 6.95296e-310 min 
+##      time on mcmc = 0.00861287 min 
+##      time on Omega = 0.00285767 min 
+Accept #add=11, total add step = 6569
+Accept #delete=12, total delete step = 12
+Accept #switch=0, total switch step = 5
+Accept #other=0, total other step = 13414
 ##

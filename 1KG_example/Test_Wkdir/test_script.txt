@@ -1,36 +1,36 @@
 
-# Script for testing SFBA
+# Script for testing bfGWAS
 
 ################ setup directories
 
-sfba_dir="/net/fantasia/home/yjingj/GIT/SFBA"
-data_dir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/ExData"
-wkdir="/net/fantasia/home/yjingj/GIT/SFBA/SFBA_1KG_example/SFBA_TEST"
+bfGWAS_dir="/net/fantasia/home/yjingj/GIT/bfGWAS"
+data_dir="/net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/ExData"
+wkdir="/net/fantasia/home/yjingj/GIT/bfGWAS/1KG_example/Test_Wkdir"
 
 # makdir -p $wkdir
 
 ################## perl script is used to generate makefile #############
 
 ####### Test slurm running
-${sfba_dir}/bin/gen_mkf.pl \
+${bfGWAS_dir}/bin/gen_mkf.pl \
 -w ${wkdir} \
---Estep ${sfba_dir}/bin/Estep_mcmc \
+--Estep ${bfGWAS_dir}/bin/Estep_mcmc \
 --ad ${data_dir}/annos \
 --geno vcf --ac ${data_dir}/AnnoCode6.txt  \
 --gd ${data_dir}/vcfs \
 --pheno ${data_dir}/phenoAMD_1KG.txt \
 --hyp ${data_dir}/InitValues6.txt \
 -f ${data_dir}/fileheads_4region.txt \
---rs ${sfba_dir}/bin/Mstep.r \
+--rs ${bfGWAS_dir}/bin/Mstep.r \
 -G GT --maf 0.005 --smax 10 -b 10000 -N 10000 --NL 10000 \
 --em 5 -j testjob -l slurm --part nomosix,main,assembly --mem 3000 \
---mf ${wkdir}/Test_sfba.mk
+--mf ${wkdir}/Test_bfGWAS.mk
 
 ## Run Makefile with 4 parallel jobs
-make -k -C ${wkdir} -f ${wkdir}/Test_sfba.mk -j 10 > ${wkdir}/make.output 2> ${wkdir}/make.err  &
+make -k -C ${wkdir} -f ${wkdir}/Test_bfGWAS.mk -j 10 > ${wkdir}/make.output 2> ${wkdir}/make.err  &
 
 ## Clean all jobs when you need rerun everything
-# make -f ${wkdir}/Test_sfba.mk clean
+# make -f ${wkdir}/Test_bfGWAS.mk clean
 
 
 #################
@@ -77,6 +77,6 @@ make -k -C ${wkdir} -f ${wkdir}/Test_sfba.mk -j 10 > ${wkdir}/make.output 2> ${w
 
 
 ############ example R code for analysis
-see "/SFBA_example/AnalyzeResults/Analysis.r" for details of loading data and make plots
+see "/1KG_example/AnalyzeResults/Analysis.r" for details of loading data and make plots
 
 
