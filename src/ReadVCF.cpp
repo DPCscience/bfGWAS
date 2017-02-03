@@ -1,5 +1,5 @@
 /*
-    Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC)
+    Bayesian Functional GWAS --- MCMC (bfGWAS:MCMC)
     Copyright (C) 2016  Jingjing Yang
 
     This program is free software: you can redistribute it and/or modify

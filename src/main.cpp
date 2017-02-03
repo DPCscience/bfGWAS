@@ -1,5 +1,5 @@
 /*
-	Scalable Functional Bayesian Association --- MCMC (SFBA:MCMC)
+	Bayesian Functional GWAS --- MCMC (bfGWAS:MCMC)
     Copyright (C) 2016  Jingjing Yang
 
     This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "param.h"
-#include "sfba.h"
+#include "bfgwas.h"
 
 using namespace std;
 
@@ -34,25 +34,25 @@ typedef short int int16;
 
 int main(int argc, char * argv[])
 { 	
-	SFBA cSfba;	
+	BFGWAS cBFGWAS;	
 	PARAM cPar;
 
 	if (argc <= 1) {
-		cSfba.PrintHeader(); 
+		cBFGWAS.PrintHeader(); 
 		return EXIT_SUCCESS;
 	}
 	if (argc==2 && argv[1][0] == '-' && argv[1][1] == 'h') {
-		cSfba.PrintHelp(0);
+		cBFGWAS.PrintHelp(0);
 		return EXIT_SUCCESS;
 	}
 	if (argc==3 && argv[1][0] == '-' && argv[1][1] == 'h') {
 		string str;
 		str.assign(argv[2]);
-		cSfba.PrintHelp(atoi(str.c_str()));
+		cBFGWAS.PrintHelp(atoi(str.c_str()));
 		return EXIT_SUCCESS;
 	}
 	if (argc==2 && argv[1][0] == '-' && argv[1][1] == 'l') {
-		cSfba.PrintLicense();
+		cBFGWAS.PrintLicense();
 		return EXIT_SUCCESS;
 	}
 	
@@ -61,7 +61,7 @@ int main(int argc, char * argv[])
 		mkdir("output", S_IRWXU|S_IRGRP|S_IROTH);
 	}	
 	
-	cSfba.Assign(argc, argv, cPar); 
+	cBFGWAS.Assign(argc, argv, cPar); 
 		
 	if (cPar.error==true) {return EXIT_FAILURE;}
 	     
@@ -71,11 +71,11 @@ int main(int argc, char * argv[])
 	
 	if (cPar.error==true) {return EXIT_FAILURE;}
 	
-	cSfba.BatchRun(cPar);
+	cBFGWAS.BatchRun(cPar);
 	
 	if (cPar.error==true) {return EXIT_FAILURE;}
 	
-	cSfba.WriteLog(argc, argv, cPar);
+	cBFGWAS.WriteLog(argc, argv, cPar);
 	
     return EXIT_SUCCESS;                                                          
 }
