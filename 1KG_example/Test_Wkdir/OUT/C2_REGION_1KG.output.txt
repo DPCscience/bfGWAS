@@ -76,3 +76,12 @@ acceptance percentage = 0.242250
 # of selected variants per category: 
 1, 0, 0, 0, 0, 1, 
 loglike: 59.158439
+Running MCMC ==============================100.00%  & acceptance ratio 0.24
+MCMC completed ... 
+
+region_pip = 10000
+gamma acceptance percentage = 0.24
+# of selected variants per category: 1, 0, 0, 0, 0, 1, 
+beta_hat: -0.520552, -0.548898, 
+loglike: 60.503667
+k_save_sample = 10000
